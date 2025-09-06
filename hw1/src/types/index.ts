@@ -4,6 +4,7 @@ export interface PersonalInfo {
   title: string;
   description: string;
   location: string;
+  profileImage?: string;
 }
 
 export interface Skill {

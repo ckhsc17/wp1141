@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { PortfolioViewModel } from '@/viewModels';
+import { SocialIcon } from './SocialIcon';
 
 interface AboutSectionProps {
   portfolioVM: PortfolioViewModel;
@@ -99,7 +101,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
             </motion.div>
           </motion.div>
 
-          {/* Right side - Photo placeholder */}
+          {/* Right side - Photo */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -109,9 +111,33 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
             <div className="relative">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="w-80 h-80 bg-gradient-to-br from-primary-400/20 to-primary-600/20 rounded-lg border border-primary-400/30 flex items-center justify-center"
+                className="w-80 h-80 relative overflow-hidden rounded-lg"
               >
-                <span className="text-primary-400 font-mono text-sm">Professional Photo</span>
+                <div className="relative w-full h-full bg-gradient-to-br from-primary-400/20 to-primary-600/20 border border-primary-400/30 rounded-lg">
+                  {personalInfo.profileImage ? (
+                    <Image
+                      src={personalInfo.profileImage}
+                      alt={personalInfo.name}
+                      fill
+                      className="object-cover rounded-lg filter grayscale hover:grayscale-0 transition-all duration-300"
+                      onError={() => {
+                        // 如果圖片載入失敗，將顯示 placeholder
+                        console.log('Image failed to load, showing placeholder');
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-primary-400 font-mono text-sm">Professional Photo</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Hover overlay */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileHover={{ opacity: 1 }}
+                  className="absolute inset-0 bg-primary-400/10 rounded-lg"
+                />
               </motion.div>
               
               {/* Decorative elements */}
@@ -149,7 +175,11 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               className="text-gray-400 hover:text-primary-400 transition-colors"
             >
               <span className="sr-only">{link.platform}</span>
-              <div className="w-5 h-5 bg-gray-400 rounded"></div>
+              <SocialIcon 
+                icon={link.icon} 
+                size={20}
+                className="hover:scale-110 transition-transform duration-200"
+              />
             </motion.a>
           ))}
           <motion.div
@@ -168,7 +198,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
           className="fixed right-8 bottom-0 hidden lg:flex flex-col items-center space-y-6"
         >
           <motion.a
-            href="mailto:brittany.chiang@example.com"
+            href="mailto:bowenchen0227@gmail.com"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.5 }}
@@ -176,7 +206,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
             className="text-gray-400 hover:text-primary-400 transition-colors font-mono text-sm vertical-text"
             style={{ writingMode: 'vertical-rl' }}
           >
-            brittany.chiang@example.com
+            bowenchen0227@gmail.com
           </motion.a>
           <motion.div
             initial={{ height: 0 }}

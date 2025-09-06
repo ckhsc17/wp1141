@@ -2,10 +2,11 @@ import { PersonalInfo, Skill, Experience, Project, Milestone, SocialLink } from 
 
 // Mock data based on the provided image
 export const personalInfo: PersonalInfo = {
-  name: "Brittany Chiang",
-  title: "Front End Engineer",
+  name: "Bowen Chen",
+  title: "Backend Engineer",
   description: "I build accessible, pixel-perfect digital experiences for the web.",
-  location: "Boston, MA"
+  location: "Taipei, Taiwan",
+  profileImage: "/images/profile.jpg"
 };
 
 export const skills: Skill[] = [
@@ -90,12 +91,12 @@ export const milestones: Milestone[] = [
 export const socialLinks: SocialLink[] = [
   {
     platform: "GitHub",
-    url: "https://github.com/bchiang7",
+    url: "https://github.com/ckhsc17",
     icon: "github"
   },
   {
     platform: "LinkedIn",
-    url: "https://linkedin.com/in/bchiang7",
+    url: "https://www.linkedin.com/in/bowen-chen-a18491217/",
     icon: "linkedin"
   },
   {
@@ -104,13 +105,8 @@ export const socialLinks: SocialLink[] = [
     icon: "instagram"
   },
   {
-    platform: "Codepen",
-    url: "https://codepen.io/bchiang7",
-    icon: "codepen"
-  },
-  {
-    platform: "Goodreads",
-    url: "https://goodreads.com/bchiang7",
-    icon: "book"
+    platform: "Facebook",
+    url: "https://www.facebook.com/chen.po.hua.384674/",
+    icon: "facebook"
   }
 ];
