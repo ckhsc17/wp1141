@@ -1,0 +1,193 @@
+'use client';
+
+import React from 'react';
+import { motion } from 'framer-motion';
+import { PortfolioViewModel } from '@/viewModels';
+
+interface AboutSectionProps {
+  portfolioVM: PortfolioViewModel;
+}
+
+const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
+  const { personalInfo, socialLinks } = portfolioVM;
+
+  return (
+    <section id="about" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left side - Main content */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="space-y-6"
+          >
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-primary-400 text-lg font-mono"
+            >
+              Hi, my name is
+            </motion.p>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-4xl sm:text-6xl lg:text-7xl font-bold text-gray-100"
+            >
+              {personalInfo.name}
+            </motion.h1>
+
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gray-400"
+            >
+              {personalInfo.title}
+            </motion.h2>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="text-lg text-gray-400 max-w-lg leading-relaxed"
+            >
+              {personalInfo.description}
+            </motion.p>
+
+            {/* Skills preview */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="space-y-4"
+            >
+              <h3 className="text-lg font-semibold text-gray-300">Core Technologies</h3>
+              <div className="flex flex-wrap gap-3">
+                {portfolioVM.getSkillsByCategory('frontend').slice(0, 4).map((skill, index) => (
+                  <motion.span
+                    key={skill.name}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7 + index * 0.1 }}
+                    className="px-3 py-1 bg-primary-400/10 text-primary-400 rounded-full text-sm font-mono border border-primary-400/20"
+                  >
+                    {skill.name}
+                  </motion.span>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* CTA Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="pt-4"
+            >
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-8 py-3 bg-transparent border-2 border-primary-400 text-primary-400 rounded font-mono text-sm hover:bg-primary-400/10 transition-all duration-300"
+              >
+                Check out my work!
+              </motion.button>
+            </motion.div>
+          </motion.div>
+
+          {/* Right side - Photo placeholder */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="lg:flex justify-center hidden"
+          >
+            <div className="relative">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="w-80 h-80 bg-gradient-to-br from-primary-400/20 to-primary-600/20 rounded-lg border border-primary-400/30 flex items-center justify-center"
+              >
+                <span className="text-primary-400 font-mono text-sm">Professional Photo</span>
+              </motion.div>
+              
+              {/* Decorative elements */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute -top-4 -right-4 w-8 h-8 border-2 border-primary-400 rounded"
+              />
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -bottom-4 -left-4 w-6 h-6 bg-primary-400/30 rounded-full"
+              />
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Social Links */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className="fixed left-8 bottom-0 hidden lg:flex flex-col items-center space-y-6"
+        >
+          {socialLinks.map((link, index) => (
+            <motion.a
+              key={link.platform}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2 + index * 0.1 }}
+              whileHover={{ y: -3, color: '#38bdf8' }}
+              className="text-gray-400 hover:text-primary-400 transition-colors"
+            >
+              <span className="sr-only">{link.platform}</span>
+              <div className="w-5 h-5 bg-gray-400 rounded"></div>
+            </motion.a>
+          ))}
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 80 }}
+            transition={{ delay: 1.5, duration: 0.8 }}
+            className="w-px bg-gray-400"
+          />
+        </motion.div>
+
+        {/* Email */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className="fixed right-8 bottom-0 hidden lg:flex flex-col items-center space-y-6"
+        >
+          <motion.a
+            href="mailto:brittany.chiang@example.com"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.5 }}
+            whileHover={{ y: -3, color: '#38bdf8' }}
+            className="text-gray-400 hover:text-primary-400 transition-colors font-mono text-sm vertical-text"
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            brittany.chiang@example.com
+          </motion.a>
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 80 }}
+            transition={{ delay: 1.5, duration: 0.8 }}
+            className="w-px bg-gray-400"
+          />
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+export default AboutSection;

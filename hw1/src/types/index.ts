@@ -1,0 +1,48 @@
+// ViewModels - 業務邏輯層
+export interface PersonalInfo {
+  name: string;
+  title: string;
+  description: string;
+  location: string;
+}
+
+export interface Skill {
+  name: string;
+  level: number;
+  category: 'frontend' | 'backend' | 'tools' | 'languages';
+}
+
+export interface Experience {
+  id: string;
+  company: string;
+  position: string;
+  period: string;
+  description: string;
+  technologies: string[];
+  type: 'work' | 'education';
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  technologies: string[];
+  liveUrl?: string;
+  githubUrl?: string;
+  imageUrl?: string;
+  featured: boolean;
+}
+
+export interface Milestone {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  type: 'achievement' | 'life' | 'career' | 'education';
+}
+
+export interface SocialLink {
+  platform: string;
+  url: string;
+  icon: string;
+}
