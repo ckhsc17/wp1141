@@ -30,7 +30,6 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               transition={{ delay: 0.2 }}
               className="text-primary-400 text-lg font-mono"
             >
-              Hi, my name is
             </motion.p>
 
             <motion.h1
@@ -106,7 +105,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:flex justify-center hidden"
+            className="lg:flex flex-col justify-center items-center hidden"
           >
             <div className="relative">
               <motion.div
@@ -152,6 +151,33 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
                 className="absolute -bottom-4 -left-4 w-6 h-6 bg-primary-400/30 rounded-full"
               />
             </div>
+            
+            {/* View Resume Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
+              className="mt-6"
+            >
+              <a
+                href="/files/resume.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-6 py-2 bg-primary-400 text-white rounded font-mono text-sm shadow hover:bg-primary-500 transition-colors duration-200"
+              >
+                View my resume
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="w-4 h-4 ml-2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H10M17 7v7" />
+                </svg>
+              </a>
+            </motion.div>
           </motion.div>
         </div>
 
