@@ -5,6 +5,7 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class', // 啟用類名控制的深色模式
   theme: {
     extend: {
       colors: {
@@ -21,9 +22,9 @@ module.exports = {
           900: '#0c4a6e',
         },
         background: {
-          primary: '#0f172a',
-          secondary: '#1e293b',
-          tertiary: '#334155',
+          primary: '#0f172a',    // 深藍灰色 (主要背景)
+          secondary: '#1e293b',  // 中等藍灰色 (次要背景)
+          tertiary: '#334155',   // 較淺藍灰色 (第三級背景)
         }
       },
       animation: {

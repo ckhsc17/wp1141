@@ -1,0 +1,7 @@
+I'm a student majoring Information Management in NTU. I am passionate about system designing, and are keen to designing products that create impressive user experience.
+
+Currently, I am a Backend Engineer Intern at LINE, developing Official Account Verification (OAV) using go; I am also developer in NTU course selection system team and Forward Alliance, providing services for more than 30k users. 
+
+I used to study humanities and social science, and that kind of shapes me into an attentive listener, being open to innovative ideas.
+
+In my spare time, I enjoy playing guitar and writing songs that express my emotions. I also enjoy traveling, working out and playing badminton, which keeps me energetic and curious.

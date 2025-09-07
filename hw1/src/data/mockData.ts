@@ -4,7 +4,7 @@ import { PersonalInfo, Skill, Experience, Project, Milestone, SocialLink } from 
 export const personalInfo: PersonalInfo = {
   name: "Bowen Chen",
   title: "Backend Engineer",
-  description: "I build accessible, pixel-perfect digital experiences for the web.",
+  description: "description.txt",
   location: "Taipei, Taiwan",
   profileImage: "/images/profile.jpg"
 };

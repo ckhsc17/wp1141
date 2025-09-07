@@ -33,7 +33,7 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
       animate={{ y: 0 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrollVM.isScrolled 
-          ? 'bg-background-primary/90 backdrop-blur-md shadow-lg' 
+          ? 'bg-background-primary/90 dark:bg-white/90 backdrop-blur-md shadow-lg' 
           : 'bg-transparent'
       }`}
     >
@@ -42,7 +42,7 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
           {/* Logo */}
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="text-xl font-bold text-primary-400"
+            className="text-xl font-bold text-primary-400 dark:text-blue-600"
           >
             BC
           </motion.div>

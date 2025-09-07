@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { PortfolioViewModel } from '@/viewModels';
@@ -12,6 +12,14 @@ interface AboutSectionProps {
 
 const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
   const { personalInfo, socialLinks } = portfolioVM;
+  const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    // 載入 description 內容
+    portfolioVM.loadDescription().then(content => {
+      setDescription(content);
+    });
+  }, [portfolioVM]);
 
   return (
     <section id="about" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -36,7 +44,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-4xl sm:text-6xl lg:text-7xl font-bold text-gray-100"
+              className="text-4xl sm:text-6xl lg:text-7xl font-bold text-gray-100 dark:text-gray-800"
             >
               {personalInfo.name}
             </motion.h1>
@@ -45,7 +53,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gray-400"
+              className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gray-400 dark:text-gray-500"
             >
               {personalInfo.title}
             </motion.h2>
@@ -54,9 +62,13 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-lg text-gray-400 max-w-lg leading-relaxed"
+              className="text-lg text-gray-400 dark:text-gray-600 max-w-lg leading-relaxed"
             >
-              {personalInfo.description}
+              {description.split('\n\n').map((paragraph, index) => (
+                <span key={index} className="block mb-4">
+                  {paragraph}
+                </span>
+              ))}
             </motion.p>
 
             {/* Skills preview */}
@@ -66,7 +78,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               transition={{ delay: 0.6 }}
               className="space-y-4"
             >
-              <h3 className="text-lg font-semibold text-gray-300">Core Technologies</h3>
+              <h3 className="text-lg font-semibold text-gray-300 dark:text-gray-700">Core Technologies</h3>
               <div className="flex flex-wrap gap-3">
                 {portfolioVM.getSkillsByCategory('frontend').slice(0, 4).map((skill, index) => (
                   <motion.span
@@ -74,7 +86,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.7 + index * 0.1 }}
-                    className="px-3 py-1 bg-primary-400/10 text-primary-400 rounded-full text-sm font-mono border border-primary-400/20"
+                    className="px-3 py-1 bg-primary-400/10 text-primary-400 dark:bg-blue-100 dark:text-blue-700 rounded-full text-sm font-mono border border-primary-400/20 dark:border-blue-200"
                   >
                     {skill.name}
                   </motion.span>
@@ -93,7 +105,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-8 py-3 bg-transparent border-2 border-primary-400 text-primary-400 rounded font-mono text-sm hover:bg-primary-400/10 transition-all duration-300"
+                className="px-8 py-3 bg-transparent border-2 border-primary-400 text-primary-400 dark:border-blue-500 dark:text-blue-600 dark:hover:bg-blue-50 rounded font-mono text-sm hover:bg-primary-400/10 transition-all duration-300"
               >
                 Check out my work!
               </motion.button>
@@ -118,7 +130,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
                       src={personalInfo.profileImage}
                       alt={personalInfo.name}
                       fill
-                      className="object-cover rounded-lg filter grayscale hover:grayscale-0 transition-all duration-300"
+                      className="object-cover rounded-lg hover:scale-105 transition-all duration-300"
                       onError={() => {
                         // 如果圖片載入失敗，將顯示 placeholder
                         console.log('Image failed to load, showing placeholder');
@@ -163,7 +175,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
                 href="/files/resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center px-6 py-2 bg-primary-400 text-white rounded font-mono text-sm shadow hover:bg-primary-500 transition-colors duration-200"
+                className="inline-flex items-center px-6 py-2 bg-primary-400 text-white dark:bg-blue-500 dark:text-white rounded font-mono text-sm shadow hover:bg-primary-500 dark:hover:bg-blue-600 transition-colors duration-200"
               >
                 View my resume
                 <svg

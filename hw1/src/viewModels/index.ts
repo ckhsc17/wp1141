@@ -9,6 +9,7 @@ export class PortfolioViewModel {
   private _projects: Project[];
   private _milestones: Milestone[];
   private _socialLinks: SocialLink[];
+  private _loadedDescription: string | null = null;
 
   constructor() {
     this._personalInfo = personalInfo;
@@ -17,6 +18,30 @@ export class PortfolioViewModel {
     this._projects = projects;
     this._milestones = milestones;
     this._socialLinks = socialLinks;
+  }
+
+  // 載入 description 檔案內容
+  async loadDescription(): Promise<string> {
+    if (this._loadedDescription) {
+      return this._loadedDescription;
+    }
+
+    // 如果 description 是檔案名稱，就透過 API 讀取檔案內容
+    if (this._personalInfo.description.endsWith('.txt')) {
+      try {
+        const response = await fetch(`/api/content?file=${this._personalInfo.description}`);
+        const data = await response.json();
+        if (data.content) {
+          this._loadedDescription = data.content;
+          return data.content;
+        }
+      } catch (error) {
+        console.error('Error loading description:', error);
+      }
+    }
+    
+    // 如果讀取失敗或不是檔案名稱，返回原始值
+    return this._personalInfo.description;
   }
 
   // Getters for data access
