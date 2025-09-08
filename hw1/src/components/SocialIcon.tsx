@@ -4,8 +4,6 @@ import {
   FaLinkedin, 
   FaInstagram, 
   FaFacebook, 
-  FaYoutube,
-  FaTwitter,
   FaEnvelope
 } from 'react-icons/fa';
 
@@ -20,8 +18,6 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   linkedin: FaLinkedin,
   instagram: FaInstagram,
   facebook: FaFacebook,
-  youtube: FaYoutube,
-  twitter: FaTwitter,
   email: FaEnvelope,
 };
 

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import AboutSection from '@/components/AboutSection';
-import SkillsSection from '@/components/SkillsSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import MilestonesSection from '@/components/MilestonesSection';
@@ -21,7 +20,7 @@ export default function Home() {
       scrollVM.updateScroll(window.scrollY);
       
       // Update active section based on scroll position
-      const sections = ['about', 'skills', 'experience', 'projects', 'milestones', 'connect'];
+      const sections = ['about', 'experience', 'projects', 'milestones', 'connect'];
       const scrollPosition = window.scrollY + 200;
       
       for (const section of sections) {
@@ -51,7 +50,6 @@ export default function Home() {
       
       <main>
         <AboutSection portfolioVM={portfolioVM} />
-        <SkillsSection portfolioVM={portfolioVM} />
         <ExperienceSection portfolioVM={portfolioVM} />
         <ProjectsSection portfolioVM={portfolioVM} />
         <MilestonesSection portfolioVM={portfolioVM} />

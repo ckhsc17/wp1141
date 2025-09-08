@@ -13,16 +13,18 @@ interface AboutSectionProps {
 const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
   const { personalInfo, socialLinks } = portfolioVM;
   const [description, setDescription] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // 載入 description 內容
     portfolioVM.loadDescription().then(content => {
       setDescription(content);
+      setIsLoading(false);
     });
   }, [portfolioVM]);
 
   return (
-    <section id="about" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <section id="about" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-20">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left side - Main content */}
@@ -44,7 +46,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-4xl sm:text-6xl lg:text-7xl font-bold text-gray-100"
+              className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gray-100"
             >
               {personalInfo.name}
             </motion.h1>
@@ -53,23 +55,33 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gray-400"
+              className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-400"
             >
               {personalInfo.title}
             </motion.h2>
 
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-lg text-gray-400 max-w-lg leading-relaxed"
+              className="text-base text-gray-400 max-w-lg leading-relaxed min-h-[120px] flex flex-col justify-start"
             >
-              {description.split('\n\n').map((paragraph, index) => (
-                <span key={index} className="block mb-4">
-                  {paragraph}
-                </span>
-              ))}
-            </motion.p>
+              {isLoading ? (
+                // 載入中的骨架屏，避免跑版
+                <div className="space-y-4">
+                  <div className="h-4 bg-gray-600/30 rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-600/30 rounded animate-pulse w-4/5"></div>
+                  <div className="h-4 bg-gray-600/30 rounded animate-pulse w-3/4"></div>
+                  <div className="h-4 bg-gray-600/30 rounded animate-pulse w-4/5"></div>
+                </div>
+              ) : (
+                description.split('\n\n').map((paragraph, index) => (
+                  <span key={index} className="block mb-4">
+                    {paragraph}
+                  </span>
+                ))
+              )}
+            </motion.div>
 
             {/* Skills preview */}
             <motion.div
@@ -80,7 +92,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
             >
               <h3 className="text-lg font-semibold text-gray-300">Core Technologies</h3>
               <div className="flex flex-wrap gap-3">
-                {portfolioVM.getSkillsByCategory('frontend').slice(0, 4).map((skill, index) => (
+                {portfolioVM.getSkillsByCategory('frontend').slice(0, 8).map((skill, index) => (
                   <motion.span
                     key={skill.name}
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -93,24 +105,6 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
                   </motion.span>
                 ))}
               </div>
-            </motion.div>
-
-            {/* CTA Button */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="pt-4"
-            >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
-                // 註解掉 theme 相關的 class，只保留暗色設定
-                className="px-8 py-3 bg-transparent border-2 border-blue-400 text-blue-400 rounded font-mono text-sm hover:bg-blue-400/10 transition-all duration-300"
-              >
-                Check out my work!
-              </motion.button>
             </motion.div>
           </motion.div>
 
@@ -171,7 +165,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.9 }}
-              className="mt-6"
+              className="mt-6 flex flex-col items-center space-y-4"
             >
               <a
                 href="/files/resume.pdf"
@@ -192,6 +186,16 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H10M17 7v7" />
                 </svg>
               </a>
+              
+              {/* CTA Button - 移到這裡 */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-8 py-3 bg-transparent border-2 border-blue-400 text-blue-400 rounded font-mono text-sm hover:bg-blue-400/10 transition-all duration-300"
+              >
+                Check out my work!
+              </motion.button>
             </motion.div>
           </motion.div>
         </div>

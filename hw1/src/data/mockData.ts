@@ -10,16 +10,18 @@ export const personalInfo: PersonalInfo = {
 };
 
 export const skills: Skill[] = [
-  { name: "JavaScript", level: 95, category: "languages" },
-  { name: "TypeScript", level: 90, category: "languages" },
+  { name: "TypeScript", level: 95, category: "frontend" },
+  { name: "Python", level: 90, category: "languages" },
+  { name: "FastAPI", level: 85, category: "backend" },
+  { name: "Go", level: 80, category: "languages" },
   { name: "React", level: 95, category: "frontend" },
-  { name: "Next.js", level: 85, category: "frontend" },
-  { name: "Vue.js", level: 80, category: "frontend" },
-  { name: "Node.js", level: 85, category: "backend" },
-  { name: "Python", level: 75, category: "languages" },
-  { name: "Figma", level: 80, category: "tools" },
-  { name: "Git", level: 90, category: "tools" },
-  { name: "Docker", level: 70, category: "tools" }
+  { name: "Vue.js", level: 85, category: "frontend" },
+  { name: "Next.js", level: 90, category: "frontend" },
+  { name: "GCP", level: 80, category: "tools" },
+  { name: "PostgreSQL", level: 85, category: "database" },
+  { name: "Prisma", level: 90, category: "tools" },
+  { name: "Atlas", level: 75, category: "tools" },
+  { name: "Machine Learning", level: 80, category: "ai" }
 ];
 
 export const experiences: Experience[] = [
@@ -49,7 +51,7 @@ export const experiences: Experience[] = [
     position: "Backend Engineer, New Course Selection System",
     period: "June 2025 — PRESENT",
     description: "Backend engineer using TypeScript, applying layered architecture. Deal with Prisma data migration to systematically manage schema changes.",
-    technologies: ["TypeScript", "Prisma", "Database Migration", "Layered Architecture"],
+    technologies: ["TypeScript", "Jenkins", "Prisma", "Database Migration", "Layered Architecture"],
     type: "work",
     logo: "/images/companies/ntu.png"
   },
