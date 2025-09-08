@@ -8,7 +8,7 @@ import ExperienceSection from '@/components/ExperienceSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import MilestonesSection from '@/components/MilestonesSection';
 import ConnectSection from '@/components/ConnectSection';
-import ThemeToggle from '@/components/ThemeToggle';
+// import ThemeToggle from '@/components/ThemeToggle'; // 註解掉 theme toggle
 import { PortfolioViewModel, NavigationViewModel, ScrollViewModel } from '@/viewModels';
 
 export default function Home() {
@@ -43,9 +43,11 @@ export default function Home() {
   }, [navigationVM, scrollVM]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background-primary via-background-primary to-background-secondary text-white dark:from-gray-50 dark:via-gray-100 dark:to-blue-50 dark:text-gray-800 transition-colors duration-300">
+    // 註解掉 dark mode classes，只保留暗色設定
+    <div className="min-h-screen bg-gradient-to-br from-background-primary via-background-primary to-background-secondary text-white transition-colors duration-300">
       <Navigation navigationVM={navigationVM} scrollVM={scrollVM} />
-      <ThemeToggle />
+      {/* 註解掉 ThemeToggle */}
+      {/* <ThemeToggle /> */}
       
       <main>
         <AboutSection portfolioVM={portfolioVM} />
@@ -58,7 +60,7 @@ export default function Home() {
       
       {/* Footer */}
       <footer className="py-8 text-center">
-        <p className="text-gray-400 dark:text-gray-500 text-sm font-mono">
+        <p className="text-gray-400 text-sm font-mono">
           Built with Next.js & Tailwind CSS
         </p>
       </footer>

@@ -31,20 +31,22 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      // 註解掉 theme 相關的 class，只保留暗色設定
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         scrollVM.isScrolled 
-          ? 'bg-background-primary/90 dark:bg-white/90 backdrop-blur-md shadow-lg' 
-          : 'bg-transparent'
+        ? 'bg-background-primary/90 backdrop-blur-md shadow-lg' 
+        : 'bg-transparent'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
+      <div className="container mx-auto px-6">
+        <div className="flex items-center justify-between h-16">
           <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="text-xl font-bold text-primary-400 dark:text-blue-600"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            // 註解掉 theme 相關的 class，只保留暗色設定
+            className="text-xl font-bold text-blue-400"
           >
-            BC
+            Bowen Chen
           </motion.div>
 
           {/* Desktop Navigation */}
@@ -56,13 +58,14 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 onClick={() => navigationVM.scrollToSection(item.id)}
-                className={`text-sm font-medium transition-colors duration-200 hover:text-primary-400 ${
+                // 註解掉 theme 相關的 class，只保留暗色設定
+                className={`text-sm font-medium transition-colors duration-200 hover:text-blue-400 ${
                   navigationVM.activeSection === item.id
-                    ? 'text-primary-400'
+                    ? 'text-blue-400'
                     : 'text-gray-300'
                 }`}
               >
-                <span className="text-primary-400 text-xs mr-1">0{index + 1}.</span>
+                <span className="text-blue-400 text-xs mr-1">0{index + 1}.</span>
                 {item.label}
               </motion.button>
             ))}
@@ -80,20 +83,20 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
                   rotate: navigationVM.isMenuOpen ? 45 : 0,
                   y: navigationVM.isMenuOpen ? 8 : 0,
                 }}
-                className="w-full h-0.5 bg-primary-400 block"
+                className="w-full h-0.5 bg-blue-400 block"
               />
               <motion.span
                 animate={{
                   opacity: navigationVM.isMenuOpen ? 0 : 1,
                 }}
-                className="w-full h-0.5 bg-primary-400 block"
+                className="w-full h-0.5 bg-blue-400 block"
               />
               <motion.span
                 animate={{
                   rotate: navigationVM.isMenuOpen ? -45 : 0,
                   y: navigationVM.isMenuOpen ? -8 : 0,
                 }}
-                className="w-full h-0.5 bg-primary-400 block"
+                className="w-full h-0.5 bg-blue-400 block"
               />
             </div>
           </motion.button>
@@ -117,9 +120,10 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                   onClick={() => navigationVM.scrollToSection(item.id)}
-                  className="block w-full text-left text-gray-300 hover:text-primary-400 transition-colors"
+                  // 註解掉 theme 相關的 class，只保留暗色設定
+                  className="block w-full text-left text-gray-300 hover:text-blue-400 transition-colors"
                 >
-                  <span className="text-primary-400 text-sm mr-2">0{index + 1}.</span>
+                  <span className="text-blue-400 text-sm mr-2">0{index + 1}.</span>
                   {item.label}
                 </motion.button>
               ))}
@@ -130,7 +134,7 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
 
       {/* Progress Bar */}
       <motion.div
-        className="absolute bottom-0 left-0 h-0.5 bg-primary-400"
+        className="absolute bottom-0 left-0 h-0.5 bg-blue-400"
         style={{ width: `${scrollVM.getScrollProgress()}%` }}
       />
     </motion.nav>

@@ -21,11 +21,16 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-100 mb-4">
-            <span className="text-primary-400 font-mono text-lg mr-2">03.</span>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-3xl md:text-4xl font-bold text-center mb-8"
+          >
+            <span className="text-blue-400 font-mono text-lg mr-2">03.</span>
             Some Things I've Built
-          </h2>
-          <div className="w-20 h-1 bg-primary-400 mx-auto"></div>
+          </motion.h2>
+          <div className="w-20 h-1 bg-blue-400 mx-auto"></div>
         </motion.div>
 
         {/* Featured Projects */}
@@ -48,8 +53,9 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                 }`}
               >
                 <div className="relative group">
-                  <div className="bg-gradient-to-br from-primary-400/20 to-primary-600/20 rounded-lg aspect-video border border-primary-400/30 flex items-center justify-center hover:from-primary-400/30 hover:to-primary-600/30 transition-all duration-300">
-                    <span className="text-primary-400 font-mono text-sm">
+                  {/* 註解掉 theme 相關的 class，只保留暗色設定 */}
+                  <div className="bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-lg aspect-video border border-blue-400/30 flex items-center justify-center hover:from-blue-400/30 hover:to-blue-600/30 transition-all duration-300">
+                    <span className="text-blue-400 font-mono text-sm">
                       Project Preview
                     </span>
                   </div>
@@ -58,7 +64,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                   <motion.div
                     initial={{ opacity: 0 }}
                     whileHover={{ opacity: 1 }}
-                    className="absolute inset-0 bg-primary-400/10 rounded-lg flex items-center justify-center"
+                    className="absolute inset-0 bg-blue-400/10 rounded-lg flex items-center justify-center"
                   >
                     <div className="flex space-x-4">
                       {project.githubUrl && (
@@ -67,7 +73,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                           target="_blank"
                           rel="noopener noreferrer"
                           whileHover={{ scale: 1.1 }}
-                          className="w-10 h-10 bg-background-primary/80 rounded-full flex items-center justify-center text-primary-400 hover:text-white transition-colors"
+                          className="w-10 h-10 bg-background-primary/80 rounded-full flex items-center justify-center text-blue-400 hover:text-white transition-colors"
                         >
                           <span className="sr-only">GitHub</span>
                           <div className="w-5 h-5 bg-current rounded"></div>
@@ -80,7 +86,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                           target="_blank"
                           rel="noopener noreferrer"
                           whileHover={{ scale: 1.1 }}
-                          className="w-10 h-10 bg-background-primary/80 rounded-full flex items-center justify-center text-primary-400 hover:text-white transition-colors"
+                          className="w-10 h-10 bg-background-primary/80 rounded-full flex items-center justify-center text-blue-400 hover:text-white transition-colors"
                         >
                           <span className="sr-only">Live Demo</span>
                           <div className="w-5 h-5 bg-current rounded"></div>
@@ -101,7 +107,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                   transition={{ duration: 0.6, delay: 0.3 }}
                   className="space-y-4"
                 >
-                  <p className="text-primary-400 font-mono text-sm">
+                  <p className="text-blue-400 font-mono text-sm">
                     Featured Project
                   </p>
                   
@@ -143,7 +149,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
           <h3 className="text-2xl font-bold text-gray-100 mb-4">
             Other Noteworthy Projects
           </h3>
-          <p className="text-primary-400 font-mono text-sm">
+          <p className="text-blue-400 font-mono text-sm">
             view the archive
           </p>
         </motion.div>
@@ -156,11 +162,11 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
               whileHover={{ y: -5 }}
-              className="bg-background-secondary/50 rounded-lg p-6 border border-gray-700/50 hover:border-primary-400/30 transition-all duration-300 h-full flex flex-col"
+              className="bg-background-secondary/50 rounded-lg p-6 border border-gray-700/50 hover:border-blue-400/30 transition-all duration-300 h-full flex flex-col"
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-400/20 to-primary-600/20 rounded border border-primary-400/30 flex items-center justify-center">
-                  <div className="w-5 h-5 bg-primary-400/50 rounded"></div>
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded border border-blue-400/30 flex items-center justify-center">
+                  <div className="w-5 h-5 bg-blue-400/50 rounded"></div>
                 </div>
                 
                 <div className="flex space-x-3">
@@ -170,7 +176,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.1 }}
-                      className="text-gray-400 hover:text-primary-400 transition-colors"
+                      className="text-gray-400 hover:text-blue-400 transition-colors"
                     >
                       <span className="sr-only">GitHub</span>
                       <div className="w-5 h-5 bg-current rounded"></div>
@@ -183,7 +189,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.1 }}
-                      className="text-gray-400 hover:text-primary-400 transition-colors"
+                      className="text-gray-400 hover:text-blue-400 transition-colors"
                     >
                       <span className="sr-only">Live Demo</span>
                       <div className="w-5 h-5 bg-current rounded"></div>
