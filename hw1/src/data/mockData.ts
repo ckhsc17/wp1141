@@ -25,21 +25,43 @@ export const skills: Skill[] = [
 export const experiences: Experience[] = [
   {
     id: "1",
-    company: "Klaviyo",
-    position: "Senior Frontend Engineer, Accessibility",
-    period: "2024 — PRESENT",
-    description: "Build and maintain critical components used to construct Klaviyo's frontend, across the whole product. Work closely with cross-functional teams, including developers, designers, and product managers, to implement and advocate for best practices in web accessibility.",
-    technologies: ["JavaScript", "TypeScript", "React", "Storybook"],
-    type: "work"
+    company: "LINE Taiwan",
+    position: "Backend Developer, OAV (Official Account Verification)",
+    period: "July 2025 — PRESENT",
+    description: "Backend developer using Go, applying clean architecture and running scrum development framework. Setting up Terraform to maintain and track infra resources on private cloud in the team. Applying Kubernetes to GitHub workflow.",
+    technologies: ["Go", "Terraform", "Kubernetes", "GitHub Actions", "Clean Architecture", "Scrum"],
+    type: "work",
+    logo: "/images/companies/line.png"
   },
   {
     id: "2",
-    company: "Upstatement",
-    position: "Lead Engineer",
-    period: "2018 — 2024",
-    description: "Build, style, and ship high-quality websites, design systems, mobile apps, and digital experiences for a diverse array of projects for clients including Harvard Business School, Everytown for Gun Safety, Pratt Institute, Koala Health, Vanderbilt University, The 19th News, and more. Provide leadership within engineering department through close collaboration, knowledge shares, and spearheading the adoption of new technologies.",
-    technologies: ["JavaScript", "TypeScript", "React", "Vue.js", "Node.js"],
-    type: "work"
+    company: "Forward Alliance",
+    position: "Fullstack Engineer",
+    period: "September 2025 — PRESENT",
+    description: "Fullstack engineer using Next.js, applying layered architecture. Deal with service and database query optimization.",
+    technologies: ["Next.js", "TypeScript", "Database Optimization", "Layered Architecture"],
+    type: "work",
+    logo: "/images/companies/fa.png"
+  },
+  {
+    id: "3",
+    company: "National Taiwan University",
+    position: "Backend Engineer, New Course Selection System",
+    period: "June 2025 — PRESENT",
+    description: "Backend engineer using TypeScript, applying layered architecture. Deal with Prisma data migration to systematically manage schema changes.",
+    technologies: ["TypeScript", "Prisma", "Database Migration", "Layered Architecture"],
+    type: "work",
+    logo: "/images/companies/ntu.png"
+  },
+  {
+    id: "4",
+    company: "Academia Sinica",
+    position: "AI Engineer, Taide_med (Medical QA system)",
+    period: "March 2025 — June 2025",
+    description: "Applying RAG & RLHF to improve model medical response accuracy, reducing human resource cost.",
+    technologies: ["RAG", "RLHF", "Machine Learning", "Medical AI", "Natural Language Processing"],
+    type: "work",
+    logo: "/images/companies/aca.png"
   }
 ];
 

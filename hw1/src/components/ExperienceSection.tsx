@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { PortfolioViewModel } from '@/viewModels';
 
@@ -21,10 +22,10 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({ portfolioVM }) =>
           className="text-center mb-16"
         >
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-100 mb-4">
-            <span className="text-primary-400 font-mono text-lg mr-2">02.</span>
+            <span className="text-blue-400 font-mono text-lg mr-2">02.</span>
             Where I've Worked
           </h2>
-          <div className="w-20 h-1 bg-primary-400 mx-auto"></div>
+          <div className="w-20 h-1 bg-blue-400 mx-auto"></div>
         </motion.div>
 
         <div className="space-y-8">
@@ -36,15 +37,15 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({ portfolioVM }) =>
               transition={{ duration: 0.6, delay: index * 0.2 }}
               className="relative"
             >
-              <div className="bg-background-secondary/50 rounded-lg p-6 border border-gray-700/50 hover:border-primary-400/30 transition-all duration-300">
+              <div className="bg-background-secondary/50 rounded-lg p-6 border border-gray-700/50 hover:border-blue-400/30 transition-all duration-300">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                   <div className="flex-1">
                     <div className="flex flex-col md:flex-row md:items-center gap-2 mb-3">
                       <h3 className="text-xl font-bold text-gray-100">
                         {experience.position}
                       </h3>
-                      <span className="text-primary-400 font-mono">@</span>
-                      <span className="text-primary-400 font-semibold">
+                      <span className="text-blue-400 font-mono">@</span>
+                      <span className="text-blue-400 font-semibold">
                         {experience.company}
                       </span>
                     </div>
@@ -61,7 +62,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({ portfolioVM }) =>
                       {experience.technologies.map((tech, techIndex) => (
                         <span
                           key={techIndex}
-                          className="px-3 py-1 bg-primary-400/10 text-primary-400 rounded-full text-xs font-mono border border-primary-400/20"
+                          className="px-3 py-1 bg-blue-400/10 text-blue-400 rounded-full text-xs font-mono border border-blue-400/20"
                         >
                           {tech}
                         </span>
@@ -71,11 +72,39 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({ portfolioVM }) =>
 
                   <motion.div
                     whileHover={{ scale: 1.1 }}
-                    className="w-16 h-16 bg-gradient-to-br from-primary-400/20 to-primary-600/20 rounded-lg border border-primary-400/30 flex items-center justify-center flex-shrink-0"
+                    className={`w-16 h-16 flex items-center justify-center flex-shrink-0 overflow-hidden ${
+                      experience.company === 'LINE Taiwan' || experience.company === 'Forward Alliance'
+                        ? 'bg-white' // 方形，無邊框
+                        : 'rounded-full border-2 border-blue-400/30 bg-white' // 圓形，有邊框
+                    }`}
+                    style={
+                      experience.company === 'LINE Taiwan' || experience.company === 'Forward Alliance'
+                        ? { borderRadius: '20px' } // 自定義 20px 圓角
+                        : {}
+                    }
                   >
-                    <span className="text-primary-400 font-bold text-sm">
-                      {experience.company.charAt(0)}
-                    </span>
+                    {experience.logo ? (
+                      <Image
+                        src={experience.logo}
+                        alt={`${experience.company} logo`}
+                        width={64}
+                        height={64}
+                        className={`${
+                          experience.company === 'LINE Taiwan' || experience.company === 'Forward Alliance'
+                            ? 'object-cover w-full h-full' // 方形填滿
+                            : 'object-cover w-full h-full rounded-full' // 圓形填滿
+                        }`}
+                        style={
+                          experience.company === 'LINE Taiwan' || experience.company === 'Forward Alliance'
+                            ? { borderRadius: '20px' } // 圖片也使用 20px 圓角
+                            : {}
+                        }
+                      />
+                    ) : (
+                      <span className="text-blue-400 font-bold text-sm">
+                        {experience.company.charAt(0)}
+                      </span>
+                    )}
                   </motion.div>
                 </div>
 
@@ -85,7 +114,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({ portfolioVM }) =>
                     initial={{ scaleY: 0 }}
                     whileInView={{ scaleY: 1 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
-                    className="absolute left-1/2 transform -translate-x-1/2 bottom-0 w-px h-8 bg-gradient-to-b from-primary-400/50 to-transparent"
+                    className="absolute left-1/2 transform -translate-x-1/2 bottom-0 w-px h-8 bg-gradient-to-b from-blue-400/50 to-transparent"
                   />
                 )}
               </div>

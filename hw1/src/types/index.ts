@@ -21,6 +21,7 @@ export interface Experience {
   description: string;
   technologies: string[];
   type: 'work' | 'education';
+  logo?: string; // 新增 logo 欄位
 }
 
 export interface Project {
