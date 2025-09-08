@@ -1,5 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { 
+  FaChessBoard, 
+  FaBicycle, 
+  FaRoute, 
+  FaGraduationCap, 
+  FaMicrophone, 
+  FaGlobeAsia, 
+  FaMountain, 
+  FaLaptopCode, 
+  FaBullhorn, 
+  FaGuitar, 
+  FaUsers, 
+  FaRocket 
+} from 'react-icons/fa';
 import { PortfolioViewModel } from '@/viewModels';
 
 interface MilestonesSectionProps {
@@ -9,17 +23,29 @@ interface MilestonesSectionProps {
 const MilestonesSection: React.FC<MilestonesSectionProps> = ({ portfolioVM }) => {
   const milestones = portfolioVM.milestones;
 
-  const getMilestoneIcon = (type: string) => {
-    switch (type) {
-      case 'education':
-        return '🎓';
-      case 'achievement':
-        return '🏆';
-      case 'life':
-        return '🌟';
-      default:
-        return '📍';
+  const getMilestoneIcon = (iconName?: string) => {
+    const iconMap: Record<string, React.ComponentType> = {
+      FaChessBoard,
+      FaBicycle,
+      FaRoute,
+      FaGraduationCap,
+      FaMicrophone,
+      FaGlobeAsia,
+      FaMountain,
+      FaLaptopCode,
+      FaBullhorn,
+      FaGuitar,
+      FaUsers,
+      FaRocket
+    };
+
+    if (iconName && iconMap[iconName]) {
+      const IconComponent = iconMap[iconName];
+      return <IconComponent />;
     }
+
+    // 後備方案：根據類型返回預設圖示
+    return <FaRocket />; // 預設圖示
   };
 
   const getMilestoneColor = (type: string) => {
@@ -68,8 +94,8 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ portfolioVM }) =>
                 className="relative flex items-start space-x-6"
               >
                 {/* Timeline dot */}
-                <div className={`flex-shrink-0 w-16 h-16 rounded-full border-2 ${getMilestoneColor(milestone.type)} flex items-center justify-center text-2xl backdrop-blur-sm`}>
-                  {getMilestoneIcon(milestone.type)}
+                <div className={`flex-shrink-0 w-16 h-16 rounded-full border-2 ${getMilestoneColor(milestone.type)} flex items-center justify-center text-xl backdrop-blur-sm`}>
+                  {getMilestoneIcon(milestone.icon)}
                 </div>
 
                 {/* Content */}

@@ -42,6 +42,7 @@ export interface Milestone {
   description: string;
   date: string;
   type: 'achievement' | 'life' | 'career' | 'education';
+  icon?: string; // 新增 icon 欄位
 }
 
 export interface SocialLink {

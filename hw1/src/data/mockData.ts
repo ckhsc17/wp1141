@@ -98,24 +98,99 @@ export const projects: Project[] = [
 export const milestones: Milestone[] = [
   {
     id: "1",
-    title: "Graduated from Northeastern University",
-    description: "Received Bachelor's degree in Computer Science with a focus on Human-Computer Interaction",
-    date: "2018",
-    type: "education"
+    title: "Became a 5-dan Go player",
+    description: "Achieved 5-dan rank in Go (Weiqi), demonstrating strategic thinking and pattern recognition skills",
+    date: "2015",
+    type: "achievement",
+    icon: "FaChessBoard"
   },
   {
-    id: "2",
-    title: "First Open Source Contribution",
-    description: "Made my first contribution to a major open source project, leading to regular contributions",
-    date: "2019",
-    type: "achievement"
+    id: "2", 
+    title: "Completed first round-island cycling trip",
+    description: "Successfully completed my first cycling journey around Taiwan, covering over 1000km",
+    date: "2016",
+    type: "life",
+    icon: "FaBicycle"
   },
   {
     id: "3",
-    title: "Korok Seeds Discovery",
-    description: "In my spare time, I'm usually climbing, reading, hanging out with my wife and two cats, or running around Hyrule searching for Korok seeds",
-    date: "Ongoing",
-    type: "life"
+    title: "Completed second round-island cycling trip", 
+    description: "Accomplished my second round-island cycling adventure, further exploring Taiwan's beauty",
+    date: "2019",
+    type: "life",
+    icon: "FaRoute"
+  },
+  {
+    id: "4",
+    title: "Joined the Humanities and Social Science Program",
+    description: "Embarked on interdisciplinary studies combining technology with humanities perspectives",
+    date: "2020", 
+    type: "education",
+    icon: "FaGraduationCap"
+  },
+  {
+    id: "5",
+    title: "Became the president of CK English Debate Club",
+    description: "Led the English Debate Club, developing leadership and public speaking skills",
+    date: "2021",
+    type: "career",
+    icon: "FaMicrophone"
+  },
+  {
+    id: "6",
+    title: "World Volunteer Club's visit to Nepal",
+    description: "Participated in international volunteer work in Nepal, contributing to community development",
+    date: "2023",
+    type: "life", 
+    icon: "FaGlobeAsia"
+  },
+  {
+    id: "7",
+    title: "International workcamp's visit to Iceland",
+    description: "Joined international workcamp program in Iceland, experiencing cross-cultural collaboration",
+    date: "2023",
+    type: "life",
+    icon: "FaMountain"
+  },
+  {
+    id: "8",
+    title: "Association Information Department",
+    description: "Served in the Information Department, managing digital communications and tech infrastructure",
+    date: "2024",
+    type: "career",
+    icon: "FaLaptopCode"
+  },
+  {
+    id: "9", 
+    title: "Committee member of NTUPA (Public Address)",
+    description: "Contributed as committee member for NTU Public Address, organizing campus events and communications",
+    date: "2024",
+    type: "career",
+    icon: "FaBullhorn"
+  },
+  {
+    id: "10",
+    title: "President of NTU Guitar Club Education Department",
+    description: "Led the Education Department of NTU Guitar Club, organizing workshops and teaching programs",
+    date: "2024", 
+    type: "career",
+    icon: "FaGuitar"
+  },
+  {
+    id: "11",
+    title: "President of NTU Information Management Student Association",
+    description: "Served as president of the IM Student Association, representing student interests and organizing activities",
+    date: "2024",
+    type: "career",
+    icon: "FaUsers"
+  },
+  {
+    id: "12",
+    title: "Market Department of SITCON",
+    description: "Joined SITCON's Market Department, promoting tech conferences and community engagement",
+    date: "2025",
+    type: "career", 
+    icon: "FaRocket"
   }
 ];
 
