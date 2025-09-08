@@ -32,6 +32,7 @@ export interface Project {
   liveUrl?: string;
   githubUrl?: string;
   imageUrl?: string;
+  aspectRatio?: 'wide' | 'tall' | 'square'; // 預設長寬比類型
   featured: boolean;
 }
 

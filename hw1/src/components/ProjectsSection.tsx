@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { PortfolioViewModel } from '@/viewModels';
 
@@ -11,6 +12,20 @@ interface ProjectsSectionProps {
 const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
   const projects = portfolioVM.projects;
   const featuredProjects = portfolioVM.featuredProjects;
+  const [imageAspectRatios, setImageAspectRatios] = useState<Record<string, number>>({});
+  
+  // 獲取專案的長寬比類型
+  const getAspectRatioType = (project: any): 'wide' | 'tall' | 'square' => {
+    // 優先使用動態計算的長寬比
+    if (imageAspectRatios[project.id]) {
+      const ratio = imageAspectRatios[project.id];
+      if (ratio > 1.5) return 'wide';
+      if (ratio < 0.8) return 'tall';
+      return 'square';
+    }
+    // 後備使用預設的 aspectRatio
+    return project.aspectRatio || 'square';
+  };
 
   return (
     <section id="projects" className="py-20 px-4 sm:px-6 lg:px-8">
@@ -48,16 +63,63 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
               {/* Project Image */}
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className={`lg:col-span-7 ${
-                  index % 2 === 1 ? 'lg:col-start-6' : ''
+                className={`${
+                  // 根據長寬比調整網格大小
+                  (() => {
+                    const aspectType = getAspectRatioType(project);
+                    switch (aspectType) {
+                      case 'wide': return 'lg:col-span-8';
+                      case 'tall': return 'lg:col-span-5'; // 從 6 減少到 5
+                      default: return 'lg:col-span-7';
+                    }
+                  })()
+                } ${
+                  index % 2 === 1 
+                    ? (() => {
+                        const aspectType = getAspectRatioType(project);
+                        switch (aspectType) {
+                          case 'wide': return 'lg:col-start-5';
+                          case 'tall': return 'lg:col-start-8'; // 從第8列開始 (12-5+1=8)
+                          default: return 'lg:col-start-6';
+                        }
+                      })()
+                    : ''
                 }`}
               >
                 <div className="relative group">
-                  {/* 註解掉 theme 相關的 class，只保留暗色設定 */}
-                  <div className="bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-lg aspect-video border border-blue-400/30 flex items-center justify-center hover:from-blue-400/30 hover:to-blue-600/30 transition-all duration-300">
-                    <span className="text-blue-400 font-mono text-sm">
-                      Project Preview
-                    </span>
+                  {/* Project Image */}
+                  <div className={`relative rounded-lg overflow-hidden border border-blue-400/30 ${
+                    (() => {
+                      const aspectType = getAspectRatioType(project);
+                      switch (aspectType) {
+                        case 'wide': return 'aspect-video'; // 寬圖：16:9
+                        case 'tall': return 'aspect-[2/3]'; // 直圖：2:3 (比 3:4 更窄一點)
+                        default: return 'aspect-square'; // 方圖：1:1
+                      }
+                    })()
+                  }`}>
+                    {project.imageUrl ? (
+                      <Image
+                        src={project.imageUrl}
+                        alt={project.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        onLoad={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          const aspectRatio = img.naturalWidth / img.naturalHeight;
+                          setImageAspectRatios((prev: Record<string, number>) => ({
+                            ...prev,
+                            [project.id]: aspectRatio
+                          }));
+                        }}
+                      />
+                    ) : (
+                      <div className="bg-gradient-to-br from-blue-400/20 to-blue-600/20 w-full h-full flex items-center justify-center">
+                        <span className="text-blue-400 font-mono text-sm">
+                          Project Preview
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Overlay */}
@@ -98,7 +160,17 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
               </motion.div>
 
               {/* Project Content */}
-              <div className={`lg:col-span-5 ${
+              <div className={`${
+                // 根據圖片長寬比調整內容區域大小
+                (() => {
+                  const aspectType = getAspectRatioType(project);
+                  switch (aspectType) {
+                    case 'wide': return 'lg:col-span-4'; // 寬圖時內容區域較小
+                    case 'tall': return 'lg:col-span-7'; // 直圖時內容區域較大 (12-5=7)
+                    default: return 'lg:col-span-5'; // 方圖標準大小
+                  }
+                })()
+              } ${
                 index % 2 === 1 ? 'lg:col-start-1 lg:row-start-1' : ''
               }`}>
                 <motion.div

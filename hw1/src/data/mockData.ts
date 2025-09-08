@@ -74,20 +74,23 @@ export const experiences: Experience[] = [
 export const projects: Project[] = [
   {
     id: "1",
-    title: "Build a Spotify Connected App",
-    description: "A web app for visualizing personalized Spotify data. View your top artists, top tracks, recently played tracks, and detailed audio information about each track. Create and save new playlists of recommended tracks based on your existing playlists and more.",
-    technologies: ["React", "Styled Components", "Express", "Spotify API", "Heroku"],
-    liveUrl: "https://spotify-profile.herokuapp.com/",
-    githubUrl: "https://github.com/bchiang7/spotify-profile",
+    title: "DOGTOR APP",
+    description: "A comprehensive Flutter education app for medical learning, launching soon on App Store TestFlight. Full-stack application using Flutter as frontend and FastAPI as backend, deployed on GCP with Cloud Run & Cloud SQL. Features AI-powered question generation using prompt engineering and model cross-validation, personalized recommendations with RAG customization, and TextCNN for topic classification to optimize token costs.",
+    technologies: ["Flutter", "FastAPI", "GCP", "Cloud Run", "Cloud SQL", "AI", "RAG", "TextCNN", "Prompt Engineering"],
+    liveUrl: "https://testflight.apple.com/",
+    githubUrl: "",
+    imageUrl: "/images/projects/DOGTOR.png",
     featured: true
   },
   {
     id: "2",
-    title: "Halcyon Theme",
-    description: "A minimal, dark blue theme for VS Code, Sublime Text, Atom, iTerm, and more. Available on Visual Studio Marketplace, Package Control, Atom Package Manager, and npm.",
-    technologies: ["VS Code", "Sublime Text", "Atom", "iTerm2", "Hyper"],
-    liveUrl: "https://halcyon-theme.netlify.app/",
-    githubUrl: "https://github.com/bchiang7/halcyon-theme",
+    title: "TicketEase",
+    description: "A full-stack ticketing system with advanced seat selection and concurrency control. Built with Next.js frontend, FastAPI backend, and Supabase cloud database. Features include user authentication, CI/CD deployment on GCP using Dockerfile and cloudbuild.yaml, optimized SQL schema with indexing for enhanced performance, and sophisticated seat selection concurrency control for improved user experience.",
+    technologies: ["Next.js", "FastAPI", "Supabase", "GCP", "CI/CD", "Docker", "SQL", "Authentication"],
+    liveUrl: "https://ticketease-demo.com/",
+    githubUrl: "https://github.com/username/ticketease",
+    imageUrl: "/images/projects/TicktEase.png",
+    aspectRatio: "tall",
     featured: true
   }
 ];
