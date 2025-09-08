@@ -10,7 +10,7 @@ export interface PersonalInfo {
 export interface Skill {
   name: string;
   level: number;
-  category: 'frontend' | 'backend' | 'tools' | 'languages' | 'database' | 'ai';
+  category: 'frontend' | 'backend' | 'tools' | 'languages' | 'database' | 'ai' | 'devops';
 }
 
 export interface Experience {

@@ -24,7 +24,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
   }, [portfolioVM]);
 
   return (
-    <section id="about" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-20">
+    <section id="about" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-20 pt-20">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left side - Main content */}
@@ -32,7 +32,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="space-y-6"
+            className="space-y-6 lg:pr-8"
           >
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -92,12 +92,12 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
             >
               <h3 className="text-lg font-semibold text-gray-300">Core Technologies</h3>
               <div className="flex flex-wrap gap-3">
-                {portfolioVM.getSkillsByCategory('frontend').slice(0, 8).map((skill, index) => (
+                {portfolioVM.skills.map((skill, index) => (
                   <motion.span
                     key={skill.name}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.7 + index * 0.1 }}
+                    transition={{ delay: 0.7 + index * 0.05 }}
                     // 註解掉 theme 相關的 class，只保留暗色設定
                     className="px-3 py-1 bg-blue-400/10 text-blue-400 rounded-full text-sm font-mono border border-blue-400/20"
                   >

@@ -104,6 +104,7 @@ export class PortfolioViewModel {
 export class NavigationViewModel {
   private _activeSection: string = 'about';
   private _isMenuOpen: boolean = false;
+  private _listeners: Set<() => void> = new Set();
 
   get activeSection(): string {
     return this._activeSection;
@@ -113,16 +114,38 @@ export class NavigationViewModel {
     return this._isMenuOpen;
   }
 
+  // 添加狀態變更監聽器
+  addListener(listener: () => void): void {
+    this._listeners.add(listener);
+  }
+
+  // 移除狀態變更監聽器
+  removeListener(listener: () => void): void {
+    this._listeners.delete(listener);
+  }
+
+  // 通知所有監聽器狀態已變更
+  private notifyListeners(): void {
+    this._listeners.forEach(listener => listener());
+  }
+
   setActiveSection(section: string): void {
-    this._activeSection = section;
+    if (this._activeSection !== section) {
+      this._activeSection = section;
+      this.notifyListeners();
+    }
   }
 
   toggleMenu(): void {
     this._isMenuOpen = !this._isMenuOpen;
+    this.notifyListeners();
   }
 
   closeMenu(): void {
-    this._isMenuOpen = false;
+    if (this._isMenuOpen) {
+      this._isMenuOpen = false;
+      this.notifyListeners();
+    }
   }
 
   scrollToSection(sectionId: string): void {

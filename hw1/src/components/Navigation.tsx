@@ -11,10 +11,24 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
   const [mounted, setMounted] = useState(false);
+  const [activeSection, setActiveSection] = useState(navigationVM.activeSection);
+  const [isMenuOpen, setIsMenuOpen] = useState(navigationVM.isMenuOpen);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    // 監聽 navigationVM 的狀態變更
+    const handleStateChange = () => {
+      setActiveSection(navigationVM.activeSection);
+      setIsMenuOpen(navigationVM.isMenuOpen);
+    };
+
+    navigationVM.addListener(handleStateChange);
+
+    return () => {
+      navigationVM.removeListener(handleStateChange);
+    };
+  }, [navigationVM]);
 
   if (!mounted) return null;
 
@@ -59,7 +73,7 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
                 onClick={() => navigationVM.scrollToSection(item.id)}
                 // 註解掉 theme 相關的 class，只保留暗色設定
                 className={`text-sm font-medium transition-colors duration-200 hover:text-blue-400 ${
-                  navigationVM.activeSection === item.id
+                  activeSection === item.id
                     ? 'text-blue-400'
                     : 'text-gray-300'
                 }`}
@@ -79,21 +93,21 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
             <div className="w-6 h-6 flex flex-col justify-center space-y-1">
               <motion.span
                 animate={{
-                  rotate: navigationVM.isMenuOpen ? 45 : 0,
-                  y: navigationVM.isMenuOpen ? 8 : 0,
+                  rotate: isMenuOpen ? 45 : 0,
+                  y: isMenuOpen ? 8 : 0,
                 }}
                 className="w-full h-0.5 bg-blue-400 block"
               />
               <motion.span
                 animate={{
-                  opacity: navigationVM.isMenuOpen ? 0 : 1,
+                  opacity: isMenuOpen ? 0 : 1,
                 }}
                 className="w-full h-0.5 bg-blue-400 block"
               />
               <motion.span
                 animate={{
-                  rotate: navigationVM.isMenuOpen ? -45 : 0,
-                  y: navigationVM.isMenuOpen ? -8 : 0,
+                  rotate: isMenuOpen ? -45 : 0,
+                  y: isMenuOpen ? -8 : 0,
                 }}
                 className="w-full h-0.5 bg-blue-400 block"
               />
@@ -104,7 +118,7 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
 
       {/* Mobile Menu */}
       <AnimatePresence>
-        {navigationVM.isMenuOpen && (
+        {isMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
