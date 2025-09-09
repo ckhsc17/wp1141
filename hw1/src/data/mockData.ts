@@ -75,10 +75,10 @@ export const projects: Project[] = [
   {
     id: "1",
     title: "DOGTOR APP",
-    description: "A comprehensive Flutter education app for medical learning, launching soon on App Store TestFlight. Full-stack application using Flutter as frontend and FastAPI as backend, deployed on GCP with Cloud Run & Cloud SQL. Features AI-powered question generation using prompt engineering and model cross-validation, personalized recommendations with RAG customization, and TextCNN for topic classification to optimize token costs.",
+    description: "A comprehensive, customized Flutter education app for proactive learning, launching soon on App Store. Full-stack application using Flutter as frontend and FastAPI as backend, deployed on GCP with Cloud Run & Cloud SQL. Features AI-powered question generation using prompt engineering and model cross-validation, personalized recommendations with RAG customization, and TextCNN for topic classification to optimize token costs.",
     technologies: ["Flutter", "FastAPI", "GCP", "Cloud Run", "Cloud SQL", "AI", "RAG", "TextCNN", "Prompt Engineering"],
-    liveUrl: "https://testflight.apple.com/",
-    githubUrl: "",
+    liveUrl: "https://testflight.apple.com/join/4DPcds6h",
+    githubUrl: "https://github.com/DOGTOR-LEARNING/dogtor_app",
     imageUrl: "/images/projects/DOGTOR.png",
     featured: true
   },
@@ -87,8 +87,8 @@ export const projects: Project[] = [
     title: "TicketEase",
     description: "A full-stack ticketing system with advanced seat selection and concurrency control. Built with Next.js frontend, FastAPI backend, and Supabase cloud database. Features include user authentication, CI/CD deployment on GCP using Dockerfile and cloudbuild.yaml, optimized SQL schema with indexing for enhanced performance, and sophisticated seat selection concurrency control for improved user experience.",
     technologies: ["Next.js", "FastAPI", "Supabase", "GCP", "CI/CD", "Docker", "SQL", "Authentication"],
-    liveUrl: "https://ticketease-demo.com/",
-    githubUrl: "https://github.com/username/ticketease",
+    liveUrl: "https://www.youtube.com/watch?v=M3Gjyj0CihU",
+    githubUrl: "https://github.com/Ocean1029/NTU-Database-Management",
     imageUrl: "/images/projects/TicktEase.png",
     aspectRatio: "tall",
     featured: true
