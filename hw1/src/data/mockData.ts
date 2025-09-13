@@ -85,7 +85,7 @@ export const projects: Project[] = [
   },
   {
     id: "2",
-    title: "TicketEase",
+    title: "Open Ticket",
     description: "A full-stack ticketing system with advanced seat selection and concurrency control. Built with Next.js frontend, FastAPI backend, and Supabase cloud database. Features include user authentication, CI/CD deployment on GCP using Dockerfile and cloudbuild.yaml, optimized SQL schema with indexing for enhanced performance, and sophisticated seat selection concurrency control for improved user experience.",
     technologies: ["Next.js", "FastAPI", "Supabase", "GCP", "CI/CD", "Docker", "SQL", "Authentication"],
     liveUrl: "https://www.youtube.com/watch?v=M3Gjyj0CihU",

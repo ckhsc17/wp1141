@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { FaGithub, FaYoutube, FaApple } from 'react-icons/fa';
 import { PortfolioViewModel } from '@/viewModels';
 
 interface ProjectsSectionProps {
@@ -13,6 +14,19 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
   const projects = portfolioVM.projects;
   const featuredProjects = portfolioVM.featuredProjects;
   const [imageAspectRatios, setImageAspectRatios] = useState<Record<string, number>>({});
+  
+  // 根據 URL 獲取對應的圖示
+  const getUrlIcon = (url: string) => {
+    if (url.includes('github.com')) {
+      return <FaGithub className="w-5 h-5" />;
+    } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return <FaYoutube className="w-5 h-5" />;
+    } else if (url.includes('testflight.apple.com')) {
+      return <FaApple className="w-5 h-5" />;
+    }
+    // 預設圖示
+    return <div className="w-5 h-5 bg-current rounded"></div>;
+  };
   
   // 獲取專案的長寬比類型
   const getAspectRatioType = (project: any): 'wide' | 'tall' | 'square' => {
@@ -138,7 +152,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                           className="w-10 h-10 bg-background-primary/80 rounded-full flex items-center justify-center text-blue-400 hover:text-white transition-colors"
                         >
                           <span className="sr-only">GitHub</span>
-                          <div className="w-5 h-5 bg-current rounded"></div>
+                          {getUrlIcon(project.githubUrl)}
                         </motion.a>
                       )}
                       
@@ -151,7 +165,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                           className="w-10 h-10 bg-background-primary/80 rounded-full flex items-center justify-center text-blue-400 hover:text-white transition-colors"
                         >
                           <span className="sr-only">Live Demo</span>
-                          <div className="w-5 h-5 bg-current rounded"></div>
+                          {getUrlIcon(project.liveUrl)}
                         </motion.a>
                       )}
                     </div>
@@ -236,7 +250,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                       className="text-gray-400 hover:text-blue-400 transition-colors"
                     >
                       <span className="sr-only">GitHub</span>
-                      <div className="w-5 h-5 bg-current rounded"></div>
+                      {getUrlIcon(project.githubUrl)}
                     </motion.a>
                   )}
                   
@@ -249,7 +263,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
                       className="text-gray-400 hover:text-blue-400 transition-colors"
                     >
                       <span className="sr-only">Live Demo</span>
-                      <div className="w-5 h-5 bg-current rounded"></div>
+                      {getUrlIcon(project.liveUrl)}
                     </motion.a>
                   )}
                 </div>

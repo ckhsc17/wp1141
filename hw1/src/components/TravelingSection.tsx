@@ -140,32 +140,6 @@ const TravelingSection: React.FC = () => {
             <span>Click on the red pins to explore my travel destinations • Zoom and pan to explore</span>
           </div>
         </motion.div>
-
-        {/* Travel Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
-        >
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-6 text-white text-center">
-            <div className="text-3xl font-bold mb-2">{travelDestinations.length}</div>
-            <div className="text-blue-100">Destinations Visited</div>
-          </div>
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-6 text-white text-center">
-            <div className="text-3xl font-bold mb-2">
-              {travelDestinations.reduce((total: number, dest: TravelDestination) => total + dest.photos.length, 0)}
-            </div>
-            <div className="text-green-100">Photos Captured</div>
-          </div>
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white text-center">
-            <div className="text-3xl font-bold mb-2">
-              {new Set(travelDestinations.map((dest: TravelDestination) => dest.visitDate.split('-')[0])).size}
-            </div>
-            <div className="text-purple-100">Years of Travel</div>
-          </div>
-        </motion.div>
       </div>
 
       {/* Destination Details Modal */}

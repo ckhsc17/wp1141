@@ -15,6 +15,25 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
+  // 函數來處理粗體文字
+  const renderTextWithBold = (text: string) => {
+    const keywords = ['LINE', 'NTU course selection system', 'Forward Alliance'];
+    let result = text;
+    
+    keywords.forEach(keyword => {
+      const regex = new RegExp(`(${keyword})`, 'gi');
+      result = result.replace(regex, `**$1**`);
+    });
+
+    return result.split(/(\*\*.*?\*\*)/).map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        const boldText = part.slice(2, -2);
+        return <strong key={index} className="font-semibold text-gray-300">{boldText}</strong>;
+      }
+      return part;
+    });
+  };
+
   useEffect(() => {
     // 載入 description 內容
     portfolioVM.loadDescription().then(content => {
@@ -26,13 +45,13 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
   return (
     <section id="about" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-20 pt-20">
       <div className="max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-5 gap-8 items-center">
           {/* Left side - Main content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="space-y-6 lg:pr-8"
+            className="space-y-6 lg:col-span-3"
           >
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -64,7 +83,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-base text-gray-400 max-w-lg leading-relaxed min-h-[120px] flex flex-col justify-start"
+              className="text-base text-gray-400 max-w-2xl leading-relaxed min-h-[120px] flex flex-col justify-start"
             >
               {isLoading ? (
                 // 載入中的骨架屏，避免跑版
@@ -77,7 +96,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               ) : (
                 description.split('\n\n').map((paragraph, index) => (
                   <span key={index} className="block mb-4">
-                    {paragraph}
+                    {renderTextWithBold(paragraph)}
                   </span>
                 ))
               )}
@@ -113,7 +132,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:flex flex-col justify-center items-center hidden"
+            className="lg:flex flex-col justify-center items-center hidden lg:col-span-2"
           >
             <div className="relative">
               <motion.div
