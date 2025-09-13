@@ -14,10 +14,11 @@ A modern, responsive personal portfolio website built with Next.js, TypeScript, 
 ## Sections
 
 - **About**: Introduction with personal information and core technologies
-- **Skills**: Technical skills organized by category
-- **Experience**: Professional work experience and education
-- **Projects**: Featured and other noteworthy projects
-- **Milestones**: Personal achievements and life experiences
+- **Skills**: Technical skills organized by category with proficiency levels
+- **Experience**: Professional work experience and education timeline
+- **Projects**: Featured and other noteworthy projects with live demos
+- **Milestones**: Personal achievements and life experiences with timeline
+- **Traveling**: Interactive world map showcasing travel destinations and photo galleries
 - **Connect**: Contact information and social links
 
 ## Tech Stack
@@ -26,7 +27,9 @@ A modern, responsive personal portfolio website built with Next.js, TypeScript, 
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
-- **UI Components**: Material UI (optional)
+- **Icons**: React Icons
+- **Maps**: React Simple Maps (for travel section)
+- **Image Gallery**: React Image Gallery (for travel photos)
 - **Architecture**: MVVM (Model-View-ViewModel)
 
 ## Getting Started
@@ -70,18 +73,30 @@ src/
 ├── app/                 # Next.js App Router pages
 │   ├── globals.css     # Global styles
 │   ├── layout.tsx      # Root layout
-│   └── page.tsx        # Home page
+│   ├── page.tsx        # Home page
+│   └── api/            # API routes
+│       └── content/    # Content API endpoints
 ├── components/          # React components (Views)
-│   ├── Navigation.tsx
-│   ├── AboutSection.tsx
-│   ├── ExperienceSection.tsx
-│   └── ProjectsSection.tsx
-├── viewModels/         # Business logic layer
-│   └── index.ts
-├── data/               # Mock data and models
-│   └── mockData.ts
+│   ├── Navigation.tsx           # Main navigation with smooth scrolling
+│   ├── AboutSection.tsx         # About section with dynamic description
+│   ├── SkillsSection.tsx        # Skills with category filtering
+│   ├── ExperienceSection.tsx    # Work experience timeline
+│   ├── ProjectsSection.tsx      # Featured projects with icons
+│   ├── MilestonesSection.tsx    # Personal milestones timeline
+│   ├── TravelingSection.tsx     # Interactive world map with travel photos
+│   ├── ConnectSection.tsx       # Contact information
+│   ├── SocialIcon.tsx           # Social media icons
+│   ├── SocialLinks.tsx          # Social links component
+│   └── ThemeToggle.tsx          # Theme switching (if implemented)
+├── contexts/           # React context providers
+│   └── ThemeContext.tsx        # Theme management
+├── viewModels/         # Business logic layer (MVVM)
+│   └── index.ts        # Portfolio ViewModel with data management
+├── data/               # Mock data and content
+│   ├── mockData.ts     # All application data
+│   └── description.txt # About section description
 └── types/              # TypeScript type definitions
-    └── index.ts
+    └── index.ts        # All interface definitions
 ```
 
 ## MVVM Architecture
@@ -119,13 +134,8 @@ Each section can be customized by modifying the corresponding component in `src/
 
 ## Deployment
 
-The site can be deployed to any platform that supports Next.js:
-
-- Vercel (recommended)
-- Netlify
-- AWS Amplify
-- Railway
-- DigitalOcean App Platform
+### Vercel 
+This project is optimized for deployment on Vercel, which automates the CI/CD flow with small effort
 
 ## License
 
