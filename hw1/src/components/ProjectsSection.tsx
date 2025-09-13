@@ -211,21 +211,6 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
           ))}
         </div>
 
-        {/* Other Projects Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
-          <h3 className="text-2xl font-bold text-gray-100 mb-4">
-            Other Noteworthy Projects
-          </h3>
-          <p className="text-blue-400 font-mono text-sm">
-            view the archive
-          </p>
-        </motion.div>
-
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.filter(p => !p.featured).map((project, index) => (
             <motion.div
