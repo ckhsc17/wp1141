@@ -6,12 +6,13 @@ import AboutSection from '@/components/AboutSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import MilestonesSection from '@/components/MilestonesSection';
+import TravelingSection from '@/components/TravelingSection';
 import ConnectSection from '@/components/ConnectSection';
 // import ThemeToggle from '@/components/ThemeToggle'; // 註解掉 theme toggle
 import { PortfolioViewModel, NavigationViewModel, ScrollViewModel } from '@/viewModels';
 
 export default function Home() {
-  const [portfolioVM] = useState(() => new PortfolioViewModel());
+  const [portfolioVM] = useState(() => PortfolioViewModel.getInstance());
   const [navigationVM] = useState(() => new NavigationViewModel());
   const [scrollVM] = useState(() => new ScrollViewModel());
 
@@ -20,7 +21,7 @@ export default function Home() {
       scrollVM.updateScroll(window.scrollY);
       
       // Update active section based on scroll position
-      const sections = ['about', 'experience', 'projects', 'milestones', 'connect'];
+      const sections = ['about', 'experience', 'projects', 'milestones', 'traveling', 'connect'];
       const scrollPosition = window.scrollY + 200;
       
       for (const section of sections) {
@@ -53,15 +54,9 @@ export default function Home() {
         <ExperienceSection portfolioVM={portfolioVM} />
         <ProjectsSection portfolioVM={portfolioVM} />
         <MilestonesSection portfolioVM={portfolioVM} />
+        <TravelingSection />
         <ConnectSection />
       </main>
-      
-      {/* Footer */}
-      <footer className="py-8 text-center">
-        <p className="text-gray-400 text-sm font-mono">
-          Built with Next.js & Tailwind CSS
-        </p>
-      </footer>
     </div>
   );
 }

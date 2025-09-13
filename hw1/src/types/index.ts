@@ -50,3 +50,25 @@ export interface SocialLink {
   url: string;
   icon: string;
 }
+
+export interface TravelDestination {
+  id: string;
+  country: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  visitDate: string;
+  duration: string;
+  highlights: string[];
+  description: string;
+  photos: TravelPhoto[];
+}
+
+export interface TravelPhoto {
+  id: string;
+  url: string;
+  thumbnail: string;
+  caption: string;
+  location?: string;
+}

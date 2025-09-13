@@ -1,23 +1,33 @@
-import { PersonalInfo, Skill, Experience, Project, Milestone, SocialLink } from '@/types';
-import { personalInfo, skills, experiences, projects, milestones, socialLinks } from '@/data/mockData';
+import { PersonalInfo, Skill, Experience, Project, Milestone, SocialLink, TravelDestination } from '@/types';
+import { personalInfo, skills, experiences, projects, milestones, socialLinks, travelDestinations } from '@/data/mockData';
 
 // Portfolio ViewModel - 管理所有組合數據和業務邏輯
 export class PortfolioViewModel {
+  private static instance: PortfolioViewModel;
   private _personalInfo: PersonalInfo;
   private _skills: Skill[];
   private _experiences: Experience[];
   private _projects: Project[];
   private _milestones: Milestone[];
   private _socialLinks: SocialLink[];
+  private _travelDestinations: TravelDestination[];
   private _loadedDescription: string | null = null;
 
-  constructor() {
+  private constructor() {
     this._personalInfo = personalInfo;
     this._skills = skills;
     this._experiences = experiences;
     this._projects = projects;
     this._milestones = milestones;
     this._socialLinks = socialLinks;
+    this._travelDestinations = travelDestinations;
+  }
+
+  public static getInstance(): PortfolioViewModel {
+    if (!PortfolioViewModel.instance) {
+      PortfolioViewModel.instance = new PortfolioViewModel();
+    }
+    return PortfolioViewModel.instance;
   }
 
   // 載入 description 檔案內容
@@ -73,6 +83,10 @@ export class PortfolioViewModel {
     return this._socialLinks;
   }
 
+  get travelDestinations(): TravelDestination[] {
+    return this._travelDestinations;
+  }
+
   // Business logic methods
   getSkillsByCategory(category: Skill['category']): Skill[] {
     return this._skills.filter(skill => skill.category === category);
@@ -97,6 +111,10 @@ export class PortfolioViewModel {
       project.description.toLowerCase().includes(lowercaseQuery) ||
       project.technologies.some(tech => tech.toLowerCase().includes(lowercaseQuery))
     );
+  }
+
+  getTravelDestinationById(id: string): TravelDestination | undefined {
+    return this._travelDestinations.find(destination => destination.id === id);
   }
 }
 

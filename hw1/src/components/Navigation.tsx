@@ -37,6 +37,7 @@ const Navigation: React.FC<NavigationProps> = ({ navigationVM, scrollVM }) => {
     { id: 'experience', label: 'Experience' },
     { id: 'projects', label: 'Projects' },
     { id: 'milestones', label: 'Milestones' },
+    { id: 'traveling', label: 'Traveling' },
     { id: 'connect', label: 'Connect' },
   ];
 

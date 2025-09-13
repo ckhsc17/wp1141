@@ -1,4 +1,4 @@
-import { PersonalInfo, Skill, Experience, Project, Milestone, SocialLink } from '@/types';
+import { PersonalInfo, Skill, Experience, Project, Milestone, SocialLink, TravelDestination } from '@/types';
 
 // Mock data based on the provided image
 export const personalInfo: PersonalInfo = {
@@ -23,7 +23,8 @@ export const skills: Skill[] = [
   { name: "AWS", level: 85, category: "tools" },
   { name: "GCP", level: 80, category: "tools" },
   { name: "PostgreSQL", level: 85, category: "database" },
-  { name: "Prisma", level: 90, category: "tools" },
+  { name: "Redis", level: 80, category: "database" },
+  { name: "Prisma", level: 90, category: "database" },
   { name: "Atlas", level: 75, category: "tools" },
   { name: "Machine Learning", level: 80, category: "ai" }
 ];
@@ -214,5 +215,122 @@ export const socialLinks: SocialLink[] = [
     platform: "Facebook",
     url: "https://www.facebook.com/chen.po.hua.384674/",
     icon: "facebook"
+  }
+];
+
+export const travelDestinations: TravelDestination[] = [
+  {
+    id: "iceland",
+    country: "Iceland",
+    coordinates: { lng: -19.0208, lat: 64.9631 },
+    visitDate: "2023",
+    duration: "2 weeks",
+    highlights: [
+      "International workcamp experience",
+      "Northern Lights observation",
+      "Blue Lagoon geothermal spa",
+      "Golden Circle tour",
+      "Cultural exchange with locals"
+    ],
+    description: "An unforgettable international workcamp experience in the land of fire and ice. Participated in community projects while exploring Iceland's stunning natural wonders including waterfalls, geysers, and volcanic landscapes.",
+    photos: [
+      {
+        id: "iceland-1",
+        url: "/images/travel/iceland/northern-lights.jpg",
+        thumbnail: "/images/travel/iceland/northern-lights-thumb.jpg",
+        caption: "Magical Northern Lights dancing in the Arctic sky",
+        location: "Reykjavik"
+      },
+      {
+        id: "iceland-2", 
+        url: "/images/travel/iceland/blue-lagoon.jpg",
+        thumbnail: "/images/travel/iceland/blue-lagoon-thumb.jpg",
+        caption: "Relaxing in the famous Blue Lagoon",
+        location: "Grindavik"
+      },
+      {
+        id: "iceland-3",
+        url: "/images/travel/iceland/workcamp.jpg", 
+        thumbnail: "/images/travel/iceland/workcamp-thumb.jpg",
+        caption: "International workcamp team building",
+        location: "Reykjavik"
+      }
+    ]
+  },
+  {
+    id: "nepal",
+    country: "Nepal", 
+    coordinates: { lng: 84.1240, lat: 28.3949 },
+    visitDate: "2023",
+    duration: "3 weeks",
+    highlights: [
+      "World Volunteer Club mission",
+      "Community development projects",
+      "Himalayan mountain views", 
+      "Local school teaching",
+      "Cultural immersion"
+    ],
+    description: "A meaningful volunteer experience with World Volunteer Club, contributing to community development in rural Nepal. Engaged in educational projects while experiencing the warmth of Nepalese culture and the majesty of the Himalayas.",
+    photos: [
+      {
+        id: "nepal-1",
+        url: "/images/travel/nepal/himalayas.jpg",
+        thumbnail: "/images/travel/nepal/himalayas-thumb.jpg", 
+        caption: "Breathtaking view of the Himalayan mountains",
+        location: "Kathmandu Valley"
+      },
+      {
+        id: "nepal-2",
+        url: "/images/travel/nepal/volunteer-work.jpg",
+        thumbnail: "/images/travel/nepal/volunteer-work-thumb.jpg",
+        caption: "Teaching local children at community school",
+        location: "Rural Nepal"
+      },
+      {
+        id: "nepal-3",
+        url: "/images/travel/nepal/temple.jpg",
+        thumbnail: "/images/travel/nepal/temple-thumb.jpg", 
+        caption: "Ancient Buddhist temple in Kathmandu",
+        location: "Kathmandu"
+      }
+    ]
+  },
+  {
+    id: "taiwan",
+    country: "Taiwan",
+    coordinates: { lng: 120.9605, lat: 23.6978 },
+    visitDate: "2016 & 2019", 
+    duration: "Multiple trips",
+    highlights: [
+      "Round-island cycling adventures",
+      "East coast scenic routes",
+      "Night market exploration",
+      "Mountain and coastal views",
+      "Local culture discovery"
+    ],
+    description: "Completed two epic round-island cycling journeys, covering over 1000km each time. Experienced Taiwan's diverse landscapes from bustling cities to serene coastlines, mountain ranges, and traditional villages.",
+    photos: [
+      {
+        id: "taiwan-1",
+        url: "/images/travel/taiwan/cycling-coast.jpg",
+        thumbnail: "/images/travel/taiwan/cycling-coast-thumb.jpg",
+        caption: "Cycling along Taiwan's stunning east coast",
+        location: "Hualien"
+      },
+      {
+        id: "taiwan-2", 
+        url: "/images/travel/taiwan/night-market.jpg",
+        thumbnail: "/images/travel/taiwan/night-market-thumb.jpg",
+        caption: "Exploring vibrant night markets",
+        location: "Taipei"
+      },
+      {
+        id: "taiwan-3",
+        url: "/images/travel/taiwan/mountain-view.jpg",
+        thumbnail: "/images/travel/taiwan/mountain-view-thumb.jpg",
+        caption: "Panoramic mountain views from cycling route",
+        location: "Central Mountains"
+      }
+    ]
   }
 ];

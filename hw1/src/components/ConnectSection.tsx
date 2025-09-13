@@ -43,31 +43,7 @@ export const ConnectSection: React.FC = () => {
             direction="horizontal"
           />
         </div>
-
-        {/* Email Contact */}
-        <div className="bg-gray-800 rounded-lg p-8 max-w-md mx-auto">
-          <h4 className="text-lg font-semibold mb-4">Direct Contact</h4>
-          <a 
-            href="mailto:hello@example.com"
-            className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition-colors duration-200"
-          >
-            <span>Send me an email</span>
-            <svg 
-              className="w-4 h-4" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M14 5l7 7m0 0l-7 7m7-7H3" 
-              />
-            </svg>
-          </a>
-        </div>
-
+        
         {/* Footer */}
         <div className="mt-16 pt-8 border-t border-gray-800">
           <p className="text-gray-500 text-sm">
