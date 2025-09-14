@@ -63,6 +63,8 @@ export interface TravelDestination {
   highlights: string[];
   description: string;
   photos: TravelPhoto[];
+  comingSoonPhotos?: string[];
+  links?: TravelLink[];
 }
 
 export interface TravelPhoto {
@@ -71,4 +73,11 @@ export interface TravelPhoto {
   thumbnail: string;
   caption: string;
   location?: string;
+}
+
+export interface TravelLink {
+  type: 'vlog' | 'album' | 'blog' | 'article';
+  title: string;
+  url: string;
+  description?: string;
 }

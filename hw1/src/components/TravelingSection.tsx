@@ -5,13 +5,39 @@ import React, { useState, useMemo } from 'react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 // @ts-ignore
 import ImageGallery from 'react-image-gallery';
-import { FaTimes, FaMapMarkerAlt, FaCalendarAlt, FaCamera, FaGlobeAmericas } from 'react-icons/fa';
+import ReactCountryFlag from 'react-country-flag';
+import { FaTimes, FaMapMarkerAlt, FaCalendarAlt, FaCamera, FaGlobeAmericas, FaPlay, FaImages, FaBlog, FaNewspaper, FaExternalLinkAlt } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PortfolioViewModel } from '@/viewModels';
-import { TravelDestination, TravelPhoto } from '@/types';
+import { TravelDestination, TravelPhoto, TravelLink } from '@/types';
 import 'react-image-gallery/styles/css/image-gallery.css';
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+
+// Country code mapping for flags
+const countryCodeMap: { [key: string]: string } = {
+  'Iceland': 'IS',
+  'Nepal': 'NP',
+  'Austria': 'AT',
+  'Italy': 'IT',
+  'Japan': 'JP',
+  'United Kingdom': 'GB',
+  'Philippines': 'PH',
+  'Taiwan': 'TW',
+  'Singapore': 'SG',
+  'Hong Kong': 'HK'
+};
+
+// Link type icons
+const getLinkIcon = (type: string) => {
+  switch (type) {
+    case 'vlog': return FaPlay;
+    case 'album': return FaImages;
+    case 'blog': return FaBlog;
+    case 'article': return FaNewspaper;
+    default: return FaExternalLinkAlt;
+  }
+};
 
 const TravelingSection: React.FC = () => {
   const viewModel = PortfolioViewModel.getInstance();
@@ -156,7 +182,7 @@ const TravelingSection: React.FC = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto mt-16"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
@@ -169,22 +195,25 @@ const TravelingSection: React.FC = () => {
                 </button>
                 
                 <div className="flex items-center mb-4">
-                  <img
-                    src="/images/avatar/avatar.jpg"
-                    alt="Travel Avatar"
-                    className="w-12 h-12 rounded-full mr-4 object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/images/profile.jpg";
-                    }}
-                  />
+                  {/* Country Flag */}
+                  <div className="w-16 h-12 mr-4 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                    <ReactCountryFlag
+                      countryCode={countryCodeMap[selectedDestination.country] || 'US'}
+                      svg
+                      style={{
+                        width: '3rem',
+                        height: '2.25rem',
+                      }}
+                      title={selectedDestination.country}
+                    />
+                  </div>
                   <div>
                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                       {selectedDestination.country}
                     </h3>
                     <div className="flex items-center text-gray-600 dark:text-gray-400 mt-1">
                       <FaCalendarAlt className="mr-2" />
-                      <span>{selectedDestination.visitDate}</span>
+                      <span>{selectedDestination.visitDate} • {selectedDestination.duration}</span>
                     </div>
                   </div>
                 </div>
@@ -222,7 +251,12 @@ const TravelingSection: React.FC = () => {
                     </h4>
                     <div className="flex items-center text-gray-600 dark:text-gray-400">
                       <FaCamera className="mr-2" />
-                      <span>{selectedDestination.photos.length} photos</span>
+                      <span>
+                        {selectedDestination.photos.length} photos
+                        {selectedDestination.comingSoonPhotos && selectedDestination.comingSoonPhotos.length > 0 && 
+                          ` + ${selectedDestination.comingSoonPhotos.length} coming soon`
+                        }
+                      </span>
                     </div>
                   </div>
                   
@@ -245,8 +279,62 @@ const TravelingSection: React.FC = () => {
                         />
                       </motion.div>
                     ))}
+                    
+                    {/* Coming Soon Photos */}
+                    {selectedDestination.comingSoonPhotos?.map((comingText, index) => (
+                      <div
+                        key={`coming-soon-${index}`}
+                        className="rounded-lg overflow-hidden shadow-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center h-32"
+                      >
+                        <div className="text-center p-3">
+                          <FaCamera className="mx-auto text-gray-400 dark:text-gray-500 mb-2" />
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {comingText}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+
+                {/* Travel Links */}
+                {selectedDestination.links && selectedDestination.links.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Travel Content
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {selectedDestination.links.map((link, index) => {
+                        const IconComponent = getLinkIcon(link.type);
+                        return (
+                          <motion.a
+                            key={index}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            whileHover={{ scale: 1.02 }}
+                            className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 rounded-lg hover:shadow-md transition-all duration-200 group"
+                          >
+                            <div className="w-10 h-10 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center mr-4 group-hover:bg-blue-600 dark:group-hover:bg-blue-500 transition-colors">
+                              <IconComponent className="text-white text-sm" />
+                            </div>
+                            <div className="flex-1">
+                              <h5 className="font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                {link.title}
+                              </h5>
+                              {link.description && (
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                  {link.description}
+                                </p>
+                              )}
+                            </div>
+                            <FaExternalLinkAlt className="text-gray-400 group-hover:text-blue-500 ml-2 transition-colors" />
+                          </motion.a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>

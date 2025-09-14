@@ -236,24 +236,32 @@ export const travelDestinations: TravelDestination[] = [
     photos: [
       {
         id: "iceland-1",
-        url: "/images/travel/iceland/northern-lights.jpg",
-        thumbnail: "/images/travel/iceland/northern-lights-thumb.jpg",
-        caption: "Magical Northern Lights dancing in the Arctic sky",
-        location: "Reykjavik"
+        url: "/images/travel/iceland/1.JPG",
+        thumbnail: "/images/travel/iceland/1.JPG",
+        caption: "Stunning Icelandic landscape with dramatic skies",
+        location: "Iceland"
       },
       {
         id: "iceland-2", 
-        url: "/images/travel/iceland/blue-lagoon.jpg",
-        thumbnail: "/images/travel/iceland/blue-lagoon-thumb.jpg",
-        caption: "Relaxing in the famous Blue Lagoon",
-        location: "Grindavik"
+        url: "/images/travel/iceland/2.JPG",
+        thumbnail: "/images/travel/iceland/2.JPG",
+        caption: "Exploring Iceland's unique geological formations",
+        location: "Iceland"
       },
       {
         id: "iceland-3",
-        url: "/images/travel/iceland/workcamp.jpg", 
-        thumbnail: "/images/travel/iceland/workcamp-thumb.jpg",
-        caption: "International workcamp team building",
-        location: "Reykjavik"
+        url: "/images/travel/iceland/3.JPG", 
+        thumbnail: "/images/travel/iceland/3.JPG",
+        caption: "International workcamp team and beautiful scenery",
+        location: "Iceland"
+      }
+    ],
+    links: [
+      {
+        type: "vlog",
+        title: "Iceland Adventure Vlog",
+        url: "https://www.youtube.com/watch?v=your-iceland-vlog",
+        description: "Watch my Iceland workcamp experience"
       }
     ]
   },
@@ -274,25 +282,275 @@ export const travelDestinations: TravelDestination[] = [
     photos: [
       {
         id: "nepal-1",
-        url: "/images/travel/nepal/himalayas.jpg",
-        thumbnail: "/images/travel/nepal/himalayas-thumb.jpg", 
+        url: "/images/travel/nepal/1.jpg",
+        thumbnail: "/images/travel/nepal/1.jpg", 
         caption: "Breathtaking view of the Himalayan mountains",
-        location: "Kathmandu Valley"
+        location: "Nepal"
       },
       {
         id: "nepal-2",
-        url: "/images/travel/nepal/volunteer-work.jpg",
-        thumbnail: "/images/travel/nepal/volunteer-work-thumb.jpg",
-        caption: "Teaching local children at community school",
-        location: "Rural Nepal"
+        url: "/images/travel/nepal/2.jpg",
+        thumbnail: "/images/travel/nepal/2.jpg",
+        caption: "Volunteer work and community engagement",
+        location: "Nepal"
       },
       {
         id: "nepal-3",
-        url: "/images/travel/nepal/temple.jpg",
-        thumbnail: "/images/travel/nepal/temple-thumb.jpg", 
-        caption: "Ancient Buddhist temple in Kathmandu",
-        location: "Kathmandu"
+        url: "/images/travel/nepal/3.jpg",
+        thumbnail: "/images/travel/nepal/3.jpg", 
+        caption: "Cultural experiences and local interactions",
+        location: "Nepal"
+      },
+      {
+        id: "nepal-4",
+        url: "/images/travel/nepal/4.JPG",
+        thumbnail: "/images/travel/nepal/4.JPG", 
+        caption: "Beautiful mountain scenery and adventure",
+        location: "Nepal"
       }
+    ],
+    links: [
+      {
+        type: "album",
+        title: "Nepal Photo Album",
+        url: "https://photos.google.com/your-nepal-album",
+        description: "Complete photo collection from Nepal"
+      }
+    ]
+  },
+  {
+    id: "austria",
+    country: "Austria",
+    coordinates: { lng: 13.3333, lat: 47.3333 },
+    visitDate: "2024", 
+    duration: "1 week",
+    highlights: [
+      "Alpine mountain exploration",
+      "Classical music heritage",
+      "Historic architecture tour",
+      "Local cuisine experience",
+      "Cultural immersion"
+    ],
+    description: "A wonderful journey through Austria's alpine beauty and rich cultural heritage. Explored historic cities, enjoyed classical music performances, and experienced the breathtaking mountain landscapes.",
+    photos: [
+      {
+        id: "austria-1",
+        url: "/images/travel/austria/1.jpg",
+        thumbnail: "/images/travel/austria/1.jpg",
+        caption: "Beautiful Austrian alpine scenery",
+        location: "Austria"
+      },
+      {
+        id: "austria-2", 
+        url: "/images/travel/austria/2.JPG",
+        thumbnail: "/images/travel/austria/2.JPG",
+        caption: "Historic architecture and city views",
+        location: "Austria"
+      },
+      {
+        id: "austria-3",
+        url: "/images/travel/austria/3.JPG",
+        thumbnail: "/images/travel/austria/3.JPG",
+        caption: "Mountain adventures and outdoor activities",
+        location: "Austria"
+      }
+    ]
+  },
+  {
+    id: "italy",
+    country: "Italy",
+    coordinates: { lng: 12.4964, lat: 41.9028 },
+    visitDate: "2024", 
+    duration: "10 days",
+    highlights: [
+      "Venice canal exploration",
+      "Milan fashion and design",
+      "Renaissance art and culture",
+      "Italian cuisine discovery",
+      "Historic landmarks tour"
+    ],
+    description: "An incredible journey through Italy's most iconic cities. From the romantic canals of Venice to the fashion capital Milan, experiencing the perfect blend of history, art, cuisine, and modern Italian culture.",
+    photos: [
+      {
+        id: "italy-milan-1",
+        url: "/images/travel/italy/milano/1.JPG",
+        thumbnail: "/images/travel/italy/milano/1.JPG",
+        caption: "Milan's stunning architecture and fashion district",
+        location: "Milan, Italy"
+      },
+      {
+        id: "italy-milan-2", 
+        url: "/images/travel/italy/milano/2.JPG",
+        thumbnail: "/images/travel/italy/milano/2.JPG",
+        caption: "Exploring Milan's cultural landmarks",
+        location: "Milan, Italy"
+      },
+      {
+        id: "italy-milan-3",
+        url: "/images/travel/italy/milano/3.JPG",
+        thumbnail: "/images/travel/italy/milano/3.JPG",
+        caption: "Milan city life and modern attractions",
+        location: "Milan, Italy"
+      },
+      {
+        id: "italy-venice-1",
+        url: "/images/travel/italy/venice/1.JPG",
+        thumbnail: "/images/travel/italy/venice/1.JPG",
+        caption: "Romantic Venice canals and gondolas",
+        location: "Venice, Italy"
+      },
+      {
+        id: "italy-venice-2", 
+        url: "/images/travel/italy/venice/2.JPG",
+        thumbnail: "/images/travel/italy/venice/2.JPG",
+        caption: "Historic Venice architecture and bridges",
+        location: "Venice, Italy"
+      },
+      {
+        id: "italy-venice-3",
+        url: "/images/travel/italy/venice/3.JPG",
+        thumbnail: "/images/travel/italy/venice/3.JPG",
+        caption: "Venice's unique charm and waterways",
+        location: "Venice, Italy"
+      }
+    ],
+    links: [
+      {
+        type: "album",
+        title: "Italy Photo Collection",
+        url: "https://photos.google.com/your-italy-album",
+        description: "Complete Italy travel photo album"
+      }
+    ]
+  },
+  {
+    id: "japan",
+    country: "Japan",
+    coordinates: { lng: 139.6917, lat: 35.6895 },
+    visitDate: "2023-2024", 
+    duration: "Multiple trips",
+    highlights: [
+      "Tokyo urban exploration",
+      "Osaka & Kyoto cultural heritage",
+      "Fukuoka local experiences",
+      "Traditional and modern fusion",
+      "Japanese cuisine journey"
+    ],
+    description: "Multiple amazing trips across Japan, from the bustling streets of Tokyo to the traditional temples of Kyoto, the culinary delights of Osaka, and the warm hospitality of Fukuoka. Each region offered unique cultural experiences.",
+    photos: [
+      {
+        id: "japan-fukuoka-1",
+        url: "/images/travel/japan/fukuoka/3.jpg",
+        thumbnail: "/images/travel/japan/fukuoka/3.jpg",
+        caption: "Fukuoka local culture and delicious food",
+        location: "Fukuoka, Japan"
+      },
+      {
+        id: "japan-osaka-1", 
+        url: "/images/travel/japan/osaka_kyoto/1.JPG",
+        thumbnail: "/images/travel/japan/osaka_kyoto/1.JPG",
+        caption: "Osaka and Kyoto traditional architecture",
+        location: "Osaka/Kyoto, Japan"
+      },
+      {
+        id: "japan-osaka-2",
+        url: "/images/travel/japan/osaka_kyoto/2.JPG",
+        thumbnail: "/images/travel/japan/osaka_kyoto/2.JPG",
+        caption: "Temple visits and cultural experiences",
+        location: "Osaka/Kyoto, Japan"
+      },
+      {
+        id: "japan-osaka-3",
+        url: "/images/travel/japan/osaka_kyoto/3.JPG",
+        thumbnail: "/images/travel/japan/osaka_kyoto/3.JPG",
+        caption: "Japanese gardens and scenic beauty",
+        location: "Osaka/Kyoto, Japan"
+      }
+    ],
+    comingSoonPhotos: [
+      "Tokyo adventures - Coming Soon",
+      "Hokkaido winter experiences - Coming Soon",
+      "More Fukuoka memories - Coming Soon"
+    ],
+    links: [
+      {
+        type: "vlog",
+        title: "Japan Travel Series",
+        url: "https://www.youtube.com/playlist?list=your-japan-playlist",
+        description: "Complete Japan travel vlog series"
+      }
+    ]
+  },
+  {
+    id: "uk",
+    country: "United Kingdom",
+    coordinates: { lng: -0.1276, lat: 51.5074 },
+    visitDate: "2024", 
+    duration: "2 weeks",
+    highlights: [
+      "London historical landmarks",
+      "British cultural immersion",
+      "Countryside exploration",
+      "Academic exchange program",
+      "Traditional afternoon tea"
+    ],
+    description: "A fascinating exploration of British culture and history. From London's iconic landmarks to the beautiful countryside, experiencing the perfect blend of tradition and modernity in the United Kingdom.",
+    photos: [
+      {
+        id: "uk-1",
+        url: "/images/travel/u.k./1.JPG",
+        thumbnail: "/images/travel/u.k./1.JPG",
+        caption: "London's iconic landmarks and city life",
+        location: "London, UK"
+      },
+      {
+        id: "uk-2", 
+        url: "/images/travel/u.k./2.JPG",
+        thumbnail: "/images/travel/u.k./2.JPG",
+        caption: "British countryside and scenic views",
+        location: "United Kingdom"
+      },
+      {
+        id: "uk-3",
+        url: "/images/travel/u.k./3.JPG",
+        thumbnail: "/images/travel/u.k./3.JPG",
+        caption: "Historic architecture and cultural sites",
+        location: "United Kingdom"
+      },
+      {
+        id: "uk-4",
+        url: "/images/travel/u.k./4.JPG",
+        thumbnail: "/images/travel/u.k./4.JPG",
+        caption: "Exploring British heritage and traditions",
+        location: "United Kingdom"
+      }
+    ]
+  },
+  {
+    id: "philippines",
+    country: "Philippines",
+    coordinates: { lng: 121.7740, lat: 12.8797 },
+    visitDate: "2024", 
+    duration: "1 week",
+    highlights: [
+      "Tropical island paradise",
+      "Beach and marine activities",
+      "Local Filipino culture",
+      "Island hopping adventures",
+      "Tropical cuisine experience"
+    ],
+    description: "A tropical paradise adventure in the beautiful Philippines. Enjoyed pristine beaches, crystal-clear waters, warm Filipino hospitality, and explored the stunning natural beauty of the islands.",
+    photos: [
+      {
+        id: "philippines-1",
+        url: "/images/travel/philippines/1.JPG",
+        thumbnail: "/images/travel/philippines/1.JPG",
+        caption: "Beautiful Philippine beaches and islands",
+        location: "Philippines"
+      }
+    ],
+    comingSoonPhotos: [
+      "More island adventures - Coming Soon"
     ]
   },
   {
@@ -300,7 +558,7 @@ export const travelDestinations: TravelDestination[] = [
     country: "Taiwan",
     coordinates: { lng: 120.9605, lat: 23.6978 },
     visitDate: "2016 & 2019", 
-    duration: "Multiple trips",
+    duration: "Multiple cycling trips",
     highlights: [
       "Round-island cycling adventures",
       "East coast scenic routes",
@@ -309,28 +567,61 @@ export const travelDestinations: TravelDestination[] = [
       "Local culture discovery"
     ],
     description: "Completed two epic round-island cycling journeys, covering over 1000km each time. Experienced Taiwan's diverse landscapes from bustling cities to serene coastlines, mountain ranges, and traditional villages.",
-    photos: [
+    photos: [],
+    comingSoonPhotos: [
+      "Round-island cycling photos - Coming Soon",
+      "East coast scenic routes - Coming Soon",
+      "Night market adventures - Coming Soon"
+    ],
+    links: [
       {
-        id: "taiwan-1",
-        url: "/images/travel/taiwan/cycling-coast.jpg",
-        thumbnail: "/images/travel/taiwan/cycling-coast-thumb.jpg",
-        caption: "Cycling along Taiwan's stunning east coast",
-        location: "Hualien"
-      },
-      {
-        id: "taiwan-2", 
-        url: "/images/travel/taiwan/night-market.jpg",
-        thumbnail: "/images/travel/taiwan/night-market-thumb.jpg",
-        caption: "Exploring vibrant night markets",
-        location: "Taipei"
-      },
-      {
-        id: "taiwan-3",
-        url: "/images/travel/taiwan/mountain-view.jpg",
-        thumbnail: "/images/travel/taiwan/mountain-view-thumb.jpg",
-        caption: "Panoramic mountain views from cycling route",
-        location: "Central Mountains"
+        type: "blog",
+        title: "Taiwan Cycling Adventures",
+        url: "https://your-blog.com/taiwan-cycling",
+        description: "Detailed blog about round-island cycling"
       }
+    ]
+  },
+  {
+    id: "singapore",
+    country: "Singapore",
+    coordinates: { lng: 103.8198, lat: 1.3521 },
+    visitDate: "2024", 
+    duration: "3 days",
+    highlights: [
+      "Marina Bay modern architecture",
+      "Gardens by the Bay",
+      "Multicultural food scene",
+      "Urban exploration",
+      "Southeast Asian gateway"
+    ],
+    description: "A quick but memorable visit to the Lion City. Experienced Singapore's incredible urban planning, diverse culinary scene, and impressive modern architecture in this Southeast Asian metropolis.",
+    photos: [],
+    comingSoonPhotos: [
+      "Marina Bay photos - Coming Soon",
+      "Gardens by the Bay - Coming Soon",
+      "Singapore food adventure - Coming Soon"
+    ]
+  },
+  {
+    id: "hong_kong",
+    country: "Hong Kong",
+    coordinates: { lng: 114.1694, lat: 22.3193 },
+    visitDate: "2024", 
+    duration: "4 days",
+    highlights: [
+      "Victoria Harbour skyline",
+      "Dim sum culinary tour",
+      "Peak tram adventure",
+      "Traditional markets",
+      "East meets West culture"
+    ],
+    description: "A vibrant exploration of Hong Kong's unique blend of Eastern and Western cultures. From the stunning Victoria Harbour views to authentic dim sum experiences and bustling traditional markets.",
+    photos: [],
+    comingSoonPhotos: [
+      "Victoria Harbour skyline - Coming Soon",
+      "Dim sum adventures - Coming Soon",
+      "Traditional market exploration - Coming Soon"
     ]
   }
 ];
