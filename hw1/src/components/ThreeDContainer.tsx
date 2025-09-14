@@ -383,36 +383,36 @@ const Character: React.FC<{
 
   return (
     <group ref={characterRef} position={currentPosition}>
-      {/* 簡單的人物模型 - 調整大小和位置讓它更適合音樂會場地 */}
+      {/* 簡單的人物模型 - 調整到地面高度 */}
       <group>
-        {/* 身體 */}
-        <Box position={[0, 0.8, 0]} args={[0.4, 0.8, 0.3]}>
+        {/* 身體 - 向下移動讓腳踩在地面 */}
+        <Box position={[0, 0.6, 0]} args={[0.4, 0.8, 0.3]}>
           <meshStandardMaterial color="#4a90e2" />
         </Box>
         
-        {/* 頭部 */}
-        <Sphere position={[0, 1.4, 0]} args={[0.25]}>
+        {/* 頭部 - 向下移動 */}
+        <Sphere position={[0, 1.2, 0]} args={[0.25]}>
           <meshStandardMaterial color="#ffdbac" />
         </Sphere>
         
-        {/* 腿部 */}
-        <Box position={[-0.1, 0.2, 0]} args={[0.15, 0.4, 0.15]}>
+        {/* 腿部 - 腳踩在地面 (y=0) */}
+        <Box position={[-0.1, 0.0, 0]} args={[0.15, 0.4, 0.15]}>
           <meshStandardMaterial color="#2c3e50" />
         </Box>
-        <Box position={[0.1, 0.2, 0]} args={[0.15, 0.4, 0.15]}>
+        <Box position={[0.1, 0.0, 0]} args={[0.15, 0.4, 0.15]}>
           <meshStandardMaterial color="#2c3e50" />
         </Box>
         
-        {/* 手臂 */}
-        <Box position={[-0.3, 1.0, 0]} args={[0.12, 0.5, 0.12]}>
+        {/* 手臂 - 向下移動 */}
+        <Box position={[-0.3, 0.8, 0]} args={[0.12, 0.5, 0.12]}>
           <meshStandardMaterial color="#ffdbac" />
         </Box>
-        <Box position={[0.3, 1.0, 0]} args={[0.12, 0.5, 0.12]}>
+        <Box position={[0.3, 0.8, 0]} args={[0.12, 0.5, 0.12]}>
           <meshStandardMaterial color="#ffdbac" />
         </Box>
       </group>
       
-      {/* 腳下指示圈 */}
+      {/* 腳下指示圈 - 在地面上 */}
       <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.4, 0.5, 16]} />
         <meshBasicMaterial color="#ffffff" transparent opacity={0.6} />
@@ -429,7 +429,7 @@ const Character: React.FC<{
         });
 
         return nearbySection ? (
-          <Html position={[0, 2.0, 0]} center>
+          <Html position={[0, 1.5, 0]} center>
             <div className="bg-purple-600/90 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm font-medium border border-purple-400/50 shadow-lg animate-pulse">
               {nearbySection.section} - Press Enter
             </div>
@@ -440,7 +440,7 @@ const Character: React.FC<{
   );
 };
 
-// 3D圖標組件 - 放在紫色地毯上的簡潔圖標
+// 3D圖標組件 - 直接使用 emoji 作為圖標
 const InteractiveIcons: React.FC = () => {
   const groupRefs = useRef<THREE.Group[]>([]);
   
@@ -449,19 +449,19 @@ const InteractiveIcons: React.FC = () => {
     groupRefs.current.forEach((group, index) => {
       if (group) {
         group.rotation.y = Math.sin(state.clock.elapsedTime + index) * 0.1;
-        group.position.y = 0.5 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.05;
+        group.position.y = 0.15 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.03; // 輕微上下浮動
       }
     });
   });
 
   const iconSections = [
-    { position: [0, 0.5, 0], section: 'about', color: '#4a90e2', emoji: '👤', label: '關於我' },
-    { position: [2.5, 0.5, 2.5], section: 'experience', color: '#f39c12', emoji: '💼', label: '工作經驗' },
-    { position: [-2.5, 0.5, 2.5], section: 'projects', color: '#e74c3c', emoji: '🚀', label: '專案作品' },
-    { position: [2.5, 0.5, -2.5], section: 'skills', color: '#2ecc71', emoji: '⚡', label: '技能專長' },
-    { position: [-2.5, 0.5, -2.5], section: 'milestones', color: '#9b59b6', emoji: '🏆', label: '重要里程碑' },
-    { position: [0, 0.5, 3.5], section: 'traveling', color: '#1abc9c', emoji: '🌍', label: '旅行足跡' },
-    { position: [0, 0.5, -3.5], section: 'connect', color: '#34495e', emoji: '📧', label: '聯絡方式' },
+    { position: [100, 0.15, 10], section: 'about', color: '#4a90e2', emoji: '👤', label: '關於我' },
+    { position: [2.5, 0.15, 2.5], section: 'experience', color: '#f39c12', emoji: '💼', label: '工作經驗' },
+    { position: [-2.5, 0.15, 2.5], section: 'projects', color: '#e74c3c', emoji: '🚀', label: '專案作品' },
+    { position: [2.5, 0.15, -2.5], section: 'skills', color: '#2ecc71', emoji: '⚡', label: '技能專長' },
+    { position: [-2.5, 0.15, -2.5], section: 'milestones', color: '#9b59b6', emoji: '🏆', label: '重要里程碑' },
+    { position: [0, 0.15, 3.5], section: 'traveling', color: '#1abc9c', emoji: '🌍', label: '旅行足跡' },
+    { position: [0, 0.15, -3.5], section: 'connect', color: '#34495e', emoji: '📧', label: '聯絡方式' },
   ];
 
   return (
@@ -474,48 +474,21 @@ const InteractiveIcons: React.FC = () => {
             if (el) groupRefs.current[index] = el;
           }}
         >
-          {/* 簡潔的 3D 圖標基座 */}
-          <mesh position={[0, 0, 0]}>
-            <cylinderGeometry args={[0.3, 0.4, 0.1, 8]} />
-            <meshStandardMaterial 
-              color={icon.color} 
-              transparent 
-              opacity={0.8}
-              emissive={icon.color}
-              emissiveIntensity={0.2}
-            />
-          </mesh>
-          
-          {/* 發光的中央球體 */}
-          <mesh position={[0, 0.2, 0]}>
-            <sphereGeometry args={[0.15, 16, 16]} />
-            <meshStandardMaterial 
-              color="#ffffff" 
-              transparent 
-              opacity={0.9}
-              emissive={icon.color}
-              emissiveIntensity={0.3}
-            />
-          </mesh>
+          {/* 直接顯示 emoji 圖標 */}
+          <Html position={[0, 0, 0]} center distanceFactor={8}>
+            <div className="text-6xl select-none pointer-events-none transform -translate-y-1/2">
+              {icon.emoji}
+            </div>
+          </Html>
           
           {/* 柔和的光暈效果 */}
           <pointLight
-            position={[0, 0.5, 0]}
+            position={[0, 0.3, 0]}
             color={icon.color}
-            intensity={0.3}
-            distance={3}
+            intensity={0.15}
+            distance={2}
             decay={2}
           />
-          
-          {/* 浮動標籤 - 只在接近時顯示 */}
-          <Html position={[0, 1, 0]} center distanceFactor={10}>
-            <div className="bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-xs pointer-events-none border border-white/20 shadow-lg transform -translate-y-full">
-              <div className="text-center">
-                <div className="text-lg mb-1">{icon.emoji}</div>
-                <div className="font-medium whitespace-nowrap">{icon.label}</div>
-              </div>
-            </div>
-          </Html>
         </group>
       ))}
     </>
@@ -536,7 +509,7 @@ const CameraController: React.FC<{ characterPosition: [number, number, number] }
     
     // 更平滑的跟隨
     camera.position.lerp(targetPosition, 0.03);
-    camera.lookAt(characterPosition[0], characterPosition[1] + 0.8, characterPosition[2]);
+    camera.lookAt(characterPosition[0], characterPosition[1] + 0.5, characterPosition[2]); // 調整視線高度
   });
 
   return null;
@@ -650,13 +623,6 @@ const ThreeDContainer: React.FC = () => {
             onContentDisplay={handleContentDisplay}
           />
         </Canvas>
-      </div>
-      
-      {/* 3D 控制提示 */}
-      <div className="absolute bottom-4 left-4 text-white/70 text-sm z-10">
-        <div>⌨️ WASD/方向鍵在音樂會場地中移動</div>
-        <div>� 走到舞台區域按 Enter 查看內容</div>
-        <div>💫 探索不同的展示區域</div>
       </div>
 
       {/* 內容顯示彈窗 */}
