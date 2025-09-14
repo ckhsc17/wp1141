@@ -1,595 +1,688 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, Stars, Sphere, Plane, OrbitControls, useGLTF } from '@react-three/drei';
+import { Box, Sphere, Html } from '@react-three/drei';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
-import { useThreeD } from '@/contexts/ThreeDContext';
-import { personalInfo, experiences, projects, skills, milestones, socialLinks } from '@/data/mockData';
+import { useThreeD } from '../contexts/ThreeDContext';
+import { personalInfo, experiences, projects, skills, milestones, socialLinks } from '../data/mockData';
 
-// 宇宙粒子效果
-const SpaceParticles: React.FC = () => {
-  const count = 200;
-  const mesh = useRef<THREE.InstancedMesh>(null);
-
-  const particles = React.useMemo(() => {
-    const temp = [];
-    for (let i = 0; i < count; i++) {
-      temp.push({
-        position: [
-          (Math.random() - 0.5) * 100,
-          (Math.random() - 0.5) * 100,
-          (Math.random() - 0.5) * 100,
-        ],
-        speed: Math.random() * 0.005 + 0.001,
-      });
-    }
-    return temp;
-  }, []);
-
-  useFrame(() => {
-    if (mesh.current) {
-      particles.forEach((particle, i) => {
-        const matrix = new THREE.Matrix4();
-        particle.position[1] += particle.speed;
-        if (particle.position[1] > 50) particle.position[1] = -50;
-        
-        matrix.setPosition(
-          particle.position[0],
-          particle.position[1],
-          particle.position[2]
+// 內容顯示組件
+const ContentDisplay: React.FC<{
+  section: string;
+  onClose: () => void;
+}> = ({ section, onClose }) => {
+  const getSectionContent = () => {
+    switch (section) {
+      case 'about':
+        return (
+          <div className="p-8">
+            <h2 className="text-3xl font-bold text-white mb-6">關於我</h2>
+            <div className="space-y-4 text-white/90">
+              <p className="text-xl">{personalInfo.title}</p>
+              <p className="text-lg">{personalInfo.description}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">聯絡資訊</h3>
+                  <p>📧 chen.bowen@example.com</p>
+                  <p>📱 +886 912-345-678</p>
+                  <p>📍 {personalInfo.location}</p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">個人特質</h3>
+                  <p>🎓 持續學習新技術</p>
+                  <p>🤝 良好的團隊合作</p>
+                  <p>💡 創新思維與解決問題</p>
+                </div>
+              </div>
+            </div>
+          </div>
         );
-        mesh.current!.setMatrixAt(i, matrix);
-      });
-      mesh.current.instanceMatrix.needsUpdate = true;
+
+      case 'experience':
+        return (
+          <div className="p-8">
+            <h2 className="text-3xl font-bold text-white mb-6">工作經驗</h2>
+            <div className="space-y-6">
+              {experiences.map((exp, index) => (
+                <div key={index} className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">{exp.position}</h3>
+                      <p className="text-blue-300">{exp.company}</p>
+                    </div>
+                    <span className="text-white/70 text-sm">{exp.period}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-white/80">{exp.description}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {exp.technologies.map((tech, i) => (
+                      <span key={i} className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-sm">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'projects':
+        return (
+          <div className="p-8">
+            <h2 className="text-3xl font-bold text-white mb-6">專案作品</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {projects.map((project, index) => (
+                <div key={index} className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <div className="mb-4">
+                    <h3 className="text-xl font-semibold text-white mb-2">{project.title}</h3>
+                    <p className="text-white/80">{project.description}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {project.technologies.map((tech, i) => (
+                      <span key={i} className="bg-green-500/20 text-green-300 px-2 py-1 rounded text-sm">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-3">
+                    {project.githubUrl && (
+                      <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" 
+                         className="text-blue-400 hover:text-blue-300 text-sm">
+                        📂 GitHub
+                      </a>
+                    )}
+                    {project.liveUrl && (
+                      <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
+                         className="text-green-400 hover:text-green-300 text-sm">
+                        🚀 Live Demo
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'skills':
+        return (
+          <div className="p-8">
+            <h2 className="text-3xl font-bold text-white mb-6">技能專長</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {skills.map((skill, index) => (
+                <div key={index} className="bg-white/5 rounded-lg p-4 border border-white/10 text-center">
+                  <div className="text-2xl mb-2">⚡</div>
+                  <h3 className="text-white font-medium mb-1">{skill.name}</h3>
+                  <div className="w-full bg-white/20 rounded-full h-2 mb-2">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full"
+                      style={{ width: `${skill.level}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-white/70 text-sm">{skill.level}%</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'milestones':
+        return (
+          <div className="p-8">
+            <h2 className="text-3xl font-bold text-white mb-6">重要里程碑</h2>
+            <div className="space-y-4">
+              {milestones.map((milestone, index) => {
+                // 將圖標字符串轉換為 emoji
+                const getIcon = (iconName: string) => {
+                  const iconMap: Record<string, string> = {
+                    'FaChessBoard': '♟️',
+                    'FaBicycle': '🚴',
+                    'FaRoute': '🗺️',
+                    'FaGraduationCap': '🎓',
+                    'FaMicrophone': '🎤',
+                    'FaGlobeAsia': '🌏',
+                    'FaMountain': '⛰️',
+                    'FaLaptopCode': '💻',
+                    'FaBullhorn': '📢',
+                    'FaGuitar': '🎸',
+                    'FaUsers': '👥',
+                    'FaRocket': '🚀'
+                  };
+                  return iconMap[iconName] || '⭐';
+                };
+
+                return (
+                  <div key={index} className="flex items-start gap-4 bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div className="text-2xl">{getIcon(milestone.icon || '')}</div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-semibold text-white">{milestone.title}</h3>
+                        <span className="text-white/70 text-sm">{milestone.date}</span>
+                      </div>
+                      <p className="text-white/80">{milestone.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+
+      case 'traveling':
+        return (
+          <div className="p-8">
+            <h2 className="text-3xl font-bold text-white mb-6">旅行足跡</h2>
+            <div className="text-center space-y-6">
+              <p className="text-white/80 text-lg">探索世界，豐富人生體驗</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {['🇯🇵 日本', '🇰🇷 韓國', '🇺🇸 美國', '🇨🇦 加拿大', '🇬🇧 英國', '🇫🇷 法國'].map((country, index) => (
+                  <div key={index} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <p className="text-white text-lg">{country}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-white/70">持續探索中...</p>
+            </div>
+          </div>
+        );
+
+      case 'connect':
+        return (
+          <div className="p-8">
+            <h2 className="text-3xl font-bold text-white mb-6">聯絡方式</h2>
+            <div className="space-y-6">
+              <div className="text-center">
+                <p className="text-white/80 text-lg mb-6">歡迎與我聯絡交流</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {socialLinks.map((link, index) => {
+                  // 將圖標字符串轉換為 emoji
+                  const getIcon = (iconName: string) => {
+                    const iconMap: Record<string, string> = {
+                      'github': '⚡',
+                      'linkedin': '💼',
+                      'instagram': '📷',
+                      'facebook': '📘'
+                    };
+                    return iconMap[iconName] || '🔗';
+                  };
+
+                  return (
+                    <a key={index} href={link.url} target="_blank" rel="noopener noreferrer"
+                       className="bg-white/5 rounded-lg p-6 border border-white/10 hover:bg-white/10 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="text-3xl">{getIcon(link.icon)}</div>
+                        <div>
+                          <h3 className="text-white font-semibold">{link.platform}</h3>
+                          <p className="text-white/70">@{link.platform.toLowerCase()}</p>
+                        </div>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+              <div className="text-center pt-4">
+                <p className="text-white/70">📧 chen.bowen@example.com</p>
+                <p className="text-white/70">📱 +886 912-345-678</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="p-8 text-center">
+            <h2 className="text-2xl font-bold text-white">未知區域</h2>
+            <p className="text-white/70 mt-2">這個區域還在開發中...</p>
+          </div>
+        );
     }
-  });
+  };
 
   return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, count]}>
-      <sphereGeometry args={[0.05]} />
-      <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
-    </instancedMesh>
-  );
-};
-
-// GLTF 星球組件
-const GLTFPlanet: React.FC<{
-  modelPath: string;
-  position: [number, number, number];
-  scale?: number;
-  onClick: () => void;
-  isActive: boolean;
-  title: string;
-  content: string;
-  color: string;
-}> = ({ modelPath, position, scale = 1, onClick, isActive, title, content, color }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const [hovered, setHovered] = useState(false);
-  
-  // 載入 GLTF 模型
-  const { scene } = useGLTF(modelPath);
-  
-  // 複製場景以避免多次使用同一模型的問題
-  const clonedScene = scene.clone();
-
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += 0.01;
-    }
-  });
-
-  return (
-    <group 
-      ref={groupRef}
-      position={position}
-      scale={[scale, scale, scale]}
-      onClick={onClick}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
-    >
-      {/* GLTF 模型 */}
-      <primitive object={clonedScene} />
-      
-      {/* 星球光環 */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[scale * 1.2, scale * 1.4, 32]} />
-        <meshBasicMaterial
-          color={color}
-          transparent
-          opacity={hovered || isActive ? 0.4 : 0.15}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-      
-      {/* 星球標籤 */}
-      <Html
-        position={[0, scale + 0.8, 0]}
-        center
-        distanceFactor={12}
-        occlude
+    <div className="relative">
+      {/* 關閉按鈕 */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white/70 hover:text-white z-10 bg-white/10 rounded-full p-2"
       >
-        <div className="bg-black/90 backdrop-blur-sm rounded-lg p-3 text-white text-center pointer-events-none border border-white/20">
-          <div className="font-bold text-base">{title}</div>
-          <div className="text-sm text-gray-300 mt-1">{content}</div>
-        </div>
-      </Html>
+        ✕
+      </button>
       
-      {/* 粒子效果 */}
-      {(hovered || isActive) && (
-        <points>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={100}
-              array={new Float32Array(300).map(() => (Math.random() - 0.5) * scale * 4)}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <pointsMaterial
-            size={0.03}
-            color={color}
-            transparent
-            opacity={0.8}
-            sizeAttenuation
-          />
-        </points>
-      )}
-    </group>
+      {/* 內容 */}
+            <div className="max-h-[70vh] overflow-y-auto">
+        {getSectionContent()}
+      </div>
+    </div>
   );
 };
 
-// 星球組件
-const Planet: React.FC<{
+// 3D 人物角色
+const Character: React.FC<{
   position: [number, number, number];
-  color: string;
-  size: number;
-  title: string;
-  content: string;
-  onClick: () => void;
-  isActive: boolean;
-  textureUrl?: string;
-}> = ({ position, color, size, title, content, onClick, isActive, textureUrl }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const [hovered, setHovered] = useState(false);
+  onSectionTrigger: (section: string | null) => void;
+  onContentTrigger: (section: string) => void;
+  onPositionChange?: (newPosition: [number, number, number]) => void;
+}> = ({ position, onSectionTrigger, onContentTrigger, onPositionChange }) => {
+  const characterRef = useRef<THREE.Group>(null);
+  const [currentPosition, setCurrentPosition] = useState<[number, number, number]>(position);
+  const [targetPosition, setTargetPosition] = useState<[number, number, number]>(position);
+  const [isMoving, setIsMoving] = useState(false);
 
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.01;
-    }
-  });
+  // 定義音樂會場地中紫色地毯區域的座標和對應的 section
+  const floorSections = [
+    { position: [0, 0, 0], section: 'about', color: '#4a90e2', tolerance: 1.2 },          // 中央舞台區域
+    { position: [2.5, 0, 2.5], section: 'experience', color: '#f39c12', tolerance: 1.0 }, // 右前方地毯
+    { position: [-2.5, 0, 2.5], section: 'projects', color: '#e74c3c', tolerance: 1.0 },  // 左前方地毯
+    { position: [2.5, 0, -2.5], section: 'skills', color: '#2ecc71', tolerance: 1.0 },    // 右後方地毯
+    { position: [-2.5, 0, -2.5], section: 'milestones', color: '#9b59b6', tolerance: 1.0 }, // 左後方地毯
+    { position: [0, 0, 3.5], section: 'traveling', color: '#1abc9c', tolerance: 1.0 },    // 前方中央地毯
+    { position: [0, 0, -3.5], section: 'connect', color: '#34495e', tolerance: 1.0 },     // 後方中央地毯
+  ];
 
-  return (
-    <group position={position}>
-      <Sphere
-        ref={meshRef}
-        args={[size, 32, 32]}
-        onClick={onClick}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-      >
-        {textureUrl ? (
-          <meshStandardMaterial
-            map={new THREE.TextureLoader().load(textureUrl)}
-            transparent
-            opacity={0.9}
-            emissive={hovered || isActive ? color : '#000000'}
-            emissiveIntensity={hovered || isActive ? 0.1 : 0}
-          />
-        ) : (
-          <meshStandardMaterial
-            color={color}
-            transparent
-            opacity={0.8}
-            emissive={hovered || isActive ? color : '#000000'}
-            emissiveIntensity={hovered || isActive ? 0.2 : 0}
-            roughness={0.3}
-            metalness={0.1}
-          />
-        )}
-      </Sphere>
-      
-      {/* 星球光環 - 更精緻的效果 */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[size * 1.2, size * 1.4, 32]} />
-        <meshBasicMaterial
-          color={color}
-          transparent
-          opacity={hovered || isActive ? 0.4 : 0.15}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-      
-      {/* 星球標籤 */}
-      <Html
-        position={[0, size + 0.8, 0]}
-        center
-        distanceFactor={12}
-        occlude
-      >
-        <div className="bg-black/90 backdrop-blur-sm rounded-lg p-3 text-white text-center pointer-events-none border border-white/20">
-          <div className="font-bold text-base">{title}</div>
-          <div className="text-sm text-gray-300 mt-1">{content}</div>
-        </div>
-      </Html>
-      
-      {/* 粒子效果 */}
-      {(hovered || isActive) && (
-        <points>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={100}
-              array={new Float32Array(300).map(() => (Math.random() - 0.5) * size * 4)}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <pointsMaterial
-            size={0.03}
-            color={color}
-            transparent
-            opacity={0.8}
-            sizeAttenuation
-          />
-        </points>
-      )}
-    </group>
-  );
-};
+  // 鍵盤控制
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (isMoving) return;
 
-// 弧形地表（只在點擊星球時顯示）
-const CurvedGround: React.FC<{ visible: boolean }> = ({ visible }) => {
-  if (!visible) return null;
-  
-  return (
-    <group position={[0, -10, 0]}>
-      {/* 主要地表球體 - 調整弧度 */}
-      <Sphere args={[15, 64, 32, 0, Math.PI * 2, 0, Math.PI / 3]}>
-        <meshStandardMaterial
-          color="#2a2a3e"
-          transparent
-          opacity={0.4}
-          wireframe={false}
-        />
-      </Sphere>
-      
-      {/* 地表線框 */}
-      <Sphere args={[15.1, 32, 16, 0, Math.PI * 2, 0, Math.PI / 3]}>
-        <meshBasicMaterial
-          color="#4a90e2"
-          transparent
-          opacity={0.3}
-          wireframe
-        />
-      </Sphere>
-    </group>
-  );
-};
+      const moveDistance = 1;
+      let newTarget: [number, number, number] = [...currentPosition];
 
-// 旗子組件
-const Flag: React.FC<{
-  position: [number, number, number];
-  color: string;
-  title: string;
-  icon: string;
-}> = ({ position, color, title, icon }) => {
-  const flagRef = useRef<THREE.Group>(null);
-  const [hovered, setHovered] = useState(false);
-
-  useFrame((state) => {
-    if (flagRef.current && flagRef.current.children[1]) {
-      const flag = flagRef.current.children[1];
-      if (flag) {
-        flag.rotation.z = Math.sin(state.clock.elapsedTime * 2) * 0.1;
+      switch (event.key.toLowerCase()) {
+        case 'w':
+        case 'arrowup':
+          newTarget[2] -= moveDistance;
+          break;
+        case 's':
+        case 'arrowdown':
+          newTarget[2] += moveDistance;
+          break;
+        case 'a':
+        case 'arrowleft':
+          newTarget[0] -= moveDistance;
+          break;
+        case 'd':
+        case 'arrowright':
+          newTarget[0] += moveDistance;
+          break;
+        case 'enter':
+          // 處理 Enter 鍵 - 顯示當前區域內容
+          const nearbySection = floorSections.find(section => {
+            const distance = Math.sqrt(
+              Math.pow(currentPosition[0] - section.position[0], 2) +
+              Math.pow(currentPosition[2] - section.position[2], 2)
+            );
+            return distance < section.tolerance;
+          });
+          if (nearbySection) {
+            console.log(`Displaying content for section: ${nearbySection.section}`);
+            onContentTrigger(nearbySection.section);
+          }
+          return;
+        default:
+          return;
       }
+
+      // 限制移動範圍（擴大範圍讓人物可以在音樂會場地中自由移動）
+      newTarget[0] = Math.max(-6, Math.min(6, newTarget[0]));
+      newTarget[2] = Math.max(-6, Math.min(6, newTarget[2]));
+
+      setTargetPosition(newTarget);
+      setIsMoving(true);
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentPosition, isMoving, floorSections, onContentTrigger]);
+
+  // 角色移動動畫
+  useFrame(() => {
+    if (characterRef.current && isMoving) {
+      const current = new THREE.Vector3(...currentPosition);
+      const target = new THREE.Vector3(...targetPosition);
+      
+      current.lerp(target, 0.1);
+      
+      if (current.distanceTo(target) < 0.01) {
+        const newPosition: [number, number, number] = [targetPosition[0], targetPosition[1], targetPosition[2]];
+        setCurrentPosition(newPosition);
+        setIsMoving(false);
+        
+        // 通知父組件位置變化
+        if (onPositionChange) {
+          onPositionChange(newPosition);
+        }
+        
+        // 檢查是否到達特定位置
+        const nearbySection = floorSections.find(section => {
+          const distance = Math.sqrt(
+            Math.pow(targetPosition[0] - section.position[0], 2) +
+            Math.pow(targetPosition[2] - section.position[2], 2)
+          );
+          return distance < section.tolerance;
+        });
+        
+        onSectionTrigger(nearbySection ? nearbySection.section : null);
+      } else {
+        const newPosition: [number, number, number] = [current.x, current.y, current.z];
+        setCurrentPosition(newPosition);
+        
+        // 通知父組件位置變化
+        if (onPositionChange) {
+          onPositionChange(newPosition);
+        }
+      }
+      
+      characterRef.current.position.set(current.x, current.y, current.z);
     }
   });
 
   return (
-    <group
-      ref={flagRef}
-      position={position}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
-    >
-      {/* 旗杆 */}
-      <mesh position={[0, 0.5, 0]}>
-        <cylinderGeometry args={[0.02, 0.02, 1]} />
-        <meshStandardMaterial color="#666666" />
+    <group ref={characterRef} position={currentPosition}>
+      {/* 簡單的人物模型 - 調整大小和位置讓它更適合音樂會場地 */}
+      <group>
+        {/* 身體 */}
+        <Box position={[0, 0.8, 0]} args={[0.4, 0.8, 0.3]}>
+          <meshStandardMaterial color="#4a90e2" />
+        </Box>
+        
+        {/* 頭部 */}
+        <Sphere position={[0, 1.4, 0]} args={[0.25]}>
+          <meshStandardMaterial color="#ffdbac" />
+        </Sphere>
+        
+        {/* 腿部 */}
+        <Box position={[-0.1, 0.2, 0]} args={[0.15, 0.4, 0.15]}>
+          <meshStandardMaterial color="#2c3e50" />
+        </Box>
+        <Box position={[0.1, 0.2, 0]} args={[0.15, 0.4, 0.15]}>
+          <meshStandardMaterial color="#2c3e50" />
+        </Box>
+        
+        {/* 手臂 */}
+        <Box position={[-0.3, 1.0, 0]} args={[0.12, 0.5, 0.12]}>
+          <meshStandardMaterial color="#ffdbac" />
+        </Box>
+        <Box position={[0.3, 1.0, 0]} args={[0.12, 0.5, 0.12]}>
+          <meshStandardMaterial color="#ffdbac" />
+        </Box>
+      </group>
+      
+      {/* 腳下指示圈 */}
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.4, 0.5, 16]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.6} />
       </mesh>
-      
-      {/* 旗子 */}
-      <Plane
-        position={[0.2, 0.8, 0]}
-        args={[0.4, 0.25]}
-        rotation={[0, 0, 0]}
-      >
-        <meshStandardMaterial
-          color={color}
-          transparent
-          opacity={0.9}
-          side={THREE.DoubleSide}
-        />
-      </Plane>
-      
-      {/* 旗子標籤 */}
-      <Html
-        position={[0, 1.2, 0]}
-        center
-        distanceFactor={10}
-        occlude
-      >
-        <div className={`
-          bg-black/80 backdrop-blur-sm rounded px-2 py-1 text-white text-xs
-          transition-all duration-200 pointer-events-none
-          ${hovered ? 'scale-110' : 'scale-100'}
-        `}>
-          {icon} {title}
-        </div>
-      </Html>
+
+      {/* 當前區域指示器 */}
+      {(() => {
+        const nearbySection = floorSections.find(section => {
+          const distance = Math.sqrt(
+            Math.pow(currentPosition[0] - section.position[0], 2) +
+            Math.pow(currentPosition[2] - section.position[2], 2)
+          );
+          return distance < section.tolerance;
+        });
+
+        return nearbySection ? (
+          <Html position={[0, 2.0, 0]} center>
+            <div className="bg-purple-600/90 backdrop-blur-sm rounded-lg px-4 py-2 text-white text-sm font-medium border border-purple-400/50 shadow-lg animate-pulse">
+              {nearbySection.section} - Press Enter
+            </div>
+          </Html>
+        ) : null;
+      })()}
     </group>
   );
 };
 
-// 相機控制器
-const CameraController: React.FC<{ currentSection: string; isLanded: boolean }> = ({ currentSection, isLanded }) => {
+// 3D圖標組件 - 放在紫色地毯上的簡潔圖標
+const InteractiveIcons: React.FC = () => {
+  const groupRefs = useRef<THREE.Group[]>([]);
+  
+  // 添加旋轉動畫
+  useFrame((state) => {
+    groupRefs.current.forEach((group, index) => {
+      if (group) {
+        group.rotation.y = Math.sin(state.clock.elapsedTime + index) * 0.1;
+        group.position.y = 0.5 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.05;
+      }
+    });
+  });
+
+  const iconSections = [
+    { position: [0, 0.5, 0], section: 'about', color: '#4a90e2', emoji: '👤', label: '關於我' },
+    { position: [2.5, 0.5, 2.5], section: 'experience', color: '#f39c12', emoji: '💼', label: '工作經驗' },
+    { position: [-2.5, 0.5, 2.5], section: 'projects', color: '#e74c3c', emoji: '🚀', label: '專案作品' },
+    { position: [2.5, 0.5, -2.5], section: 'skills', color: '#2ecc71', emoji: '⚡', label: '技能專長' },
+    { position: [-2.5, 0.5, -2.5], section: 'milestones', color: '#9b59b6', emoji: '🏆', label: '重要里程碑' },
+    { position: [0, 0.5, 3.5], section: 'traveling', color: '#1abc9c', emoji: '🌍', label: '旅行足跡' },
+    { position: [0, 0.5, -3.5], section: 'connect', color: '#34495e', emoji: '📧', label: '聯絡方式' },
+  ];
+
+  return (
+    <>
+      {iconSections.map((icon, index) => (
+        <group 
+          key={index} 
+          position={icon.position as [number, number, number]}
+          ref={(el) => {
+            if (el) groupRefs.current[index] = el;
+          }}
+        >
+          {/* 簡潔的 3D 圖標基座 */}
+          <mesh position={[0, 0, 0]}>
+            <cylinderGeometry args={[0.3, 0.4, 0.1, 8]} />
+            <meshStandardMaterial 
+              color={icon.color} 
+              transparent 
+              opacity={0.8}
+              emissive={icon.color}
+              emissiveIntensity={0.2}
+            />
+          </mesh>
+          
+          {/* 發光的中央球體 */}
+          <mesh position={[0, 0.2, 0]}>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshStandardMaterial 
+              color="#ffffff" 
+              transparent 
+              opacity={0.9}
+              emissive={icon.color}
+              emissiveIntensity={0.3}
+            />
+          </mesh>
+          
+          {/* 柔和的光暈效果 */}
+          <pointLight
+            position={[0, 0.5, 0]}
+            color={icon.color}
+            intensity={0.3}
+            distance={3}
+            decay={2}
+          />
+          
+          {/* 浮動標籤 - 只在接近時顯示 */}
+          <Html position={[0, 1, 0]} center distanceFactor={10}>
+            <div className="bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-xs pointer-events-none border border-white/20 shadow-lg transform -translate-y-full">
+              <div className="text-center">
+                <div className="text-lg mb-1">{icon.emoji}</div>
+                <div className="font-medium whitespace-nowrap">{icon.label}</div>
+              </div>
+            </div>
+          </Html>
+        </group>
+      ))}
+    </>
+  );
+};
+
+// 相機控制器 - 音樂會場地第三人稱視角
+const CameraController: React.FC<{ characterPosition: [number, number, number] }> = ({ characterPosition }) => {
   const { camera } = useThree();
   
-  useEffect(() => {
-    if (isLanded) {
-      // 著陸視角 - 更接近地面
-      camera.position.lerp(new THREE.Vector3(0, 2, 5), 0.05);
-      camera.lookAt(0, 0, 0);
-    } else {
-      // 宇宙航行視角
-      const positions: Record<string, [number, number, number]> = {
-        about: [0, 0, 15],
-        experience: [10, 3, 12],
-        projects: [-10, 3, 12],
-        skills: [0, 8, 15],
-        milestones: [8, -3, 12],
-        traveling: [-8, -3, 12],
-        connect: [0, -8, 15],
-      };
-
-      const targetPosition = positions[currentSection] || [0, 0, 15];
-      camera.position.lerp(new THREE.Vector3(...targetPosition), 0.05);
-      camera.lookAt(0, 0, 0);
-    }
-  }, [currentSection, isLanded, camera]);
+  useFrame(() => {
+    // 更低的第三人稱視角，模擬在音樂會場地中觀察的感覺
+    const targetPosition = new THREE.Vector3(
+      characterPosition[0] + 4,
+      characterPosition[1] + 3,
+      characterPosition[2] + 4
+    );
+    
+    // 更平滑的跟隨
+    camera.position.lerp(targetPosition, 0.03);
+    camera.lookAt(characterPosition[0], characterPosition[1] + 0.8, characterPosition[2]);
+  });
 
   return null;
 };
 
 // 主要3D場景
-const ThreeDScene: React.FC<{ currentSection: string }> = ({ currentSection }) => {
-  const { setCurrentSection } = useThreeD();
-  const [isLanded, setIsLanded] = useState(false);
+const ThreeDScene: React.FC<{ 
+  currentSection: string;
+  onSectionChange: (section: string | null) => void;
+  onContentDisplay: (section: string) => void;
+}> = ({ currentSection, onSectionChange, onContentDisplay }) => {
+  const [characterPosition, setCharacterPosition] = useState<[number, number, number]>([0, 0, 0]);
 
-  // 根據 mockData 定義星球
-  const sections = [
-    { 
-      id: 'about', 
-      title: '關於我', 
-      content: personalInfo.title, 
-      position: [0, 0, 0] as [number, number, number], 
-      color: '#4a90e2', 
-      size: 1.5,
-      useGLTF: true,
-      modelPath: '/models/earth/scene.gltf' // 修正的 GLTF 模型路徑
-    },
-    { 
-      id: 'experience', 
-      title: '工作經驗', 
-      content: `${experiences.length} 項經驗`, 
-      position: [8, 4, 0] as [number, number, number], 
-      color: '#f39c12', 
-      size: 1.2,
-      useGLTF: false,
-      textureUrl: '/images/textures/mars.jpg' // 預留圖片位置
-    },
-    { 
-      id: 'projects', 
-      title: '專案作品', 
-      content: `${projects.length} 項專案`, 
-      position: [-8, 4, 0] as [number, number, number], 
-      color: '#e74c3c', 
-      size: 1.3,
-      useGLTF: false,
-      textureUrl: '/images/textures/jupiter.jpg' // 預留圖片位置
-    },
-    { 
-      id: 'skills', 
-      title: '技能專長', 
-      content: `${skills.length} 項技能`, 
-      position: [0, 8, 0] as [number, number, number], 
-      color: '#2ecc71', 
-      size: 1.0,
-      useGLTF: false,
-      textureUrl: '/images/textures/venus.jpg' // 預留圖片位置
-    },
-    { 
-      id: 'milestones', 
-      title: '重要里程碑', 
-      content: `${milestones.length} 個里程碑`, 
-      position: [6, -4, 0] as [number, number, number], 
-      color: '#9b59b6', 
-      size: 0.9,
-      useGLTF: false,
-      textureUrl: '/images/textures/saturn.jpg' // 預留圖片位置
-    },
-    { 
-      id: 'traveling', 
-      title: '旅行足跡', 
-      content: '世界地圖', 
-      position: [-6, -4, 0] as [number, number, number], 
-      color: '#1abc9c', 
-      size: 0.9,
-      useGLTF: false,
-      textureUrl: '/images/textures/neptune.jpg' // 預留圖片位置
-    },
-    { 
-      id: 'connect', 
-      title: '聯絡方式', 
-      content: `${socialLinks.length} 個平台`, 
-      position: [0, -8, 0] as [number, number, number], 
-      color: '#34495e', 
-      size: 0.8,
-      useGLTF: false,
-      textureUrl: '/images/textures/mercury.jpg' // 預留圖片位置
-    }
-  ];
+  const handleSectionTrigger = useCallback((section: string | null) => {
+    onSectionChange(section);
+  }, [onSectionChange]);
 
-  const handlePlanetClick = (sectionId: string) => {
-    setCurrentSection(sectionId);
-    setIsLanded(true);
-    // 3秒後回到宇宙視角
-    setTimeout(() => setIsLanded(false), 3000);
-  };
+  const handleContentTrigger = useCallback((section: string) => {
+    onContentDisplay(section);
+  }, [onContentDisplay]);
 
-  // 地表上的旗子 - 根據不同 section 顯示不同內容
-  const getFlagsForSection = (sectionId: string) => {
-    switch (sectionId) {
-      case 'experience':
-        return experiences.slice(0, 4).map((exp, index) => ({
-          position: [index * 2 - 3, 0, 8] as [number, number, number],
-          color: '#f39c12',
-          title: exp.company,
-          icon: '🏢'
-        }));
-      case 'projects':
-        return projects.map((project, index) => ({
-          position: [index * 3 - 1.5, 0, 8] as [number, number, number],
-          color: '#e74c3c',
-          title: project.title,
-          icon: '🚀'
-        }));
-      case 'skills':
-        return skills.slice(0, 6).map((skill, index) => ({
-          position: [(index % 3) * 2 - 2, 0, 6 + Math.floor(index / 3) * 2] as [number, number, number],
-          color: '#2ecc71',
-          title: skill.name,
-          icon: '⚡'
-        }));
-      default:
-        return [
-          { position: [2, 0, 8] as [number, number, number], color: '#4a90e2', title: '技術能力', icon: '⚡' },
-          { position: [-2, 0, 8] as [number, number, number], color: '#e74c3c', title: '專案經驗', icon: '🚀' },
-          { position: [4, 0, 6] as [number, number, number], color: '#2ecc71', title: '學習成果', icon: '📚' },
-          { position: [-4, 0, 6] as [number, number, number], color: '#f39c12', title: '創新思維', icon: '💡' },
-          { position: [0, 0, 9] as [number, number, number], color: '#9b59b6', title: '團隊合作', icon: '🤝' },
-          { position: [3, 0, 4] as [number, number, number], color: '#1abc9c', title: '問題解決', icon: '🔧' },
-        ];
-    }
-  };
-
-  const flags = isLanded ? getFlagsForSection(currentSection) : [];
+  const handleCharacterMove = useCallback((newPosition: [number, number, number]) => {
+    setCharacterPosition(newPosition);
+  }, []);
 
   return (
     <>
-      {/* 深藍色星空背景 */}
-      <color attach="background" args={['#0a0e1a']} />
+      {/* 柔和的環境光照 */}
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[5, 10, 5]} intensity={0.5} color="#ffffff" />
       
-      {/* 星空環境 */}
-      <Stars radius={150} depth={80} count={8000} factor={6} saturation={0} fade speed={0.5} />
-      
-      {/* 光照設置 */}
-      <ambientLight intensity={0.3} />
-      <pointLight position={[20, 20, 20]} intensity={1.5} color="#ffffff" />
-      <pointLight position={[-20, -20, -20]} intensity={0.8} color="#4a90e2" />
-      <directionalLight position={[0, 50, 0]} intensity={0.5} color="#ffffff" />
-      
-      {/* 宇宙粒子 */}
-      <SpaceParticles />
-      
-      {/* 軌道控制器 - 允許拖拽旋轉 */}
-      <OrbitControls 
-        enablePan={true}
-        enableZoom={true}
-        enableRotate={true}
-        maxDistance={50}
-        minDistance={5}
-        autoRotate={!isLanded}
-        autoRotateSpeed={0.5}
+      {/* 舞台聚光燈效果 */}
+      <spotLight
+        position={[0, 8, 0]}
+        angle={Math.PI / 6}
+        penumbra={0.3}
+        intensity={1}
+        color="#ffffff"
+        target-position={[0, 0, 0]}
       />
       
+      {/* 3D 人物角色 */}
+      <Character 
+        position={[0, 0, 0]} 
+        onSectionTrigger={handleSectionTrigger}
+        onContentTrigger={handleContentTrigger}
+        onPositionChange={handleCharacterMove}
+      />
+      
+      {/* 簡潔的 3D 互動圖標 */}
+      <InteractiveIcons />
+      
       {/* 相機控制 */}
-      <CameraController currentSection={currentSection} isLanded={isLanded} />
-      
-      {/* 弧形地表 - 只在著陸時顯示 */}
-      <CurvedGround visible={isLanded} />
-      
-      {/* 星球（代表各個section） */}
-      {sections.map((section) => (
-        section.useGLTF ? (
-          <GLTFPlanet
-            key={section.id}
-            modelPath={section.modelPath!}
-            position={section.position}
-            scale={section.size}
-            onClick={() => handlePlanetClick(section.id)}
-            isActive={currentSection === section.id}
-            title={section.title}
-            content={section.content}
-            color={section.color}
-          />
-        ) : (
-          <Planet
-            key={section.id}
-            position={section.position}
-            color={section.color}
-            size={section.size}
-            title={section.title}
-            content={section.content}
-            onClick={() => handlePlanetClick(section.id)}
-            isActive={currentSection === section.id}
-            textureUrl={section.textureUrl}
-          />
-        )
-      ))}
-      
-      {/* 地表上的旗子 - 只在著陸時顯示 */}
-      {flags.map((flag, index) => (
-        <Flag
-          key={index}
-          position={flag.position}
-          color={flag.color}
-          title={flag.title}
-          icon={flag.icon}
-        />
-      ))}
+      <CameraController characterPosition={characterPosition} />
     </>
   );
 };
 
 // 主要3D容器組件
 const ThreeDContainer: React.FC = () => {
-  const { currentSection } = useThreeD();
+  const { currentSection, setCurrentSection } = useThreeD();
+  const [showContent, setShowContent] = useState(false);
+  const [contentSection, setContentSection] = useState<string>('');
+
+  const handleContentDisplay = (section: string) => {
+    setContentSection(section);
+    setShowContent(true);
+  };
+
+  const handleContentClose = () => {
+    setShowContent(false);
+    setContentSection('');
+  };
 
   return (
     <div className="fixed inset-0 w-full h-full bg-black">
-      <Canvas
-        camera={{ 
-          position: [0, 0, 15], 
-          fov: 60,
-          near: 0.1,
-          far: 1000
-        }}
-        gl={{ 
-          antialias: true,
-          alpha: true,
-          powerPreference: "high-performance"
-        }}
-      >
-        <ThreeDScene currentSection={currentSection} />
-      </Canvas>
+      {/* Sketchfab 音樂會場地背景 */}
+      <div className="absolute inset-0 w-full h-full">
+        <iframe 
+          title="MUSIC CONCERT FESTIVAL DJ SCENE INSTRUMENT 🎶🎸" 
+          className="w-full h-full"
+          frameBorder="0" 
+          allowFullScreen 
+          allow="autoplay; fullscreen; xr-spatial-tracking" 
+          src="https://sketchfab.com/models/a889e86112834c41950d85a6d629fe77/embed?ui_theme=dark&autostart=1&camera=0"
+        />
+      </div>
+      
+      {/* 3D 人物和交互場景 - 透明覆蓋層 */}
+      <div className="absolute inset-0 w-full h-full">
+        <Canvas
+          camera={{ 
+            position: [0, 3, 8], 
+            fov: 60,
+            near: 0.1,
+            far: 1000
+          }}
+          gl={{ 
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance"
+          }}
+        >
+          <ThreeDScene 
+            currentSection={currentSection} 
+            onSectionChange={(section) => {
+              if (section) {
+                setCurrentSection(section);
+              }
+            }}
+            onContentDisplay={handleContentDisplay}
+          />
+        </Canvas>
+      </div>
       
       {/* 3D 控制提示 */}
-      <div className="absolute bottom-4 left-4 text-white/70 text-sm">
-        <div>🖱️ 拖拽旋轉視角</div>
-        <div>🪐 點擊星球探索</div>
-        <div>🔍 滾輪縮放</div>
+      <div className="absolute bottom-4 left-4 text-white/70 text-sm z-10">
+        <div>⌨️ WASD/方向鍵在音樂會場地中移動</div>
+        <div>� 走到舞台區域按 Enter 查看內容</div>
+        <div>💫 探索不同的展示區域</div>
       </div>
+
+      {/* 內容顯示彈窗 */}
+      <AnimatePresence>
+        {showContent && (
+          <motion.div
+            initial={{ opacity: 0.5, scale: 0.8 }}
+            animate={{ opacity: 0.5, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={handleContentClose}
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0.5 }}
+              animate={{ y: 0, opacity: 0.5 }}
+              exit={{ y: 50, opacity: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl max-w-4xl max-h-[80vh] overflow-y-auto m-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ContentDisplay section={contentSection} onClose={handleContentClose} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
