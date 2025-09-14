@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import Navigation from '@/components/Navigation';
 import AboutSection from '@/components/AboutSection';
 import ExperienceSection from '@/components/ExperienceSection';
@@ -8,13 +9,17 @@ import ProjectsSection from '@/components/ProjectsSection';
 import MilestonesSection from '@/components/MilestonesSection';
 import TravelingSection from '@/components/TravelingSection';
 import ConnectSection from '@/components/ConnectSection';
+import ThreeDToggle from '@/components/ThreeDToggle';
+import ThreeDContainer from '@/components/ThreeDContainer';
 // import ThemeToggle from '@/components/ThemeToggle'; // 註解掉 theme toggle
 import { PortfolioViewModel, NavigationViewModel, ScrollViewModel } from '@/viewModels';
+import { useThreeD } from '@/contexts/ThreeDContext';
 
 export default function Home() {
   const [portfolioVM] = useState(() => PortfolioViewModel.getInstance());
   const [navigationVM] = useState(() => new NavigationViewModel());
   const [scrollVM] = useState(() => new ScrollViewModel());
+  const { is3DMode } = useThreeD();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,18 +50,29 @@ export default function Home() {
   return (
     // 註解掉 dark mode classes，只保留暗色設定
     <div className="min-h-screen bg-gradient-to-br from-background-primary via-background-primary to-background-secondary text-white transition-colors duration-300">
-      <Navigation navigationVM={navigationVM} scrollVM={scrollVM} />
-      {/* 註解掉 ThemeToggle */}
-      {/* <ThemeToggle /> */}
+      {/* 3D Toggle Button */}
+      <ThreeDToggle />
       
-      <main>
-        <AboutSection portfolioVM={portfolioVM} />
-        <ExperienceSection portfolioVM={portfolioVM} />
-        <ProjectsSection portfolioVM={portfolioVM} />
-        <MilestonesSection portfolioVM={portfolioVM} />
-        <TravelingSection />
-        <ConnectSection />
-      </main>
+      {/* 3D Mode */}
+      <AnimatePresence>
+        {is3DMode && <ThreeDContainer />}
+      </AnimatePresence>
+      
+      {/* Regular 2D Mode */}
+      <div className={is3DMode ? 'hidden' : 'block'}>
+        <Navigation navigationVM={navigationVM} scrollVM={scrollVM} />
+        {/* 註解掉 ThemeToggle */}
+        {/* <ThemeToggle /> */}
+        
+        <main>
+          <AboutSection portfolioVM={portfolioVM} />
+          <ExperienceSection portfolioVM={portfolioVM} />
+          <ProjectsSection portfolioVM={portfolioVM} />
+          <MilestonesSection portfolioVM={portfolioVM} />
+          <TravelingSection />
+          <ConnectSection />
+        </main>
+      </div>
     </div>
   );
 }
