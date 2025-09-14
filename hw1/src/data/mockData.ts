@@ -243,7 +243,7 @@ export const socialLinks: SocialLink[] = [
   },
   {
     platform: "Instagram",
-    url: "https://instagram.com/bchiang7",
+    url: "https://www.instagram.com/bohua19/",
     icon: "instagram"
   },
   {
