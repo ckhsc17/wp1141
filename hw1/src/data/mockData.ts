@@ -187,6 +187,41 @@ export const milestones: Milestone[] = [
   },
   {
     id: "12",
+    title: "First time being a live sound engineer",
+    description: "Experienced my first role as a live sound engineer, managing audio for live performances",
+    date: "2024",
+    type: "career",
+    icon: "FaRocket"
+  },
+  {
+    id: "13",
+    title: "Composed my first novel",
+    description: "Completed my debut novel, exploring creative writing and storytelling",
+    date: "2025",
+    type: "achievement",
+    icon: "FaBlog",
+    link: "/files/novel.pdf"
+  },
+  {
+    id: "14",
+    title: "Directed my first stage play",
+    description: "Successfully directed my first theatrical production, combining creativity with leadership",
+    date: "2025",
+    type: "achievement",
+    icon: "FaPlay",
+    link: "https://www.youtube.com/watch?v=vyMCwqeGdqo"
+  },
+  {
+    id: "15",
+    title: "First light dance performance",
+    description: "Performed my first light dance, combining technology and artistic expression",
+    date: "2025",
+    type: "achievement",
+    icon: "FaRocket",
+    link: "https://www.youtube.com/watch?v=YH_QWUGwiGA"
+  },
+  {
+    id: "16",
     title: "Market Department of SITCON",
     description: "Joined SITCON's Market Department, promoting tech conferences and community engagement",
     date: "2025",

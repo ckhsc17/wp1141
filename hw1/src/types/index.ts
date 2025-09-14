@@ -43,6 +43,7 @@ export interface Milestone {
   date: string;
   type: 'achievement' | 'life' | 'career' | 'education';
   icon?: string; // 新增 icon 欄位
+  link?: string; // 新增連結欄位
 }
 
 export interface SocialLink {

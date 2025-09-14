@@ -2,7 +2,7 @@
 
 A modern, responsive personal portfolio website built with Next.js, TypeScript, Tailwind CSS, and Framer Motion, following MVVM architecture principles. Intended to be neat and informative, letting people get to know important parts of me with a quick glance but can also find out more if they are interested. 
 
-*The theme toggle and 3D toggle are still in development, so it is not visible on the latest website. In the repo, however, the codes are still available for reference.
+*The theme toggle and 3D toggle are currently in "coming soon" mode - they are visually present with beautiful hover effects but the actual functionality is still in development. The complete code architecture is available in the repo for future implementation.
 
 ## Features
 
@@ -32,6 +32,7 @@ A modern, responsive personal portfolio website built with Next.js, TypeScript, 
 - **Icons**: React Icons
 - **Maps**: React Simple Maps (for travel section)
 - **Image Gallery**: React Image Gallery (for travel photos)
+- **Country Flags**: React Country Flag (for travel destinations)
 - **Architecture**: MVVM (Model-View-ViewModel)
 
 ## Getting Started
@@ -84,14 +85,17 @@ src/
 │   ├── SkillsSection.tsx        # Skills with category filtering
 │   ├── ExperienceSection.tsx    # Work experience timeline
 │   ├── ProjectsSection.tsx      # Featured projects with icons
-│   ├── MilestonesSection.tsx    # Personal milestones timeline
+│   ├── MilestonesSection.tsx    # Personal milestones timeline with links
 │   ├── TravelingSection.tsx     # Interactive world map with travel photos
 │   ├── ConnectSection.tsx       # Contact information
 │   ├── SocialIcon.tsx           # Social media icons
 │   ├── SocialLinks.tsx          # Social links component
-│   └── ThemeToggle.tsx          # Theme switching (if implemented)
+│   ├── ThemeToggle.tsx          # Theme switching (coming soon)
+│   ├── ThreeDContainer.tsx      # 3D experience container (coming soon)
+│   └── ThreeDToggle.tsx         # 3D mode toggle (coming soon)
 ├── contexts/           # React context providers
-│   └── ThemeContext.tsx        # Theme management
+│   ├── ThemeContext.tsx        # Theme management
+│   └── ThreeDContext.tsx       # 3D mode state management
 ├── viewModels/         # Business logic layer (MVVM)
 │   └── index.ts        # Portfolio ViewModel with data management
 ├── data/               # Mock data and content

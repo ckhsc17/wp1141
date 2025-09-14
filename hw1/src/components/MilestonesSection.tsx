@@ -12,7 +12,10 @@ import {
   FaBullhorn, 
   FaGuitar, 
   FaUsers, 
-  FaRocket 
+  FaRocket,
+  FaBlog,
+  FaPlay,
+  FaExternalLinkAlt
 } from 'react-icons/fa';
 import { PortfolioViewModel } from '@/viewModels';
 
@@ -36,7 +39,9 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ portfolioVM }) =>
       FaBullhorn,
       FaGuitar,
       FaUsers,
-      FaRocket
+      FaRocket,
+      FaBlog,
+      FaPlay
     };
 
     if (iconName && iconMap[iconName]) {
@@ -107,9 +112,21 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ portfolioVM }) =>
                   className="flex-1 bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors duration-300"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
-                    <h3 className="text-xl font-semibold text-white mb-2 sm:mb-0">
-                      {milestone.title}
-                    </h3>
+                    <div className="flex items-center mb-2 sm:mb-0">
+                      <h3 className="text-xl font-semibold text-white">
+                        {milestone.title}
+                      </h3>
+                      {milestone.link && (
+                        <a
+                          href={milestone.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-3 text-blue-400 hover:text-blue-300 transition-colors"
+                        >
+                          <FaExternalLinkAlt className="text-sm" />
+                        </a>
+                      )}
+                    </div>
                     <span className="text-sm font-mono text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full">
                       {milestone.date}
                     </span>
