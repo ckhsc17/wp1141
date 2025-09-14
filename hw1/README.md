@@ -2,6 +2,8 @@
 
 A modern, responsive personal portfolio website built with Next.js, TypeScript, Tailwind CSS, and Framer Motion, following MVVM architecture principles. Intended to be neat and informative, letting people get to know important parts of me with a quick glance but can also find out more if they are interested. 
 
+*The theme toggle and 3D toggle are still in development, so it is not visible on the latest website. In the repo, however, the codes are still available for reference.
+
 ## Features
 
 - **Modern Design**: Clean, professional design inspired by top developer portfolios

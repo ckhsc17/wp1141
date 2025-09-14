@@ -50,8 +50,8 @@ export default function Home() {
   return (
     // 註解掉 dark mode classes，只保留暗色設定
     <div className="min-h-screen bg-gradient-to-br from-background-primary via-background-primary to-background-secondary text-white transition-colors duration-300">
-      {/* 3D Toggle Button */}
-      <ThreeDToggle />
+      {/* 3D Toggle Button - 隱藏但保留功能 */}
+      {/* <ThreeDToggle /> */}
       
       {/* 3D Mode */}
       <AnimatePresence>
