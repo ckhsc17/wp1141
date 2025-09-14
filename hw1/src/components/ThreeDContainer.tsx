@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Box, Sphere, Html } from '@react-three/drei';
+import { Box, Sphere, Html, OrbitControls } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 import { useThreeD } from '../contexts/ThreeDContext';
@@ -270,8 +270,9 @@ const Character: React.FC<{
 }> = ({ position, onSectionTrigger, onContentTrigger, onPositionChange }) => {
   const characterRef = useRef<THREE.Group>(null);
   const [currentPosition, setCurrentPosition] = useState<[number, number, number]>(position);
-  const [targetPosition, setTargetPosition] = useState<[number, number, number]>(position);
+  const [velocity, setVelocity] = useState<[number, number, number]>([0, 0, 0]); // 添加速度狀態
   const [isMoving, setIsMoving] = useState(false);
+  const [keysPressed, setKeysPressed] = useState<Set<string>>(new Set()); // 追蹤按下的按鍵
 
   // 定義音樂會場地中紫色地毯區域的座標和對應的 section
   const floorSections = [
@@ -284,73 +285,100 @@ const Character: React.FC<{
     { position: [0, 0, -3.5], section: 'connect', color: '#34495e', tolerance: 1.0 },     // 後方中央地毯
   ];
 
-  // 鍵盤控制
+  // 鍵盤控制 - 改為連續移動
   useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (isMoving) return;
-
-      const moveDistance = 1;
-      let newTarget: [number, number, number] = [...currentPosition];
-
-      switch (event.key.toLowerCase()) {
-        case 'w':
-        case 'arrowup':
-          newTarget[2] -= moveDistance;
-          break;
-        case 's':
-        case 'arrowdown':
-          newTarget[2] += moveDistance;
-          break;
-        case 'a':
-        case 'arrowleft':
-          newTarget[0] -= moveDistance;
-          break;
-        case 'd':
-        case 'arrowright':
-          newTarget[0] += moveDistance;
-          break;
-        case 'enter':
-          // 處理 Enter 鍵 - 顯示當前區域內容
-          const nearbySection = floorSections.find(section => {
-            const distance = Math.sqrt(
-              Math.pow(currentPosition[0] - section.position[0], 2) +
-              Math.pow(currentPosition[2] - section.position[2], 2)
-            );
-            return distance < section.tolerance;
-          });
-          if (nearbySection) {
-            console.log(`Displaying content for section: ${nearbySection.section}`);
-            onContentTrigger(nearbySection.section);
-          }
-          return;
-        default:
-          return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if (['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+        setKeysPressed(prev => new Set(prev).add(key));
+        setIsMoving(true);
       }
-
-      // 限制移動範圍（擴大範圍讓人物可以在音樂會場地中自由移動）
-      newTarget[0] = Math.max(-6, Math.min(6, newTarget[0]));
-      newTarget[2] = Math.max(-6, Math.min(6, newTarget[2]));
-
-      setTargetPosition(newTarget);
-      setIsMoving(true);
+      
+      if (key === 'enter') {
+        // 處理 Enter 鍵 - 顯示當前區域內容
+        const nearbySection = floorSections.find(section => {
+          const distance = Math.sqrt(
+            Math.pow(currentPosition[0] - section.position[0], 2) +
+            Math.pow(currentPosition[2] - section.position[2], 2)
+          );
+          return distance < section.tolerance;
+        });
+        if (nearbySection) {
+          console.log(`Displaying content for section: ${nearbySection.section}`);
+          onContentTrigger(nearbySection.section);
+        }
+      }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentPosition, isMoving, floorSections, onContentTrigger]);
+    const handleKeyUp = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      setKeysPressed(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(key);
+        
+        // 檢查新的 set 是否還有移動鍵
+        const hasMovementKeys = Array.from(newSet).some(k => 
+          ['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)
+        );
+        
+        if (!hasMovementKeys) {
+          setIsMoving(false);
+          setVelocity([0, 0, 0]);
+        }
+        
+        return newSet;
+      });
+    };
 
-  // 角色移動動畫
-  useFrame(() => {
-    if (characterRef.current && isMoving) {
-      const current = new THREE.Vector3(...currentPosition);
-      const target = new THREE.Vector3(...targetPosition);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [currentPosition, keysPressed, floorSections, onContentTrigger]);
+
+  // 角色移動動畫 - 連續平滑移動
+  useFrame((state, delta) => {
+    if (characterRef.current) {
+      // 計算當前幀的移動速度
+      const moveSpeed = 3; // 移動速度
+      let newVelocity: [number, number, number] = [0, 0, 0];
       
-      current.lerp(target, 0.1);
+      // 根據按下的按鍵計算速度
+      if (keysPressed.has('w') || keysPressed.has('arrowup')) {
+        newVelocity[2] -= moveSpeed;
+      }
+      if (keysPressed.has('s') || keysPressed.has('arrowdown')) {
+        newVelocity[2] += moveSpeed;
+      }
+      if (keysPressed.has('a') || keysPressed.has('arrowleft')) {
+        newVelocity[0] -= moveSpeed;
+      }
+      if (keysPressed.has('d') || keysPressed.has('arrowright')) {
+        newVelocity[0] += moveSpeed;
+      }
       
-      if (current.distanceTo(target) < 0.01) {
-        const newPosition: [number, number, number] = [targetPosition[0], targetPosition[1], targetPosition[2]];
+      // 對角線移動時速度正規化
+      if (newVelocity[0] !== 0 && newVelocity[2] !== 0) {
+        const normalizedSpeed = moveSpeed / Math.sqrt(2);
+        newVelocity[0] = newVelocity[0] > 0 ? normalizedSpeed : -normalizedSpeed;
+        newVelocity[2] = newVelocity[2] > 0 ? normalizedSpeed : -normalizedSpeed;
+      }
+      
+      setVelocity(newVelocity);
+      
+      // 應用移動
+      if (newVelocity[0] !== 0 || newVelocity[2] !== 0) {
+        const newPosition: [number, number, number] = [
+          Math.max(-6, Math.min(6, currentPosition[0] + newVelocity[0] * delta)),
+          currentPosition[1],
+          Math.max(-6, Math.min(6, currentPosition[2] + newVelocity[2] * delta))
+        ];
+        
         setCurrentPosition(newPosition);
-        setIsMoving(false);
+        characterRef.current.position.set(newPosition[0], newPosition[1], newPosition[2]);
         
         // 通知父組件位置變化
         if (onPositionChange) {
@@ -360,24 +388,14 @@ const Character: React.FC<{
         // 檢查是否到達特定位置
         const nearbySection = floorSections.find(section => {
           const distance = Math.sqrt(
-            Math.pow(targetPosition[0] - section.position[0], 2) +
-            Math.pow(targetPosition[2] - section.position[2], 2)
+            Math.pow(newPosition[0] - section.position[0], 2) +
+            Math.pow(newPosition[2] - section.position[2], 2)
           );
           return distance < section.tolerance;
         });
         
         onSectionTrigger(nearbySection ? nearbySection.section : null);
-      } else {
-        const newPosition: [number, number, number] = [current.x, current.y, current.z];
-        setCurrentPosition(newPosition);
-        
-        // 通知父組件位置變化
-        if (onPositionChange) {
-          onPositionChange(newPosition);
-        }
       }
-      
-      characterRef.current.position.set(current.x, current.y, current.z);
     }
   });
 
@@ -440,20 +458,9 @@ const Character: React.FC<{
   );
 };
 
-// 3D圖標組件 - 直接使用 emoji 作為圖標
+// 3D圖標組件 - 直接使用 emoji 作為圖標，固定位置
 const InteractiveIcons: React.FC = () => {
-  const groupRefs = useRef<THREE.Group[]>([]);
-  
-  // 添加旋轉動畫
-  useFrame((state) => {
-    groupRefs.current.forEach((group, index) => {
-      if (group) {
-        group.rotation.y = Math.sin(state.clock.elapsedTime + index) * 0.1;
-        group.position.y = 0.15 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.03; // 輕微上下浮動
-      }
-    });
-  });
-
+  // 🎯 在這裡調整圖標座標 - 對應到 iframe 背景的地毯位置
   const iconSections = [
     { position: [100, 0.15, 10], section: 'about', color: '#4a90e2', emoji: '👤', label: '關於我' },
     { position: [2.5, 0.15, 2.5], section: 'experience', color: '#f39c12', emoji: '💼', label: '工作經驗' },
@@ -470,11 +477,8 @@ const InteractiveIcons: React.FC = () => {
         <group 
           key={index} 
           position={icon.position as [number, number, number]}
-          ref={(el) => {
-            if (el) groupRefs.current[index] = el;
-          }}
         >
-          {/* 直接顯示 emoji 圖標 */}
+          {/* 直接顯示 emoji 圖標 - 固定位置 */}
           <Html position={[0, 0, 0]} center distanceFactor={8}>
             <div className="text-6xl select-none pointer-events-none transform -translate-y-1/2">
               {icon.emoji}
@@ -493,26 +497,6 @@ const InteractiveIcons: React.FC = () => {
       ))}
     </>
   );
-};
-
-// 相機控制器 - 音樂會場地第三人稱視角
-const CameraController: React.FC<{ characterPosition: [number, number, number] }> = ({ characterPosition }) => {
-  const { camera } = useThree();
-  
-  useFrame(() => {
-    // 更低的第三人稱視角，模擬在音樂會場地中觀察的感覺
-    const targetPosition = new THREE.Vector3(
-      characterPosition[0] + 4,
-      characterPosition[1] + 3,
-      characterPosition[2] + 4
-    );
-    
-    // 更平滑的跟隨
-    camera.position.lerp(targetPosition, 0.03);
-    camera.lookAt(characterPosition[0], characterPosition[1] + 0.5, characterPosition[2]); // 調整視線高度
-  });
-
-  return null;
 };
 
 // 主要3D場景
@@ -562,8 +546,15 @@ const ThreeDScene: React.FC<{
       {/* 簡潔的 3D 互動圖標 */}
       <InteractiveIcons />
       
-      {/* 相機控制 */}
-      <CameraController characterPosition={characterPosition} />
+      {/* 自由視角控制 - 可以旋轉和縮放來觀察角色移動 */}
+      <OrbitControls 
+        enableZoom={true}
+        enablePan={true}
+        enableRotate={true}
+        minDistance={5}
+        maxDistance={20}
+        maxPolarAngle={Math.PI / 2}
+      />
     </>
   );
 };
