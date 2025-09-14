@@ -44,14 +44,14 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
 
   return (
     <section id="about" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-20 pt-20">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-5 gap-8 items-center">
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-center">
           {/* Left side - Main content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="space-y-6 lg:col-span-3"
+            className="space-y-6 lg:col-span-3 order-2 lg:order-1"
           >
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -65,7 +65,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gray-100"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-100"
             >
               {personalInfo.name}
             </motion.h1>
@@ -74,7 +74,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-400"
+              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-400"
             >
               {personalInfo.title}
             </motion.h2>
@@ -83,7 +83,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-base text-gray-400 max-w-2xl leading-relaxed min-h-[120px] flex flex-col justify-start"
+              className="text-sm sm:text-base text-gray-400 max-w-2xl leading-relaxed min-h-[120px] flex flex-col justify-start"
             >
               {isLoading ? (
                 // 載入中的骨架屏，避免跑版
@@ -109,16 +109,15 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
               transition={{ delay: 0.6 }}
               className="space-y-4"
             >
-              <h3 className="text-lg font-semibold text-gray-300">Core Technologies</h3>
-              <div className="flex flex-wrap gap-3">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-300">Core Technologies</h3>
+              <div className="flex flex-wrap gap-2 sm:gap-3">
                 {portfolioVM.skills.map((skill, index) => (
                   <motion.span
                     key={skill.name}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.7 + index * 0.05 }}
-                    // 註解掉 theme 相關的 class，只保留暗色設定
-                    className="px-3 py-1 bg-blue-400/10 text-blue-400 rounded-full text-sm font-mono border border-blue-400/20"
+                    className="px-2 sm:px-3 py-1 bg-blue-400/10 text-blue-400 rounded-full text-xs sm:text-sm font-mono border border-blue-400/20"
                   >
                     {skill.name}
                   </motion.span>
@@ -132,12 +131,12 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:flex flex-col justify-center items-center hidden lg:col-span-2"
+            className="flex flex-col justify-center items-center lg:col-span-2 order-1 lg:order-2 mb-8 lg:mb-0"
           >
             <div className="relative">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="w-80 h-80 relative overflow-hidden rounded-lg"
+                className="w-64 h-64 sm:w-72 sm:h-72 lg:w-80 lg:h-80 relative overflow-hidden rounded-lg"
               >
                 <div className="relative w-full h-full bg-gradient-to-br from-primary-400/20 to-primary-600/20 border border-primary-400/30 rounded-lg">
                   {personalInfo.profileImage ? (

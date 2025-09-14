@@ -1,0 +1,35 @@
+{
+  "name": "Bowen Chen - Portfolio",
+  "short_name": "Bowen Chen",
+  "description": "Personal portfolio of Bowen Chen, Backend Engineer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/profile.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/profile.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["portfolio", "developer", "engineering"],
+  "lang": "en",
+  "scope": "/",
+  "screenshots": [
+    {
+      "src": "/images/profile.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    }
+  ]
+}

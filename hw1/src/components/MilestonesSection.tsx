@@ -95,7 +95,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ portfolioVM }) =>
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
+                transition={{ duration: 0.3}}
                 className="relative flex items-start space-x-6"
               >
                 {/* Timeline dot */}
@@ -108,7 +108,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ portfolioVM }) =>
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.2 + 0.2 }}
+                  transition={{ duration: 0.2}}
                   className="flex-1 bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors duration-300"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
