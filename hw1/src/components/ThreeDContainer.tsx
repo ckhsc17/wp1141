@@ -2,9 +2,10 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, Stars, Sky, Sphere, Plane, Points } from '@react-three/drei';
+import { Html, Stars, Sphere, Plane, OrbitControls, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { useThreeD } from '@/contexts/ThreeDContext';
+import { personalInfo, experiences, projects, skills, milestones, socialLinks } from '@/data/mockData';
 
 // 宇宙粒子效果
 const SpaceParticles: React.FC = () => {
@@ -52,6 +53,92 @@ const SpaceParticles: React.FC = () => {
   );
 };
 
+// GLTF 星球組件
+const GLTFPlanet: React.FC<{
+  modelPath: string;
+  position: [number, number, number];
+  scale?: number;
+  onClick: () => void;
+  isActive: boolean;
+  title: string;
+  content: string;
+  color: string;
+}> = ({ modelPath, position, scale = 1, onClick, isActive, title, content, color }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const [hovered, setHovered] = useState(false);
+  
+  // 載入 GLTF 模型
+  const { scene } = useGLTF(modelPath);
+  
+  // 複製場景以避免多次使用同一模型的問題
+  const clonedScene = scene.clone();
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += 0.01;
+    }
+  });
+
+  return (
+    <group 
+      ref={groupRef}
+      position={position}
+      scale={[scale, scale, scale]}
+      onClick={onClick}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+    >
+      {/* GLTF 模型 */}
+      <primitive object={clonedScene} />
+      
+      {/* 星球光環 */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[scale * 1.2, scale * 1.4, 32]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={hovered || isActive ? 0.4 : 0.15}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      
+      {/* 星球標籤 */}
+      <Html
+        position={[0, scale + 0.8, 0]}
+        center
+        distanceFactor={12}
+        occlude
+      >
+        <div className="bg-black/90 backdrop-blur-sm rounded-lg p-3 text-white text-center pointer-events-none border border-white/20">
+          <div className="font-bold text-base">{title}</div>
+          <div className="text-sm text-gray-300 mt-1">{content}</div>
+        </div>
+      </Html>
+      
+      {/* 粒子效果 */}
+      {(hovered || isActive) && (
+        <points>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              count={100}
+              array={new Float32Array(300).map(() => (Math.random() - 0.5) * scale * 4)}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <pointsMaterial
+            size={0.03}
+            color={color}
+            transparent
+            opacity={0.8}
+            sizeAttenuation
+          />
+        </points>
+      )}
+    </group>
+  );
+};
+
 // 星球組件
 const Planet: React.FC<{
   position: [number, number, number];
@@ -61,7 +148,8 @@ const Planet: React.FC<{
   content: string;
   onClick: () => void;
   isActive: boolean;
-}> = ({ position, color, size, title, content, onClick, isActive }) => {
+  textureUrl?: string;
+}> = ({ position, color, size, title, content, onClick, isActive, textureUrl }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -80,36 +168,48 @@ const Planet: React.FC<{
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <meshStandardMaterial
-          color={color}
-          transparent
-          opacity={0.8}
-          emissive={hovered || isActive ? color : '#000000'}
-          emissiveIntensity={hovered || isActive ? 0.2 : 0}
-        />
+        {textureUrl ? (
+          <meshStandardMaterial
+            map={new THREE.TextureLoader().load(textureUrl)}
+            transparent
+            opacity={0.9}
+            emissive={hovered || isActive ? color : '#000000'}
+            emissiveIntensity={hovered || isActive ? 0.1 : 0}
+          />
+        ) : (
+          <meshStandardMaterial
+            color={color}
+            transparent
+            opacity={0.8}
+            emissive={hovered || isActive ? color : '#000000'}
+            emissiveIntensity={hovered || isActive ? 0.2 : 0}
+            roughness={0.3}
+            metalness={0.1}
+          />
+        )}
       </Sphere>
       
-      {/* 星球光環 */}
+      {/* 星球光環 - 更精緻的效果 */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[size * 1.5, size * 1.8, 32]} />
+        <ringGeometry args={[size * 1.2, size * 1.4, 32]} />
         <meshBasicMaterial
           color={color}
           transparent
-          opacity={hovered || isActive ? 0.3 : 0.1}
+          opacity={hovered || isActive ? 0.4 : 0.15}
           side={THREE.DoubleSide}
         />
       </mesh>
       
       {/* 星球標籤 */}
       <Html
-        position={[0, size + 0.5, 0]}
+        position={[0, size + 0.8, 0]}
         center
-        distanceFactor={15}
+        distanceFactor={12}
         occlude
       >
-        <div className="bg-black/80 backdrop-blur-sm rounded-lg p-2 text-white text-center pointer-events-none">
-          <div className="font-bold text-sm">{title}</div>
-          <div className="text-xs text-gray-300 mt-1">{content}</div>
+        <div className="bg-black/90 backdrop-blur-sm rounded-lg p-3 text-white text-center pointer-events-none border border-white/20">
+          <div className="font-bold text-base">{title}</div>
+          <div className="text-sm text-gray-300 mt-1">{content}</div>
         </div>
       </Html>
       
@@ -125,10 +225,10 @@ const Planet: React.FC<{
             />
           </bufferGeometry>
           <pointsMaterial
-            size={0.02}
+            size={0.03}
             color={color}
             transparent
-            opacity={0.6}
+            opacity={0.8}
             sizeAttenuation
           />
         </points>
@@ -137,26 +237,28 @@ const Planet: React.FC<{
   );
 };
 
-// 弧形地表
-const CurvedGround: React.FC = () => {
+// 弧形地表（只在點擊星球時顯示）
+const CurvedGround: React.FC<{ visible: boolean }> = ({ visible }) => {
+  if (!visible) return null;
+  
   return (
-    <group position={[0, -20, 0]}>
-      {/* 主要地表球體 */}
-      <Sphere args={[20, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2]}>
+    <group position={[0, -10, 0]}>
+      {/* 主要地表球體 - 調整弧度 */}
+      <Sphere args={[15, 64, 32, 0, Math.PI * 2, 0, Math.PI / 3]}>
         <meshStandardMaterial
-          color="#1a1a2e"
+          color="#2a2a3e"
           transparent
-          opacity={0.3}
+          opacity={0.4}
           wireframe={false}
         />
       </Sphere>
       
       {/* 地表線框 */}
-      <Sphere args={[20.1, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]}>
+      <Sphere args={[15.1, 32, 16, 0, Math.PI * 2, 0, Math.PI / 3]}>
         <meshBasicMaterial
           color="#4a90e2"
           transparent
-          opacity={0.2}
+          opacity={0.3}
           wireframe
         />
       </Sphere>
@@ -230,31 +332,31 @@ const Flag: React.FC<{
 };
 
 // 相機控制器
-const CameraController: React.FC<{ currentSection: string }> = ({ currentSection }) => {
+const CameraController: React.FC<{ currentSection: string; isLanded: boolean }> = ({ currentSection, isLanded }) => {
   const { camera } = useThree();
   
   useEffect(() => {
-    const positions: Record<string, [number, number, number]> = {
-      about: [0, 0, 10],
-      experience: [8, 2, 8],
-      projects: [-8, 2, 8],
-      skills: [0, 5, 10],
-      milestones: [5, -2, 10],
-      traveling: [-5, -2, 10],
-      connect: [0, -5, 10],
-    };
+    if (isLanded) {
+      // 著陸視角 - 更接近地面
+      camera.position.lerp(new THREE.Vector3(0, 2, 5), 0.05);
+      camera.lookAt(0, 0, 0);
+    } else {
+      // 宇宙航行視角
+      const positions: Record<string, [number, number, number]> = {
+        about: [0, 0, 15],
+        experience: [10, 3, 12],
+        projects: [-10, 3, 12],
+        skills: [0, 8, 15],
+        milestones: [8, -3, 12],
+        traveling: [-8, -3, 12],
+        connect: [0, -8, 15],
+      };
 
-    const targetPosition = positions[currentSection] || [0, 0, 10];
-    
-    // 平滑移動相機
-    const animateCamera = () => {
+      const targetPosition = positions[currentSection] || [0, 0, 15];
       camera.position.lerp(new THREE.Vector3(...targetPosition), 0.05);
       camera.lookAt(0, 0, 0);
-    };
-
-    const interval = setInterval(animateCamera, 16);
-    return () => clearInterval(interval);
-  }, [currentSection, camera]);
+    }
+  }, [currentSection, isLanded, camera]);
 
   return null;
 };
@@ -262,61 +364,191 @@ const CameraController: React.FC<{ currentSection: string }> = ({ currentSection
 // 主要3D場景
 const ThreeDScene: React.FC<{ currentSection: string }> = ({ currentSection }) => {
   const { setCurrentSection } = useThreeD();
+  const [isLanded, setIsLanded] = useState(false);
 
+  // 根據 mockData 定義星球
   const sections = [
-    { id: 'about', title: '關於我', content: '個人介紹', position: [0, 0, 0] as [number, number, number], color: '#4a90e2', size: 1.2 },
-    { id: 'experience', title: '工作經驗', content: '職業生涯', position: [6, 3, 0] as [number, number, number], color: '#f39c12', size: 1.0 },
-    { id: 'projects', title: '專案作品', content: '作品集', position: [-6, 3, 0] as [number, number, number], color: '#e74c3c', size: 1.1 },
-    { id: 'skills', title: '技能專長', content: '技術能力', position: [0, 6, 0] as [number, number, number], color: '#2ecc71', size: 0.9 },
-    { id: 'milestones', title: '重要里程碑', content: '成就時刻', position: [4, -3, 0] as [number, number, number], color: '#9b59b6', size: 0.8 },
-    { id: 'traveling', title: '旅行足跡', content: '世界地圖', position: [-4, -3, 0] as [number, number, number], color: '#1abc9c', size: 0.8 },
-    { id: 'connect', title: '聯絡方式', content: '取得聯繫', position: [0, -6, 0] as [number, number, number], color: '#34495e', size: 0.7 }
+    { 
+      id: 'about', 
+      title: '關於我', 
+      content: personalInfo.title, 
+      position: [0, 0, 0] as [number, number, number], 
+      color: '#4a90e2', 
+      size: 1.5,
+      useGLTF: true,
+      modelPath: '/models/earth/scene.gltf' // 修正的 GLTF 模型路徑
+    },
+    { 
+      id: 'experience', 
+      title: '工作經驗', 
+      content: `${experiences.length} 項經驗`, 
+      position: [8, 4, 0] as [number, number, number], 
+      color: '#f39c12', 
+      size: 1.2,
+      useGLTF: false,
+      textureUrl: '/images/textures/mars.jpg' // 預留圖片位置
+    },
+    { 
+      id: 'projects', 
+      title: '專案作品', 
+      content: `${projects.length} 項專案`, 
+      position: [-8, 4, 0] as [number, number, number], 
+      color: '#e74c3c', 
+      size: 1.3,
+      useGLTF: false,
+      textureUrl: '/images/textures/jupiter.jpg' // 預留圖片位置
+    },
+    { 
+      id: 'skills', 
+      title: '技能專長', 
+      content: `${skills.length} 項技能`, 
+      position: [0, 8, 0] as [number, number, number], 
+      color: '#2ecc71', 
+      size: 1.0,
+      useGLTF: false,
+      textureUrl: '/images/textures/venus.jpg' // 預留圖片位置
+    },
+    { 
+      id: 'milestones', 
+      title: '重要里程碑', 
+      content: `${milestones.length} 個里程碑`, 
+      position: [6, -4, 0] as [number, number, number], 
+      color: '#9b59b6', 
+      size: 0.9,
+      useGLTF: false,
+      textureUrl: '/images/textures/saturn.jpg' // 預留圖片位置
+    },
+    { 
+      id: 'traveling', 
+      title: '旅行足跡', 
+      content: '世界地圖', 
+      position: [-6, -4, 0] as [number, number, number], 
+      color: '#1abc9c', 
+      size: 0.9,
+      useGLTF: false,
+      textureUrl: '/images/textures/neptune.jpg' // 預留圖片位置
+    },
+    { 
+      id: 'connect', 
+      title: '聯絡方式', 
+      content: `${socialLinks.length} 個平台`, 
+      position: [0, -8, 0] as [number, number, number], 
+      color: '#34495e', 
+      size: 0.8,
+      useGLTF: false,
+      textureUrl: '/images/textures/mercury.jpg' // 預留圖片位置
+    }
   ];
 
-  const flags = [
-    { position: [2, 0, 8] as [number, number, number], color: '#4a90e2', title: '技術能力', icon: '⚡' },
-    { position: [-2, 0, 8] as [number, number, number], color: '#e74c3c', title: '專案經驗', icon: '🚀' },
-    { position: [4, 0, 6] as [number, number, number], color: '#2ecc71', title: '學習成果', icon: '📚' },
-    { position: [-4, 0, 6] as [number, number, number], color: '#f39c12', title: '創新思維', icon: '💡' },
-    { position: [0, 0, 9] as [number, number, number], color: '#9b59b6', title: '團隊合作', icon: '🤝' },
-    { position: [3, 0, 4] as [number, number, number], color: '#1abc9c', title: '問題解決', icon: '🔧' },
-  ];
+  const handlePlanetClick = (sectionId: string) => {
+    setCurrentSection(sectionId);
+    setIsLanded(true);
+    // 3秒後回到宇宙視角
+    setTimeout(() => setIsLanded(false), 3000);
+  };
+
+  // 地表上的旗子 - 根據不同 section 顯示不同內容
+  const getFlagsForSection = (sectionId: string) => {
+    switch (sectionId) {
+      case 'experience':
+        return experiences.slice(0, 4).map((exp, index) => ({
+          position: [index * 2 - 3, 0, 8] as [number, number, number],
+          color: '#f39c12',
+          title: exp.company,
+          icon: '🏢'
+        }));
+      case 'projects':
+        return projects.map((project, index) => ({
+          position: [index * 3 - 1.5, 0, 8] as [number, number, number],
+          color: '#e74c3c',
+          title: project.title,
+          icon: '🚀'
+        }));
+      case 'skills':
+        return skills.slice(0, 6).map((skill, index) => ({
+          position: [(index % 3) * 2 - 2, 0, 6 + Math.floor(index / 3) * 2] as [number, number, number],
+          color: '#2ecc71',
+          title: skill.name,
+          icon: '⚡'
+        }));
+      default:
+        return [
+          { position: [2, 0, 8] as [number, number, number], color: '#4a90e2', title: '技術能力', icon: '⚡' },
+          { position: [-2, 0, 8] as [number, number, number], color: '#e74c3c', title: '專案經驗', icon: '🚀' },
+          { position: [4, 0, 6] as [number, number, number], color: '#2ecc71', title: '學習成果', icon: '📚' },
+          { position: [-4, 0, 6] as [number, number, number], color: '#f39c12', title: '創新思維', icon: '💡' },
+          { position: [0, 0, 9] as [number, number, number], color: '#9b59b6', title: '團隊合作', icon: '🤝' },
+          { position: [3, 0, 4] as [number, number, number], color: '#1abc9c', title: '問題解決', icon: '🔧' },
+        ];
+    }
+  };
+
+  const flags = isLanded ? getFlagsForSection(currentSection) : [];
 
   return (
     <>
-      {/* 環境設置 */}
-      <Sky sunPosition={[100, 20, 100]} />
-      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+      {/* 深藍色星空背景 */}
+      <color attach="background" args={['#0a0e1a']} />
       
-      {/* 光照 */}
-      <ambientLight intensity={0.4} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-      <pointLight position={[-10, -10, -10]} intensity={0.5} color="#4a90e2" />
+      {/* 星空環境 */}
+      <Stars radius={150} depth={80} count={8000} factor={6} saturation={0} fade speed={0.5} />
+      
+      {/* 光照設置 */}
+      <ambientLight intensity={0.3} />
+      <pointLight position={[20, 20, 20]} intensity={1.5} color="#ffffff" />
+      <pointLight position={[-20, -20, -20]} intensity={0.8} color="#4a90e2" />
+      <directionalLight position={[0, 50, 0]} intensity={0.5} color="#ffffff" />
       
       {/* 宇宙粒子 */}
       <SpaceParticles />
       
-      {/* 相機控制 */}
-      <CameraController currentSection={currentSection} />
+      {/* 軌道控制器 - 允許拖拽旋轉 */}
+      <OrbitControls 
+        enablePan={true}
+        enableZoom={true}
+        enableRotate={true}
+        maxDistance={50}
+        minDistance={5}
+        autoRotate={!isLanded}
+        autoRotateSpeed={0.5}
+      />
       
-      {/* 弧形地表 */}
-      <CurvedGround />
+      {/* 相機控制 */}
+      <CameraController currentSection={currentSection} isLanded={isLanded} />
+      
+      {/* 弧形地表 - 只在著陸時顯示 */}
+      <CurvedGround visible={isLanded} />
       
       {/* 星球（代表各個section） */}
       {sections.map((section) => (
-        <Planet
-          key={section.id}
-          position={section.position}
-          color={section.color}
-          size={section.size}
-          title={section.title}
-          content={section.content}
-          onClick={() => setCurrentSection(section.id)}
-          isActive={currentSection === section.id}
-        />
+        section.useGLTF ? (
+          <GLTFPlanet
+            key={section.id}
+            modelPath={section.modelPath!}
+            position={section.position}
+            scale={section.size}
+            onClick={() => handlePlanetClick(section.id)}
+            isActive={currentSection === section.id}
+            title={section.title}
+            content={section.content}
+            color={section.color}
+          />
+        ) : (
+          <Planet
+            key={section.id}
+            position={section.position}
+            color={section.color}
+            size={section.size}
+            title={section.title}
+            content={section.content}
+            onClick={() => handlePlanetClick(section.id)}
+            isActive={currentSection === section.id}
+            textureUrl={section.textureUrl}
+          />
+        )
       ))}
       
-      {/* 地表上的旗子 */}
+      {/* 地表上的旗子 - 只在著陸時顯示 */}
       {flags.map((flag, index) => (
         <Flag
           key={index}
@@ -338,8 +570,8 @@ const ThreeDContainer: React.FC = () => {
     <div className="fixed inset-0 w-full h-full bg-black">
       <Canvas
         camera={{ 
-          position: [0, 0, 10], 
-          fov: 75,
+          position: [0, 0, 15], 
+          fov: 60,
           near: 0.1,
           far: 1000
         }}
@@ -351,6 +583,13 @@ const ThreeDContainer: React.FC = () => {
       >
         <ThreeDScene currentSection={currentSection} />
       </Canvas>
+      
+      {/* 3D 控制提示 */}
+      <div className="absolute bottom-4 left-4 text-white/70 text-sm">
+        <div>🖱️ 拖拽旋轉視角</div>
+        <div>🪐 點擊星球探索</div>
+        <div>🔍 滾輪縮放</div>
+      </div>
     </div>
   );
 };
