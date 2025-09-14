@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { PortfolioViewModel } from '@/viewModels';
+import { SocialLinks } from './SocialLinks';
 import { SocialIcon } from './SocialIcon';
+import { analytics } from '@/utils/analytics';
 
 interface AboutSectionProps {
   portfolioVM: PortfolioViewModel;
@@ -189,6 +191,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ portfolioVM }) => {
                 href="/files/resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => analytics.trackDownload('resume.pdf')}
                 // 註解掉 theme 相關的 class，只保留暗色設定
                 className="inline-flex items-center px-6 py-2 bg-blue-500 text-white rounded font-mono text-sm shadow hover:bg-blue-600 transition-colors duration-200"
               >

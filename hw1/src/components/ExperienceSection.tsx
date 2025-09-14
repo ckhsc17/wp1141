@@ -38,16 +38,18 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({ portfolioVM }) =>
               className="relative"
             >
               <div className="bg-background-secondary/50 rounded-lg p-6 border border-gray-700/50 hover:border-blue-400/30 transition-all duration-300">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                  <div className="flex-1">
-                    <div className="flex flex-col md:flex-row md:items-center gap-2 mb-3">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-3">
                       <h3 className="text-xl font-bold text-gray-100">
                         {experience.position}
                       </h3>
-                      <span className="text-blue-400 font-mono">@</span>
-                      <span className="text-blue-400 font-semibold">
-                        {experience.company}
-                      </span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-blue-400 font-mono">@</span>
+                        <span className="text-blue-400 font-semibold whitespace-nowrap">
+                          {experience.company}
+                        </span>
+                      </div>
                     </div>
                     
                     <p className="text-gray-400 text-sm font-mono mb-4">

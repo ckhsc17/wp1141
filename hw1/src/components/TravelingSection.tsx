@@ -90,7 +90,7 @@ const TravelingSection: React.FC = () => {
             </h2>
           </div>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Exploring the world one destination at a time. Click on the pins to discover my travel stories and photo memories.
+            Exploring the world with grace and curiousity. Click on the pins to discover my travel stories and photo memories!
           </p>
         </motion.div>
 

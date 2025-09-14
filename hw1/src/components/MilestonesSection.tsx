@@ -127,7 +127,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ portfolioVM }) =>
                         </a>
                       )}
                     </div>
-                    <span className="text-sm font-mono text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full">
+                    <span className="text-sm font-mono text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full inline-block self-start">
                       {milestone.date}
                     </span>
                   </div>

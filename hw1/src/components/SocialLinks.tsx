@@ -1,6 +1,7 @@
 import React from 'react';
 import { SocialIcon } from './SocialIcon';
 import { socialLinks } from '@/data/mockData';
+import { analytics } from '@/utils/analytics';
 
 interface SocialLinksProps {
   className?: string;
@@ -29,6 +30,7 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({
           rel="noopener noreferrer"
           className="group flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
           aria-label={`Visit ${link.platform}`}
+          onClick={() => analytics.trackExternalLink(link.platform, link.url)}
         >
           <SocialIcon 
             icon={link.icon} 
