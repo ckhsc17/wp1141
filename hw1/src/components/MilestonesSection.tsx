@@ -1,19 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FaChessBoard, 
-  FaBicycle, 
-  FaRoute, 
-  FaGraduationCap, 
-  FaMicrophone, 
-  FaGlobeAsia, 
-  FaMountain, 
-  FaLaptopCode, 
-  FaBullhorn, 
-  FaGuitar, 
-  FaUsers, 
-  FaRocket 
-} from 'react-icons/fa';
 import { PortfolioViewModel } from '@/viewModels';
 
 interface MilestonesSectionProps {
@@ -23,41 +9,18 @@ interface MilestonesSectionProps {
 const MilestonesSection: React.FC<MilestonesSectionProps> = ({ portfolioVM }) => {
   const milestones = portfolioVM.milestones;
 
-  const getMilestoneIcon = (iconName?: string) => {
-    const iconMap: Record<string, React.ComponentType> = {
-      FaChessBoard,
-      FaBicycle,
-      FaRoute,
-      FaGraduationCap,
-      FaMicrophone,
-      FaGlobeAsia,
-      FaMountain,
-      FaLaptopCode,
-      FaBullhorn,
-      FaGuitar,
-      FaUsers,
-      FaRocket
-    };
-
-    if (iconName && iconMap[iconName]) {
-      const IconComponent = iconMap[iconName];
-      return <IconComponent />;
-    }
-
-    // 後備方案：根據類型返回預設圖示
-    return <FaRocket />; // 預設圖示
-  };
-
   const getMilestoneColor = (type: string) => {
     switch (type) {
       case 'education':
-        return 'border-blue-400 bg-blue-400/10';
+        return 'border-blue-400 text-blue-400';
       case 'achievement':
-        return 'border-yellow-400 bg-yellow-400/10';
+        return 'border-yellow-400 text-yellow-400';
       case 'life':
-        return 'border-green-400 bg-green-400/10';
+        return 'border-green-400 text-green-400';
+      case 'career':
+        return 'border-purple-400 text-purple-400';
       default:
-        return 'border-gray-400 bg-gray-400/10';
+        return 'border-gray-400 text-gray-400';
     }
   };
 
@@ -81,43 +44,53 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ portfolioVM }) =>
 
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-400 via-green-400 to-yellow-400 opacity-30"></div>
+          <div className="absolute left-4 top-8 bottom-8 w-px bg-gradient-to-b from-blue-400 via-purple-400 to-green-400 opacity-40"></div>
 
-          <div className="space-y-12">
+          <div className="space-y-8">
             {milestones.map((milestone, index) => (
               <motion.div
                 key={milestone.id}
-                initial={{ opacity: 0, x: -50 }}
+                initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="relative flex items-start space-x-6"
               >
                 {/* Timeline dot */}
-                <div className={`flex-shrink-0 w-16 h-16 rounded-full border-2 ${getMilestoneColor(milestone.type)} flex items-center justify-center text-xl backdrop-blur-sm`}>
-                  {getMilestoneIcon(milestone.icon)}
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full border-2 ${getMilestoneColor(milestone.type)} flex items-center justify-center backdrop-blur-sm relative z-10`}>
+                  <div className="w-2 h-2 rounded-full bg-current opacity-80"></div>
                 </div>
 
                 {/* Content */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.2 + 0.2 }}
-                  className="flex-1 bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors duration-300"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
-                    <h3 className="text-xl font-semibold text-white mb-2 sm:mb-0">
+                <div className="flex-1 pb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-white mb-1 sm:mb-0">
                       {milestone.title}
                     </h3>
-                    <span className="text-sm font-mono text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full">
+                    <span className="text-xs font-mono text-blue-400 bg-blue-400/10 px-2 py-1 rounded">
                       {milestone.date}
                     </span>
                   </div>
-                  <p className="text-gray-400 leading-relaxed">
+                  <p className="text-gray-400 text-sm leading-relaxed">
                     {milestone.description}
                   </p>
-                </motion.div>
+                  
+                  {/* Type indicator */}
+                  <div className="mt-3">
+                    <span className={`inline-flex items-center text-xs px-2 py-1 rounded-full ${
+                      milestone.type === 'education' ? 'text-blue-300 bg-blue-400/10' :
+                      milestone.type === 'achievement' ? 'text-yellow-300 bg-yellow-400/10' :
+                      milestone.type === 'life' ? 'text-green-300 bg-green-400/10' :
+                      'text-purple-300 bg-purple-400/10'
+                    }`}>
+                      {milestone.type === 'education' && '🎓'}
+                      {milestone.type === 'achievement' && '🏆'}
+                      {milestone.type === 'life' && '🌟'}
+                      {milestone.type === 'career' && '💼'}
+                      <span className="ml-1 capitalize">{milestone.type}</span>
+                    </span>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
