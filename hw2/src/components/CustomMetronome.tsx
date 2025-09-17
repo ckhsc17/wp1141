@@ -6,14 +6,15 @@ interface CustomMetronomeProps {
   bpm: number;
   isRunning: boolean;
   soundEnabled?: boolean;
+  gameTime?: number; // 遊戲時間（秒）
 }
 
 const CustomMetronome: React.FC<CustomMetronomeProps> = ({ 
   bpm, 
   isRunning, 
-  soundEnabled = true 
+  soundEnabled = true,
+  gameTime = 0
 }) => {
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ const CustomMetronome: React.FC<CustomMetronomeProps> = ({
     };
   }, []);
 
-  const createMetronomeClick = () => {
+  const createMetronomeClick = React.useCallback(() => {
     if (!soundEnabled || !audioContextRef.current) return;
 
     const oscillator = audioContextRef.current.createOscillator();
@@ -47,28 +48,24 @@ const CustomMetronome: React.FC<CustomMetronomeProps> = ({
 
     oscillator.start(audioContextRef.current.currentTime);
     oscillator.stop(audioContextRef.current.currentTime + 0.1);
-  };
+  }, [soundEnabled]);
+
+  const lastBeatRef = useRef<number>(-1);
 
   useEffect(() => {
-    if (isRunning) {
-      const interval = 60000 / bpm; // 轉換為毫秒
+    if (isRunning && gameTime > 0) {
+      const beatInterval = 60 / bpm; // 每拍的時間間隔（秒）
+      const currentBeat = Math.floor(gameTime / beatInterval);
       
-      intervalRef.current = setInterval(() => {
+      // 如果到了新的拍子且還沒播放過這一拍
+      if (currentBeat > lastBeatRef.current) {
         createMetronomeClick();
-      }, interval);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+        lastBeatRef.current = currentBeat;
       }
+    } else if (!isRunning) {
+      lastBeatRef.current = -1; // 重置
     }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [bpm, isRunning, soundEnabled]);
+  }, [gameTime, bpm, isRunning, createMetronomeClick]);
 
   // 這個組件不需要渲染任何視覺內容
   return null;

@@ -159,21 +159,26 @@ const RhythmGame: React.FC = () => {
       setGameState(prev => {
         const newState = { ...prev, currentTime: elapsed };
         
-        // 檢查是否有音符被錯過
-        const updatedNotes = notes.map(note => {
-          if (!note.hit && !note.missed && elapsed > note.time + tolerance) {
-            return { ...note, missed: true };
-          }
-          return note;
+        // 檢查是否有音符被錯過（超過容錯時間且未被命中）
+        // 使用函數式更新來確保獲取最新的 notes 狀態
+        let latestNotes = notes;
+        
+        setNotes(currentNotes => {
+          const updatedNotes = currentNotes.map(note => {
+            // 關鍵修復：只有未被命中(hit=false)且未被標記為錯過的音符才會被檢查
+            // 這確保了一旦音符被標記為 hit，就不會再被標記為 missed
+            if (!note.hit && !note.missed && elapsed > note.time + tolerance) {
+              return { ...note, missed: true };
+            }
+            return note;
+          });
+          latestNotes = updatedNotes;
+          return updatedNotes;
         });
         
-        const missedCount = updatedNotes.filter(n => n.missed).length;
-        const hitCount = updatedNotes.filter(n => n.hit).length;
-        
-        // 更新錯過的音符
-        if (missedCount > prev.missedNotes) {
-          setNotes(updatedNotes);
-        }
+        // 基於更新後的音符計算統計數據
+        const missedCount = latestNotes.filter(n => n.missed).length;
+        const hitCount = latestNotes.filter(n => n.hit).length;
         
         // 檢查遊戲是否結束
         const totalProcessed = hitCount + missedCount;
@@ -226,27 +231,33 @@ const RhythmGame: React.FC = () => {
       
       const currentTime = gameState.currentTime;
       
-      // 尋找最接近的音符
+      // 尋找在容錯範圍內的音符
       const availableNotes = notes.filter(note => !note.hit && !note.missed);
       if (availableNotes.length === 0) return;
       
-      const closestNote = availableNotes.reduce((closest, note) => {
+      // 找到在容錯時間內的音符
+      const validNotes = availableNotes.filter(note => {
         const timeDiff = Math.abs(note.time - currentTime);
-        const closestDiff = Math.abs(closest.time - currentTime);
-        return timeDiff < closestDiff ? note : closest;
-      }, availableNotes[0]);
-
-      const timeDiff = Math.abs(closestNote.time - currentTime);
+        return timeDiff <= tolerance;
+      });
       
-      if (timeDiff <= tolerance) {
+      if (validNotes.length > 0) {
+        // 如果有多個在範圍內的音符，選擇最接近的
+        const closestNote = validNotes.reduce((closest, note) => {
+          const timeDiff = Math.abs(note.time - currentTime);
+          const closestDiff = Math.abs(closest.time - currentTime);
+          return timeDiff < closestDiff ? note : closest;
+        }, validNotes[0]);
+        
         // 命中！
         audioUtils.current.createKeyPressSound(true);
         setNotes(prev => prev.map(note => 
-          note.id === closestNote.id ? { ...note, hit: true } : note
+          note.id === closestNote.id ? { ...note, hit: true, missed: false } : note
         ));
       } else {
-        // 錯過
+        // 沒有在範圍內的音符，這是一個錯誤的按鍵
         audioUtils.current.createKeyPressSound(false);
+        // 不標記任何音符，這只是一個錯誤的按鍵時機
       }
     }
   }, [gameState.isPlaying, gameState.currentTime, gameState.isPracticeMode, gameState.isFirstRound, notes, tolerance]);
@@ -281,8 +292,10 @@ const RhythmGame: React.FC = () => {
     generateNewRhythm();
   }, [generateNewRhythm]);
 
-  const progress = gameState.totalNotes > 0 
-    ? ((gameState.hitNotes + gameState.missedNotes) / gameState.totalNotes) * 100 
+  // 計算時間進度（而不是音符完成進度）
+  const totalDuration = notes.length > 0 ? notes[notes.length - 1]?.time || 0 : 0;
+  const progress = totalDuration > 0 
+    ? Math.min((gameState.currentTime / totalDuration) * 100, 100)
     : 0;
 
   return (
@@ -431,6 +444,7 @@ const RhythmGame: React.FC = () => {
                         bpm={bpm}
                         isRunning={metronomeActive}
                         soundEnabled={true}
+                        gameTime={gameState.currentTime}
                       />
                     </Box>
                   </Stack>
@@ -476,6 +490,9 @@ const RhythmGame: React.FC = () => {
             value={progress} 
             sx={{ height: 8, borderRadius: 4 }}
           />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            時間進度: {gameState.currentTime.toFixed(1)}s / {totalDuration.toFixed(1)}s
+          </Typography>
         </CardContent>
       </Card>
 

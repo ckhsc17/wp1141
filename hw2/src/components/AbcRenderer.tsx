@@ -52,30 +52,31 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         // 添加視覺效果的 CSS
         const style = document.createElement('style');
         style.textContent = `
-          .abcjs-note.hit {
-            fill: #4caf50 !important;
-            stroke: #2e7d32 !important;
-            stroke-width: 2px !important;
-          }
-          .abcjs-note.missed {
-            fill: #f44336 !important;
-            stroke: #c62828 !important;
-            stroke-width: 2px !important;
+          .abcjs-note {
+            fill: #000000 !important;
+            stroke: #000000 !important;
           }
           .abcjs-note.current {
-            fill: #ff9800 !important;
-            stroke: #f57c00 !important;
-            stroke-width: 3px !important;
-            animation: pulse 0.5s infinite alternate;
-          }
-          @keyframes pulse {
-            from { opacity: 0.7; }
-            to { opacity: 1; }
+            fill: #808080 !important;
+            stroke: #808080 !important;
+            stroke-width: 2px !important;
           }
           .abcjs-cursor {
             stroke: #2196f3;
             stroke-width: 3px;
             fill: none;
+          }
+          .note-result {
+            font-size: 16px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: text-before-edge;
+          }
+          .note-result.hit {
+            fill: #4caf50;
+          }
+          .note-result.missed {
+            fill: #f44336;
           }
         `;
         document.head.appendChild(style);
@@ -99,16 +100,30 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         (note as SVGElement).classList.remove('hit', 'missed', 'current');
       });
 
-      // 根據遊戲狀態更新音符顏色
+      // 清除舊的結果標記
+      const oldResults = svg.querySelectorAll('.note-result');
+      oldResults.forEach(result => result.remove());
+      
+      // 根據遊戲狀態更新音符顏色和結果
       notes.forEach((note, index) => {
         const noteElement = allNotes[index] as SVGElement;
         if (noteElement) {
-          if (note.hit) {
-            noteElement.classList.add('hit');
-          } else if (note.missed) {
-            noteElement.classList.add('missed');
-          } else if (Math.abs(note.time - currentTime) < 0.5) {
+          // 只有當前演奏的音符顯示灰色
+          if (Math.abs(note.time - currentTime) < 0.3) {
             noteElement.classList.add('current');
+          }
+          
+          // 在音符下方顯示結果
+          if (note.hit || note.missed) {
+            const bbox = (noteElement as SVGGraphicsElement).getBBox();
+            const resultText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            // 優先級：hit > missed（命中優先於錯過）
+            const isHit = note.hit; // hit 優先
+            resultText.setAttribute('class', `note-result ${isHit ? 'hit' : 'missed'}`);
+            resultText.setAttribute('x', (bbox.x + bbox.width / 2).toString());
+            resultText.setAttribute('y', (bbox.y + bbox.height + 20).toString());
+            resultText.textContent = isHit ? '✓' : '✗';
+            svg.appendChild(resultText);
           }
         }
       });
