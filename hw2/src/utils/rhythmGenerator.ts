@@ -137,8 +137,8 @@ export function generateRandomRhythm(measures: number = 1, bpm: number = 100): R
   // 生成音符列表（用於遊戲邏輯）
   const noteList: Note[] = [];
   const beatDuration = 60 / bpm; // 根據 BPM 計算每拍時間
-  // 第一個音符對應第五個節拍器聲音（預備拍1-2-3-4，第5拍是第一個音符）
-  let currentTime = 4 * beatDuration; // 4拍預備拍後開始第一個音符
+  // 音符時間從 0 開始，預備拍在遊戲時間中處理
+  let currentTime = 0; // 音符從時間 0 開始
   
   durations.forEach((duration, index) => {
     noteList.push({
@@ -202,9 +202,8 @@ export function generateRhythmByDifficulty(difficulty: 'easy' | 'medium' | 'hard
   abc += abcNotes.join(' ') + ' ||\n';
 
   const noteList: Note[] = [];
-  const beatDuration = 60 / 100; // 固定 BPM 100 for difficulty mode
-  // 第一個音符對應第五個節拍器聲音（預備拍1-2-3-4，第5拍是第一個音符）
-  let currentTime = 4 * beatDuration; // 4拍預備拍後開始第一個音符
+  // 音符從時間 0 開始
+  let currentTime = 0;
   
   pattern.durations.forEach((duration, index) => {
     noteList.push({

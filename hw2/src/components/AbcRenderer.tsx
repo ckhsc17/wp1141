@@ -89,9 +89,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       const svg = containerRef.current.querySelector('svg');
       if (!svg) return;
 
-      // 檢查音符狀態
-      const hitNotes = notes.filter(n => n.hit);
-      const missedNotes = notes.filter(n => n.missed);
+      // 檢查音符狀態（用於調試）
 
       // 重置所有音符樣式
       const allNotes = svg.querySelectorAll('.abcjs-note');

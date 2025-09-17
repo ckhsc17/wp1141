@@ -173,7 +173,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       ...prev, 
       isPlaying: true, 
       gameStarted: true,
-      currentTime: -countInDuration // 從負數開始，0時才是音樂開始
+      currentTime: -countInDuration // 從負數開始，0時對應第一個音符
     }));
 
     this.setUIState(prev => ({ ...prev, metronomeActive: true }));

@@ -66,11 +66,8 @@ const RhythmGame: React.FC = () => {
   } = viewModel;
 
   // 計算顯示用的時間信息
-  const firstNoteTime = notes.length > 0 ? notes[0]?.time || 0 : 0;
   const displayTime = gameState.currentTime < 0 
     ? `預備拍: ${Math.ceil(-gameState.currentTime)}` 
-    : gameState.currentTime < firstNoteTime
-    ? `準備開始...`
     : `時間進度: ${gameState.currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`;
 
   return (
@@ -188,7 +185,7 @@ const RhythmGame: React.FC = () => {
                     bpm={gameSettings.bpm}
                     isRunning={uiState.metronomeActive}
                     soundEnabled={audioSettings.soundEnabled}
-                    gameTime={gameState.currentTime - (4 * (60 / gameSettings.bpm))}
+                    gameTime={gameState.currentTime}
                     countInBeats={gameState.isPracticeMode && gameState.isFirstRound ? 0 : 4}
                   />
                 </Box>
