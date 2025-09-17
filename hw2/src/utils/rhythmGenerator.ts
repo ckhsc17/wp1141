@@ -103,7 +103,6 @@ export function generateRandomRhythm(measures: number = 1, bpm: number = 100): R
 
   // 生成 ABC 記譜法字符串
   let abc = 'X:1\n';
-  abc += `T:節奏練習 (${numMeasures} 小節)\n`;
   abc += 'M:4/4\n';
   abc += 'L:1/4\n';
   abc += 'K:C\n';
@@ -188,7 +187,6 @@ export function generateRhythmByDifficulty(difficulty: 'easy' | 'medium' | 'hard
   );
 
   let abc = 'X:1\n';
-  abc += `T:節奏練習 (${difficulty})\n`;
   abc += 'M:4/4\n';
   abc += 'L:1/4\n';
   abc += 'K:C\n';

@@ -58,8 +58,8 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             stroke: #000000 !important;
           }
           .abcjs-note.current {
-            fill: #808080 !important;
-            stroke: #808080 !important;
+            fill: rgba(128, 128, 128, 0.4) !important;
+            stroke: rgba(128, 128, 128, 0.6) !important;
             stroke-width: 2px !important;
           }
           .note-result {
@@ -220,15 +220,76 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       sx={{
         width: '100%',
         minHeight: 200,
-        border: '1px solid #e0e0e0',
-        borderRadius: 1,
-        p: 2,
-        backgroundColor: '#fafafa',
+        borderRadius: 2,
+        p: 3,
         overflow: 'auto',
+        
+        // 玻璃態效果
+        background: 'rgba(255, 255, 255, 0.25)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)', // Safari 支援
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        
+        // 進入動畫
+        animation: 'scoreGlassFadeIn 1s ease-out 0.8s both',
+        
+        // 懸停效果
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          background: 'rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+        },
+        
+        // 響應式調整
+        '@media (max-width: 768px)': {
+          backdropFilter: 'blur(5px)',
+          WebkitBackdropFilter: 'blur(5px)',
+          background: 'rgba(255, 255, 255, 0.35)',
+          p: 2,
+        },
+        
+        // 動畫關鍵幀
+        '@keyframes scoreGlassFadeIn': {
+          '0%': {
+            opacity: 0,
+            transform: 'translateY(30px) scale(0.95)',
+            backdropFilter: 'blur(0px)',
+          },
+          '50%': {
+            opacity: 0.7,
+            backdropFilter: 'blur(5px)',
+          },
+          '100%': {
+            opacity: 1,
+            transform: 'translateY(0) scale(1)',
+            backdropFilter: 'blur(10px)',
+          },
+        },
+        
+        // SVG 樣式優化
         '& svg': {
           maxWidth: '100%',
           height: 'auto',
-        }
+          // 讓 SVG 內容更清晰
+          filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))',
+        },
+        
+        // 音符和線條的對比度增強
+        '& .abcjs-note': {
+          filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2))',
+        },
+        
+        '& .abcjs-staff': {
+          stroke: 'rgba(0, 0, 0, 0.8)',
+          strokeWidth: '1.2px',
+        },
+        
+        // 不支援毛玻璃效果的後備方案
+        '@supports not (backdrop-filter: blur(10px))': {
+          background: 'rgba(255, 255, 255, 0.4)',
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+        },
       }}
     />
   );

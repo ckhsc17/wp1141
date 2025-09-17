@@ -307,17 +307,15 @@ const RhythmGame: React.FC = () => {
       </Typography>
 
       {/* 譜面顯示區域 */}
-      <GlassCard glassLevel={4} animated={true} animationDelay={0.6} sx={{ mt: 3 }}>
-        <CardContent>
-          {abcNotation && (
-            <AbcRenderer 
-              abcNotation={abcNotation} 
-              currentTime={gameState.currentTime}
-              notes={notes}
-            />
-          )}
-        </CardContent>
-      </GlassCard>
+      <Box sx={{ mt: 3 }}>
+        {abcNotation && (
+          <AbcRenderer 
+            abcNotation={abcNotation} 
+            currentTime={gameState.currentTime}
+            notes={notes}
+          />
+        )}
+      </Box>
 
 
       {/* 結果對話框 */}
