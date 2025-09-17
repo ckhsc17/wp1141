@@ -32,6 +32,7 @@ import AbcRenderer from '@/components/AbcRenderer';
 import CustomMetronome from '@/components/CustomMetronome';
 import MobileFloatingButton from '@/components/MobileFloatingButton';
 import LanguageToggle from '@/components/LanguageToggle';
+import GlassCard from '@/components/GlassCard';
 import { useRhythmGameViewModel } from '@/viewModels/RhythmGameViewModel';
 import { useDeviceDetection } from '@/utils/deviceDetection';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -115,7 +116,7 @@ const RhythmGame: React.FC = () => {
       </Box>
 
       {/* 主遊戲區域 */}
-      <Card elevation={3} sx={{ mb: 3 }}>
+      <GlassCard glassLevel={3} animated={true} animationDelay={0.3} sx={{ mb: 3 }}>
         <CardContent>
           <Stack spacing={3}>
             {/* 標題 */}
@@ -241,7 +242,7 @@ const RhythmGame: React.FC = () => {
             </Box>
           </Stack>
         </CardContent>
-      </Card>
+      </GlassCard>
 
       <Divider sx={{ my: 3 }} />
 
@@ -306,7 +307,7 @@ const RhythmGame: React.FC = () => {
       </Typography>
 
       {/* 譜面顯示區域 */}
-      <Card elevation={2} sx={{ mt: 3 }}>
+      <GlassCard glassLevel={4} animated={true} animationDelay={0.6} sx={{ mt: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, ...fontStyle }}>
             <LibraryMusic /> {t('music.rhythmScore')}
@@ -319,10 +320,10 @@ const RhythmGame: React.FC = () => {
             />
           )}
         </CardContent>
-      </Card>
+      </GlassCard>
 
       {/* 操作說明 */}
-      <Card elevation={1} sx={{ mt: 3, backgroundColor: '#f5f5f5' }}>
+      <GlassCard glassLevel={2} animated={true} animationDelay={0.9} sx={{ mt: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom sx={fontStyle}>
             {t('instructions.title')}
@@ -350,7 +351,7 @@ const RhythmGame: React.FC = () => {
             )}
           </Stack>
         </CardContent>
-      </Card>
+      </GlassCard>
 
       {/* 結果對話框 */}
       <Dialog open={uiState.showResults} maxWidth="sm" fullWidth>
