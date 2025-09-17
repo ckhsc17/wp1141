@@ -90,6 +90,11 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   // ==================== Computed Properties ====================
 
   get progress(): number {
+    // 遊戲結束時進度歸零
+    if (this._gameState.gameEnded) {
+      return 0;
+    }
+    
     const totalDuration = this.totalDuration;
     const firstNoteTime = this._notes.length > 0 ? this._notes[0]?.time || 0 : 0;
     const musicDuration = totalDuration - firstNoteTime;
@@ -213,8 +218,16 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     this.setGameSettings(prev => ({ ...prev, ...settings }));
   };
 
+  updateGameState = (state: Partial<GameState>): void => {
+    this.setGameState(prev => ({ ...prev, ...state }));
+  };
+
   updateAudioSettings = (settings: Partial<AudioSettings>): void => {
     this.setAudioSettings(prev => ({ ...prev, ...settings }));
+  };
+
+  updateUIState = (state: Partial<UIState>): void => {
+    this.setUIState(prev => ({ ...prev, ...state }));
   };
 
   // ==================== Private Methods ====================
@@ -253,11 +266,11 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       const elapsed = (Date.now() - this.startTimeRef.current) / 1000;
       const currentGameTime = noteStartOffset + elapsed;
       
-      this.updateGameState(currentGameTime);
+      this.updateGameStateWithTime(currentGameTime);
     }, 50);
   }
 
-  private updateGameState(currentGameTime: number): void {
+  private updateGameStateWithTime(currentGameTime: number): void {
     this.setGameState(prev => {
       const newState = { ...prev, currentTime: currentGameTime };
       

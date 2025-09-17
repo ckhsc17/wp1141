@@ -25,8 +25,6 @@ export interface GameSettings {
   bpm: number;
   measures: number;
   tolerance: number; // 容錯時間 (秒)
-  isPracticeMode?: boolean;
-  showResults?: boolean;
 }
 
 // ==================== Rhythm Generation ====================
@@ -93,7 +91,9 @@ export interface IRhythmGameViewModel {
   pauseGame(): void;
   handleKeyPress(event: KeyboardEvent): void;
   updateGameSettings(settings: Partial<GameSettings>): void;
+  updateGameState(state: Partial<GameState>): void;
   updateAudioSettings(settings: Partial<AudioSettings>): void;
+  updateUIState(state: Partial<UIState>): void;
   
   // Computed Properties
   progress: number;

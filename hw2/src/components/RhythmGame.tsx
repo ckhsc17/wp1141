@@ -15,7 +15,6 @@ import {
   DialogContent,
   DialogActions,
   Slider,
-  TextField,
   FormControlLabel,
   Switch,
   Divider,
@@ -62,6 +61,8 @@ const RhythmGame: React.FC = () => {
     startGame,
     pauseGame,
     updateGameSettings,
+    updateGameState,
+    updateUIState,
   } = viewModel;
 
   // 計算顯示用的時間信息
@@ -136,14 +137,19 @@ const RhythmGame: React.FC = () => {
                   </Box>
 
                   {/* 小節數設置 */}
-                  <Box sx={{ minWidth: 150 }}>
-                    <Typography gutterBottom>小節數</Typography>
-                    <TextField
-                      type="number"
+                  <Box sx={{ minWidth: 200 }}>
+                    <Typography gutterBottom>小節數: {gameSettings.measures}</Typography>
+                    <Slider
                       value={gameSettings.measures}
-                      onChange={(e) => updateGameSettings({ measures: parseInt(e.target.value) || 1 })}
-                      inputProps={{ min: 1, max: 8 }}
-                      size="small"
+                      onChange={(_, value) => updateGameSettings({ measures: value as number })}
+                      min={1}
+                      max={8}
+                      step={1}
+                      marks={[
+                        { value: 1, label: '1' },
+                        { value: 4, label: '4' },
+                        { value: 8, label: '8' }
+                      ]}
                       disabled={isGameActive}
                     />
                   </Box>
@@ -154,8 +160,9 @@ const RhythmGame: React.FC = () => {
                       control={
                         <Switch
                           checked={gameState.isPracticeMode}
-                          onChange={(e) => updateGameSettings({ 
-                            isPracticeMode: e.target.checked 
+                          onChange={(e) => updateGameState({ 
+                            isPracticeMode: e.target.checked,
+                            isFirstRound: e.target.checked // 切換到練習模式時重置為第一輪
                           })}
                           disabled={isGameActive}
                         />
@@ -308,15 +315,14 @@ const RhythmGame: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {
-            // 這裡需要通過其他方式關閉對話框
-            // 暫時先註釋掉，稍後修復
+            updateUIState({ showResults: false });
           }}>
             關閉
           </Button>
           <Button 
             variant="contained" 
             onClick={() => {
-              // 同樣需要修復
+              updateUIState({ showResults: false });
               generateNewRhythm();
             }}
           >
