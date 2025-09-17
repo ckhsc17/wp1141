@@ -35,17 +35,6 @@
   "music": {
     "rhythmScore": "節奏譜面"
   },
-  "instructions": {
-    "title": "🎮 操作說明",
-    "keyboardInput": "空格鍵",
-    "touchInput": "觸控按鈕",
-    "inputDescription": "按照節拍點擊",
-    "practiceMode": "練習模式：先播放示範，再進行練習",
-    "testMode": "測驗模式：直接開始，有4拍預備拍",
-    "tip": "💡 提示：注意觀察灰色標記，它指示當前應該演奏的音符",
-    "results": "🎯 判定結果：綠色圓點=命中，紅色叉叉=錯過，橙色叉叉=錯誤敲擊",
-    "mobileVersion": "📱 手機版：使用右下角的綠色浮動按鈕進行操作"
-  },
   "results": {
     "title": "🎉 遊戲結果",
     "hit": "命中",

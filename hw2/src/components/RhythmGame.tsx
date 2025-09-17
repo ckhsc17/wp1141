@@ -322,36 +322,6 @@ const RhythmGame: React.FC = () => {
         </CardContent>
       </GlassCard>
 
-      {/* 操作說明 */}
-      <GlassCard glassLevel={2} animated={true} animationDelay={0.9} sx={{ mt: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={fontStyle}>
-            {t('instructions.title')}
-          </Typography>
-          <Stack spacing={1}>
-            <Typography variant="body2" sx={fontStyle}>
-              • <strong>{isMobileDevice ? t('instructions.touchInput') : t('instructions.keyboardInput')}</strong>：{t('instructions.inputDescription')}
-            </Typography>
-            <Typography variant="body2" sx={fontStyle}>
-              • <strong>{t('game.practiceMode')}</strong>：{t('instructions.practiceMode')}
-            </Typography>
-            <Typography variant="body2" sx={fontStyle}>
-              • <strong>{t('instructions.testMode').split('：')[0]}</strong>：{t('instructions.testMode').split('：')[1]}
-            </Typography>
-            <Typography variant="body2" color="primary" sx={fontStyle}>
-              {t('instructions.tip')}
-            </Typography>
-            <Typography variant="body2" color="info.main" sx={fontStyle}>
-              {t('instructions.results')}
-            </Typography>
-            {isMobileDevice && (
-              <Typography variant="body2" color="success.main" sx={fontStyle}>
-                {t('instructions.mobileVersion')}
-              </Typography>
-            )}
-          </Stack>
-        </CardContent>
-      </GlassCard>
 
       {/* 結果對話框 */}
       <Dialog open={uiState.showResults} maxWidth="sm" fullWidth>

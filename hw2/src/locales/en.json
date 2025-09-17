@@ -35,17 +35,6 @@
   "music": {
     "rhythmScore": "Rhythm Score"
   },
-  "instructions": {
-    "title": "🎮 Instructions",
-    "keyboardInput": "Spacebar",
-    "touchInput": "Touch Button",
-    "inputDescription": "Tap according to the beat",
-    "practiceMode": "Practice Mode: Play demo first, then practice",
-    "testMode": "Quiz Mode: Start directly with 4-beat count-in",
-    "tip": "💡 Tip: Watch the gray marker indicating the current note to play",
-    "results": "🎯 Results: Green dot=Hit, Red X=Missed, Orange X=Wrong tap",
-    "mobileVersion": "📱 Mobile: Use the green floating button in bottom-right corner"
-  },
   "results": {
     "title": "🎉 Game Results",
     "hit": "Hit",
