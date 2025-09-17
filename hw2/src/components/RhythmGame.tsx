@@ -284,9 +284,6 @@ const RhythmGame: React.FC = () => {
             <Typography variant="body2" color="primary">
               💡 <strong>提示</strong>：注意觀察灰色標記，它指示當前應該演奏的音符
             </Typography>
-            <Typography variant="body2" color="info.main">
-              🎯 <strong>判定結果</strong>：綠色圓點=命中，紅色叉叉=錯過，橙色叉叉=錯誤敲擊
-            </Typography>
             {isMobileDevice && (
               <Typography variant="body2" color="success.main">
                 📱 <strong>手機版</strong>：使用右下角的綠色浮動按鈕進行操作

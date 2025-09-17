@@ -336,7 +336,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       });
       
       // 計算統計數據
-      const { missedCount, hitCount, wrongCount, totalNotes } = this.calculateStats(latestNotes);
+      const { missedCount, hitCount, totalNotes } = this.calculateStats(latestNotes);
       const totalProcessed = hitCount + missedCount;
       const totalDuration = this.calculateTotalDuration(latestNotes);
       const gameFinished = this.isGameFinished(totalProcessed, totalNotes, currentGameTime, totalDuration);
@@ -425,9 +425,8 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   private calculateStats(notes: Note[]) {
     const missedCount = notes.filter(n => n.missed).length;
     const hitCount = notes.filter(n => n.hit).length;
-    const wrongCount = notes.filter(n => n.wrong).length;
     const totalNotes = notes.length;
-    return { missedCount, hitCount, wrongCount, totalNotes };
+    return { missedCount, hitCount, totalNotes };
   }
 
   private calculateTotalDuration(notes: Note[]): number {

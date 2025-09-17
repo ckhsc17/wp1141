@@ -40,33 +40,6 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const rippleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 處理觸控事件
-  const handleTouchStart = useCallback((event: React.TouchEvent) => {
-    event.preventDefault(); // 防止滾動等默認行為
-    
-    if (!isGameActive || isPracticeDemo) {
-      return;
-    }
-
-    // 觸發點擊事件
-    onTap();
-    
-    // 添加視覺反饋
-    addVisualFeedback();
-  }, [isGameActive, isPracticeDemo, onTap]);
-
-  // 處理點擊事件（桌面版備用）
-  const handleClick = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    
-    if (!isGameActive || isPracticeDemo) {
-      return;
-    }
-
-    onTap();
-    addVisualFeedback();
-  }, [isGameActive, isPracticeDemo, onTap]);
-
   // 添加視覺反饋效果
   const addVisualFeedback = useCallback(() => {
     const button = buttonRef.current;
@@ -87,6 +60,33 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
       button.style.boxShadow = '0 4px 20px rgba(76, 175, 80, 0.4)';
     }, 150);
   }, []);
+
+  // 處理觸控事件
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    event.preventDefault(); // 防止滾動等默認行為
+    
+    if (!isGameActive || isPracticeDemo) {
+      return;
+    }
+
+    // 觸發點擊事件
+    onTap();
+    
+    // 添加視覺反饋
+    addVisualFeedback();
+  }, [isGameActive, isPracticeDemo, onTap, addVisualFeedback]);
+
+  // 處理點擊事件（桌面版備用）
+  const handleClick = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    
+    if (!isGameActive || isPracticeDemo) {
+      return;
+    }
+
+    onTap();
+    addVisualFeedback();
+  }, [isGameActive, isPracticeDemo, onTap, addVisualFeedback]);
 
   // 清理 effect
   useEffect(() => {
