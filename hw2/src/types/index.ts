@@ -6,6 +6,7 @@ export interface Note {
   duration: number;
   hit?: boolean;
   missed?: boolean;
+  wrong?: boolean; // 錯誤敲擊標記
 }
 
 export interface GameState {
@@ -15,6 +16,7 @@ export interface GameState {
   totalNotes: number;
   hitNotes: number;
   missedNotes: number;
+  wrongNotes: number; // 錯誤敲擊計數
   gameStarted: boolean;
   gameEnded: boolean;
   isPracticeMode: boolean;
@@ -143,6 +145,7 @@ export const DEFAULT_GAME_STATE: GameState = {
   totalNotes: 0,
   hitNotes: 0,
   missedNotes: 0,
+  wrongNotes: 0,
   gameStarted: false,
   gameEnded: false,
   isPracticeMode: true,

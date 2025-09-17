@@ -9,6 +9,7 @@ interface Note {
   duration: number;
   hit?: boolean;
   missed?: boolean;
+  wrong?: boolean;
 }
 
 interface AbcRendererProps {
@@ -73,6 +74,9 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           .note-result.missed {
             fill: #f44336;
           }
+          .note-result.wrong {
+            fill: #ff9800;
+          }
         `;
         document.head.appendChild(style);
       });
@@ -123,28 +127,27 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           }
           
           // 在音符下方顯示結果
-          if (note.hit || note.missed) {
+          if (note.hit || note.missed || note.wrong) {
             const bbox = (noteElement as SVGGraphicsElement).getBBox();
-            // 優先級：hit > missed（命中優先於錯過）
-            const isHit = note.hit; // hit 優先
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = svg.getBBox().y + svg.getBBox().height + 30; // 統一高度
             
-            if (isHit) {
+            // 優先級：hit > missed > wrong
+            if (note.hit) {
               // 綠色無邊框圓點
               const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
               circle.setAttribute('class', 'note-result hit');
-              circle.setAttribute('cx', (bbox.x + bbox.width / 2).toString());
-              circle.setAttribute('cy', (svg.getBBox().y + svg.getBBox().height + 30).toString()); // 統一高度
+              circle.setAttribute('cx', centerX.toString());
+              circle.setAttribute('cy', centerY.toString());
               circle.setAttribute('r', '8');
               circle.setAttribute('fill', '#4caf50');
               circle.setAttribute('stroke', 'none');
               svg.appendChild(circle);
-            } else {
-              // 紅色標準小叉叉
+            } else if (note.missed) {
+              // 紅色標準小叉叉 (錯過)
               const crossGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
               crossGroup.setAttribute('class', 'note-result missed');
               
-              const centerX = bbox.x + bbox.width / 2;
-              const centerY = svg.getBBox().y + svg.getBBox().height + 30; // 統一高度
               const size = 6; // 叉叉大小
               
               // 第一條線（左上到右下）
@@ -164,6 +167,36 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
               line2.setAttribute('x2', (centerX - size).toString());
               line2.setAttribute('y2', (centerY + size).toString());
               line2.setAttribute('stroke', '#f44336');
+              line2.setAttribute('stroke-width', '2');
+              line2.setAttribute('stroke-linecap', 'round');
+              
+              crossGroup.appendChild(line1);
+              crossGroup.appendChild(line2);
+              svg.appendChild(crossGroup);
+            } else if (note.wrong) {
+              // 橙色叉叉 (錯誤敲擊)
+              const crossGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+              crossGroup.setAttribute('class', 'note-result wrong');
+              
+              const size = 6; // 叉叉大小
+              
+              // 第一條線（左上到右下）
+              const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+              line1.setAttribute('x1', (centerX - size).toString());
+              line1.setAttribute('y1', (centerY - size).toString());
+              line1.setAttribute('x2', (centerX + size).toString());
+              line1.setAttribute('y2', (centerY + size).toString());
+              line1.setAttribute('stroke', '#ff9800');
+              line1.setAttribute('stroke-width', '2');
+              line1.setAttribute('stroke-linecap', 'round');
+              
+              // 第二條線（右上到左下）
+              const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+              line2.setAttribute('x1', (centerX + size).toString());
+              line2.setAttribute('y1', (centerY - size).toString());
+              line2.setAttribute('x2', (centerX - size).toString());
+              line2.setAttribute('y2', (centerY + size).toString());
+              line2.setAttribute('stroke', '#ff9800');
               line2.setAttribute('stroke-width', '2');
               line2.setAttribute('stroke-linecap', 'round');
               

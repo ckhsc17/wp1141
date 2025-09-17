@@ -201,7 +201,7 @@ const RhythmGame: React.FC = () => {
       <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
         <Chip 
           icon={<MusicNote />} 
-          label={`得分: ${gameState.score}%`} 
+          label={`得分: ${gameState.score}`} 
           color="primary" 
           variant="outlined"
         />
@@ -213,6 +213,11 @@ const RhythmGame: React.FC = () => {
         <Chip 
           label={`錯過: ${gameState.missedNotes}`} 
           color="error" 
+          variant="outlined"
+        />
+        <Chip 
+          label={`錯誤: ${gameState.wrongNotes}`} 
+          color="warning" 
           variant="outlined"
         />
         <Chip 
@@ -273,6 +278,9 @@ const RhythmGame: React.FC = () => {
             <Typography variant="body2" color="primary">
               💡 <strong>提示</strong>：注意觀察灰色標記，它指示當前應該演奏的音符
             </Typography>
+            <Typography variant="body2" color="info.main">
+              🎯 <strong>判定結果</strong>：綠色圓點=命中，紅色叉叉=錯過，橙色叉叉=錯誤敲擊
+            </Typography>
           </Stack>
         </CardContent>
       </Card>
@@ -285,7 +293,7 @@ const RhythmGame: React.FC = () => {
             <Typography variant="h4" color="primary">
               得分: {gameState.score}%
             </Typography>
-            <Stack direction="row" spacing={3}>
+            <Stack direction="row" spacing={2}>
               <Box textAlign="center">
                 <Typography variant="h6" color="success.main">
                   {gameState.hitNotes}
@@ -297,6 +305,12 @@ const RhythmGame: React.FC = () => {
                   {gameState.missedNotes}
                 </Typography>
                 <Typography variant="body2">錯過</Typography>
+              </Box>
+              <Box textAlign="center">
+                <Typography variant="h6" color="warning.main">
+                  {gameState.wrongNotes}
+                </Typography>
+                <Typography variant="body2">錯誤</Typography>
               </Box>
               <Box textAlign="center">
                 <Typography variant="h6">

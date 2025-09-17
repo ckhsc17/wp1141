@@ -142,6 +142,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       score: 0,
       hitNotes: 0,
       missedNotes: 0,
+      wrongNotes: 0,
       currentTime: 0,
       gameStarted: false,
       gameEnded: false,
@@ -291,7 +292,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       });
       
       // 計算統計數據
-      const { missedCount, hitCount, totalNotes } = this.calculateStats(latestNotes);
+      const { missedCount, hitCount, wrongCount, totalNotes } = this.calculateStats(latestNotes);
       const totalProcessed = hitCount + missedCount;
       const totalDuration = this.calculateTotalDuration(latestNotes);
       const gameFinished = this.isGameFinished(totalProcessed, totalNotes, currentGameTime, totalDuration);
@@ -299,6 +300,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       if (gameFinished) {
         this.endGame(newState, missedCount, hitCount, totalNotes);
         // 返回結束狀態
+        const penalizedTotal = totalNotes + prev.wrongNotes; // 錯誤敲擊計入分母
         return {
           ...newState,
           currentTime: 0,
@@ -306,15 +308,19 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
           gameEnded: true,
           missedNotes: missedCount,
           hitNotes: hitCount,
-          score: Math.round((hitCount / totalNotes) * 100)
+          wrongNotes: prev.wrongNotes, // 保持錯誤計數
+          score: Math.round((hitCount / Math.max(penalizedTotal, 1)) * 100)
         };
       }
       
+      // 遊戲進行中的分數計算也要考慮錯誤敲擊
+      const penalizedTotal = totalNotes + prev.wrongNotes; // 錯誤敲擊計入分母
       return {
         ...newState,
         missedNotes: missedCount,
         hitNotes: hitCount,
-        score: Math.round((hitCount / Math.max(totalProcessed, 1)) * 100)
+        wrongNotes: prev.wrongNotes, // 保持錯誤計數
+        score: Math.round((hitCount / Math.max(penalizedTotal, 1)) * 100)
       };
     });
   }
@@ -325,17 +331,14 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       const currentTime = this._gameState.currentTime;
       const availableNotes = currentNotes.filter(note => !note.hit && !note.missed);
       
-      if (availableNotes.length === 0) {
-        this.audioUtils.current.createKeyPressSound(false);
-        return currentNotes; // 返回原狀態
-      }
-      
+      // 檢查是否有可敲擊的音符在容錯範圍內
       const validNotes = availableNotes.filter(note => {
         const timeDiff = Math.abs(note.time - currentTime);
         return timeDiff <= this._gameSettings.tolerance;
       });
       
       if (validNotes.length > 0) {
+        // 有效敲擊
         const closestNote = this.findClosestNote(validNotes, currentTime);
         this.audioUtils.current.createKeyPressSound(true);
         
@@ -344,8 +347,24 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
           note.id === closestNote.id ? { ...note, hit: true, missed: false } : note
         );
       } else {
+        // 錯誤敲擊 - 沒有音符在容錯範圍內
         this.audioUtils.current.createKeyPressSound(false);
-        return currentNotes; // 返回原狀態
+        
+        // 增加錯誤敲擊計數
+        this.setGameState(prev => ({
+          ...prev,
+          wrongNotes: prev.wrongNotes + 1
+        }));
+        
+        // 找到最接近當前時間的音符來顯示錯誤標記
+        if (availableNotes.length > 0) {
+          const closestNote = this.findClosestNote(availableNotes, currentTime);
+          return currentNotes.map(note => 
+            note.id === closestNote.id ? { ...note, wrong: true } : note
+          );
+        }
+        
+        return currentNotes; // 沒有可用音符時返回原狀態
       }
     });
   }
@@ -362,8 +381,9 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   private calculateStats(notes: Note[]) {
     const missedCount = notes.filter(n => n.missed).length;
     const hitCount = notes.filter(n => n.hit).length;
+    const wrongCount = notes.filter(n => n.wrong).length;
     const totalNotes = notes.length;
-    return { missedCount, hitCount, totalNotes };
+    return { missedCount, hitCount, wrongCount, totalNotes };
   }
 
   private calculateTotalDuration(notes: Note[]): number {
@@ -391,7 +411,8 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   }
 
   private endGame(newState: GameState, missedCount: number, hitCount: number, totalNotes: number): void {
-    console.log('🎮 Game ending:', { missedCount, hitCount, totalNotes, score: Math.round((hitCount / totalNotes) * 100) });
+    const penalizedTotal = totalNotes + this._gameState.wrongNotes;
+    console.log('🎮 Game ending:', { missedCount, hitCount, wrongNotes: this._gameState.wrongNotes, totalNotes, penalizedTotal, score: Math.round((hitCount / penalizedTotal) * 100) });
     
     // 清理所有定時器
     if (this.gameRef.current) {
@@ -413,15 +434,18 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     console.log('📊 Results dialog should now be visible');
     
     // 更新遊戲狀態：結束遊戲，重置時間
-    this.setGameState(prev => ({
-      ...prev,
-      currentTime: 0, // 重置時間，讓進度條歸零
-      isPlaying: false,
-      gameEnded: true,
-      missedNotes: missedCount,
-      hitNotes: hitCount,
-      score: Math.round((hitCount / totalNotes) * 100)
-    }));
+    this.setGameState(prev => {
+      const penalizedTotal = totalNotes + prev.wrongNotes;
+      return {
+        ...prev,
+        currentTime: 0, // 重置時間，讓進度條歸零
+        isPlaying: false,
+        gameEnded: true,
+        missedNotes: missedCount,
+        hitNotes: hitCount,
+        score: Math.round((hitCount / Math.max(penalizedTotal, 1)) * 100)
+      };
+    });
   }
 }
 
