@@ -131,6 +131,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   }
 
   generateNewRhythm = (): void => {
+    // 使用當前的 React 狀態，而不是內部狀態
     const { abc, noteList } = generateRandomRhythm(this._gameSettings.measures, this._gameSettings.bpm);
     
     this.setAbcNotation(abc);
@@ -148,8 +149,8 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       isFirstRound: prev.isPracticeMode,
     }));
     
-    this.setUIState(() => ({ 
-      ...DEFAULT_UI_STATE, 
+    this.setUIState(prev => ({ 
+      ...prev, 
       showResults: false, 
       metronomeActive: false 
     }));
@@ -161,18 +162,18 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     // 恢復音頻上下文
     this.audioUtils.current.resumeAudioContext();
 
-    // 計算預備拍時間
-    // const countInBeats = this._gameState.isPracticeMode && this._gameState.isFirstRound ? 0 : 4;
+    // 計算預備拍時間 - 所有模式都有4拍預備拍
     const beatDuration = 60 / this._gameSettings.bpm;
-    const noteStartOffset = 4 * beatDuration;
+    const countInDuration = 4 * beatDuration; // 4拍預備拍時間
     
-    this.startTimeRef.current = Date.now();
+    // 設置開始時間，讓預備拍有時間播放
+    this.startTimeRef.current = Date.now() + (countInDuration * 1000);
     
     this.setGameState(prev => ({ 
       ...prev, 
       isPlaying: true, 
       gameStarted: true,
-      currentTime: noteStartOffset
+      currentTime: -countInDuration // 從負數開始，0時才是音樂開始
     }));
 
     this.setUIState(prev => ({ ...prev, metronomeActive: true }));
@@ -180,14 +181,16 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     // 如果是練習模式的第一輪，播放示範
     if (this._gameState.isPracticeMode && this._gameState.isFirstRound) {
       this.playPracticeDemo();
-      this.startDemoTimer(noteStartOffset);
+      this.startDemoTimer();
       return;
     }
 
-    this.startGameLoop(noteStartOffset);
+    // 測驗模式或練習模式第二輪
+    this.startGameLoop();
   };
 
   pauseGame = (): void => {
+    // 清理所有定時器
     if (this.gameRef.current) {
       clearInterval(this.gameRef.current);
       this.gameRef.current = null;
@@ -197,6 +200,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       this.practiceTimeoutRef.current = null;
     }
     
+    // 停止節拍器和遊戲
     this.setUIState(prev => ({ ...prev, metronomeActive: false }));
     this.setGameState(prev => ({ ...prev, isPlaying: false }));
   };
@@ -210,7 +214,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
         return;
       }
       
-      this.processKeyPress();
+      this.processKeyPressWithCurrentState();
     }
   };
 
@@ -253,20 +257,18 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     });
   }
 
-  private startDemoTimer(noteStartOffset: number): void {
+  private startDemoTimer(): void {
     this.gameRef.current = setInterval(() => {
       const elapsed = (Date.now() - this.startTimeRef.current) / 1000;
-      const currentGameTime = noteStartOffset + elapsed;
-      this.setGameState(prev => ({ ...prev, currentTime: currentGameTime }));
+      this.setGameState(prev => ({ ...prev, currentTime: elapsed }));
     }, 50);
   }
 
-  private startGameLoop(noteStartOffset: number): void {
+  private startGameLoop(): void {
     this.gameRef.current = setInterval(() => {
       const elapsed = (Date.now() - this.startTimeRef.current) / 1000;
-      const currentGameTime = noteStartOffset + elapsed;
       
-      this.updateGameStateWithTime(currentGameTime);
+      this.updateGameStateWithTime(elapsed);
     }, 50);
   }
 
@@ -296,7 +298,16 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       
       if (gameFinished) {
         this.endGame(newState, missedCount, hitCount, totalNotes);
-        return newState;
+        // 返回結束狀態
+        return {
+          ...newState,
+          currentTime: 0,
+          isPlaying: false,
+          gameEnded: true,
+          missedNotes: missedCount,
+          hitNotes: hitCount,
+          score: Math.round((hitCount / totalNotes) * 100)
+        };
       }
       
       return {
@@ -308,27 +319,37 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     });
   }
 
-  private processKeyPress(): void {
-    const currentTime = this._gameState.currentTime;
-    const availableNotes = this._notes.filter(note => !note.hit && !note.missed);
-    
-    if (availableNotes.length === 0) return;
-    
-    const validNotes = availableNotes.filter(note => {
-      const timeDiff = Math.abs(note.time - currentTime);
-      return timeDiff <= this._gameSettings.tolerance;
+  private processKeyPressWithCurrentState(): void {
+    // 使用函數式更新來獲取最新的狀態
+    this.setNotes(currentNotes => {
+      const currentTime = this._gameState.currentTime;
+      const availableNotes = currentNotes.filter(note => !note.hit && !note.missed);
+      
+      if (availableNotes.length === 0) {
+        this.audioUtils.current.createKeyPressSound(false);
+        return currentNotes; // 返回原狀態
+      }
+      
+      const validNotes = availableNotes.filter(note => {
+        const timeDiff = Math.abs(note.time - currentTime);
+        return timeDiff <= this._gameSettings.tolerance;
+      });
+      
+      if (validNotes.length > 0) {
+        const closestNote = this.findClosestNote(validNotes, currentTime);
+        this.audioUtils.current.createKeyPressSound(true);
+        
+        // 更新音符狀態
+        return currentNotes.map(note => 
+          note.id === closestNote.id ? { ...note, hit: true, missed: false } : note
+        );
+      } else {
+        this.audioUtils.current.createKeyPressSound(false);
+        return currentNotes; // 返回原狀態
+      }
     });
-    
-    if (validNotes.length > 0) {
-      const closestNote = this.findClosestNote(validNotes, currentTime);
-      this.audioUtils.current.createKeyPressSound(true);
-      this.setNotes(prev => prev.map(note => 
-        note.id === closestNote.id ? { ...note, hit: true, missed: false } : note
-      ));
-    } else {
-      this.audioUtils.current.createKeyPressSound(false);
-    }
   }
+
 
   private findClosestNote(notes: Note[], currentTime: number): Note {
     return notes.reduce((closest, note) => {
@@ -350,18 +371,51 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   }
 
   private isGameFinished(totalProcessed: number, totalNotes: number, currentGameTime: number, totalDuration: number): boolean {
-    return totalProcessed >= totalNotes || currentGameTime > totalDuration + this._gameSettings.tolerance + 1;
+    const allNotesProcessed = totalProcessed >= totalNotes;
+    const timeExceeded = currentGameTime > totalDuration + this._gameSettings.tolerance + 1;
+    const finished = allNotesProcessed || timeExceeded;
+    
+    if (finished) {
+      console.log('🏁 Game should finish:', { 
+        totalProcessed, 
+        totalNotes, 
+        currentGameTime, 
+        totalDuration, 
+        tolerance: this._gameSettings.tolerance,
+        allNotesProcessed,
+        timeExceeded
+      });
+    }
+    
+    return finished;
   }
 
   private endGame(newState: GameState, missedCount: number, hitCount: number, totalNotes: number): void {
+    console.log('🎮 Game ending:', { missedCount, hitCount, totalNotes, score: Math.round((hitCount / totalNotes) * 100) });
+    
+    // 清理所有定時器
     if (this.gameRef.current) {
       clearInterval(this.gameRef.current);
       this.gameRef.current = null;
     }
+    if (this.practiceTimeoutRef.current) {
+      clearTimeout(this.practiceTimeoutRef.current);
+      this.practiceTimeoutRef.current = null;
+    }
     
-    this.setUIState(prev => ({ ...prev, metronomeActive: false }));
+    // 更新 UI 狀態：停止節拍器並直接顯示結果對話框
+    this.setUIState(prev => ({ 
+      ...prev, 
+      metronomeActive: false,
+      showResults: true // 直接在這裡顯示結果對話框
+    }));
+    
+    console.log('📊 Results dialog should now be visible');
+    
+    // 更新遊戲狀態：結束遊戲，重置時間
     this.setGameState(prev => ({
-      ...newState,
+      ...prev,
+      currentTime: 0, // 重置時間，讓進度條歸零
       isPlaying: false,
       gameEnded: true,
       missedNotes: missedCount,
@@ -420,12 +474,12 @@ export const useRhythmGameViewModel = (): IRhythmGameViewModel => {
     }
   }, [gameState, gameSettings, audioSettings, uiState, notes, abcNotation]);
   
-  // Initialize rhythm on mount
+  // Initialize rhythm on mount and when settings change
   useEffect(() => {
     if (viewModelRef.current) {
       viewModelRef.current.generateNewRhythm();
     }
-  }, []);
+  }, [gameSettings.measures, gameSettings.bpm]);
   
   // Keyboard event listener
   useEffect(() => {
@@ -439,12 +493,7 @@ export const useRhythmGameViewModel = (): IRhythmGameViewModel => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [gameState.isPlaying, gameState.currentTime, gameState.isPracticeMode, gameState.isFirstRound, notes, gameSettings.tolerance]);
   
-  // Game end effect
-  useEffect(() => {
-    if (gameState.gameEnded) {
-      setUIState(prev => ({ ...prev, showResults: true }));
-    }
-  }, [gameState.gameEnded]);
+  // 移除了原本的 Game end effect，現在直接在 endGame 方法中顯示結果對話框
   
   return viewModelRef.current;
 };

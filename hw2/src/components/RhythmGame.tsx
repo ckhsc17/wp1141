@@ -67,8 +67,10 @@ const RhythmGame: React.FC = () => {
 
   // 計算顯示用的時間信息
   const firstNoteTime = notes.length > 0 ? notes[0]?.time || 0 : 0;
-  const displayTime = gameState.currentTime < firstNoteTime 
-    ? `預備拍: ${Math.ceil(firstNoteTime - gameState.currentTime)}` 
+  const displayTime = gameState.currentTime < 0 
+    ? `預備拍: ${Math.ceil(-gameState.currentTime)}` 
+    : gameState.currentTime < firstNoteTime
+    ? `準備開始...`
     : `時間進度: ${gameState.currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`;
 
   return (

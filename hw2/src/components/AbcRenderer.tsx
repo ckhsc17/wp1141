@@ -61,11 +61,6 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             stroke: #808080 !important;
             stroke-width: 2px !important;
           }
-          .abcjs-cursor {
-            stroke: #2196f3;
-            stroke-width: 3px;
-            fill: none;
-          }
           .note-result {
             font-size: 16px;
             font-weight: bold;
@@ -94,16 +89,9 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       const svg = containerRef.current.querySelector('svg');
       if (!svg) return;
 
-      // 調試：檢查音符狀態
+      // 檢查音符狀態
       const hitNotes = notes.filter(n => n.hit);
       const missedNotes = notes.filter(n => n.missed);
-      if (hitNotes.length > 0 || missedNotes.length > 0) {
-        console.log('AbcRenderer: 更新視覺效果', { 
-          hitCount: hitNotes.length, 
-          missedCount: missedNotes.length,
-          currentTime 
-        });
-      }
 
       // 重置所有音符樣式
       const allNotes = svg.querySelectorAll('.abcjs-note');
@@ -189,25 +177,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         }
       });
 
-      // 添加時間游標
-      const existingCursor = svg.querySelector('.abcjs-cursor');
-      if (existingCursor) {
-        existingCursor.remove();
-      }
-
-      if (currentTime >= 0 && notes.length > 0) { // 允許從 currentTime = 0 開始顯示游標
-        const progress = Math.min(currentTime / (notes[notes.length - 1]?.time || 1), 1);
-        const svgWidth = svg.getBBox().width;
-        const cursorX = progress * svgWidth;
-
-        const cursor = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        cursor.setAttribute('class', 'abcjs-cursor');
-        cursor.setAttribute('x1', cursorX.toString());
-        cursor.setAttribute('y1', '0');
-        cursor.setAttribute('x2', cursorX.toString());
-        cursor.setAttribute('y2', svg.getBBox().height.toString());
-        svg.appendChild(cursor);
-      }
+      // 移除了時間游標功能
     } catch (error) {
       console.error('Error updating visual effects:', error);
     }
