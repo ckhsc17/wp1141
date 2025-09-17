@@ -237,6 +237,13 @@ const RhythmGame: React.FC = () => {
             variant="filled"
           />
         )}
+        {gameState.isPracticeMode && !gameState.isFirstRound && !gameState.isPlaying && gameState.gameStarted === false && (
+          <Chip 
+            label="✅ 示範完成，點擊開始練習！" 
+            color="success" 
+            variant="filled"
+          />
+        )}
       </Stack>
 
       {/* 進度條和時間顯示 */}

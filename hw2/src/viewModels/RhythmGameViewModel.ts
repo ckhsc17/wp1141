@@ -253,38 +253,53 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     const beatDuration = 60 / this._gameSettings.bpm;
     const countInDuration = 4 * beatDuration; // 4拍預備拍時間
 
-    // 儲存所有 timeout IDs 以便清理
-    const timeouts: NodeJS.Timeout[] = [];
+    // 計算示範總時長：預備拍 + 音樂時長 + 結尾緩衝時間（2拍）
+    const lastNoteTime = this._notes[this._notes.length - 1]?.time || 0;
+    const bufferTime = 2 * beatDuration; // 2拍緩衝時間
+    const totalDemoTime = countInDuration + lastNoteTime + bufferTime;
 
-    this._notes.forEach((note, index) => {
+    // 播放每個音符
+    this._notes.forEach((note) => {
       const timeoutId = setTimeout(() => {
         const noteFrequency = NOTE_FREQUENCIES['C'];
         this.audioUtils.current.createNoteSound(noteFrequency, 0.3);
-        
-        if (index === this._notes.length - 1) {
-          const endTimeout = setTimeout(() => {
-            // 練習模式結束時的清理工作
-            this.endPracticeMode();
-          }, 500);
-          timeouts.push(endTimeout);
-        }
       }, (countInDuration + note.time) * 1000); // 加上預備拍時間
-      
-      timeouts.push(timeoutId);
     });
 
-    // 將 timeouts 存儲以便後續清理（這裡簡化處理，實際上應該存儲到實例變量中）
-    this.practiceTimeoutRef.current = timeouts[timeouts.length - 1]; // 存儲最後一個作為代表
+    console.log(`🎵 Demo will end automatically after ${totalDemoTime.toFixed(1)} seconds`);
   }
 
   private startDemoTimer(): void {
+    const beatDuration = 60 / this._gameSettings.bpm;
+    const lastNoteTime = this._notes[this._notes.length - 1]?.time || 0;
+    const bufferTime = 2 * beatDuration; // 2拍緩衝時間
+    const demoEndTime = lastNoteTime + bufferTime; // 示範應該結束的時間點（相對於音樂開始）
+
     this.gameRef.current = setInterval(() => {
       const elapsed = (Date.now() - this.startTimeRef.current) / 1000;
-      this.setGameState(prev => ({ ...prev, currentTime: elapsed }));
+      
+      // 使用函數式更新來獲取最新狀態並檢查是否應該結束示範
+      this.setGameState(prev => {
+        const newState = { ...prev, currentTime: elapsed };
+        
+        // 在狀態更新中檢查是否應該結束示範
+        if (elapsed >= demoEndTime && prev.isPracticeMode && prev.isFirstRound && prev.isPlaying) {
+          console.log(`🎵 Demo auto-ending at time ${elapsed.toFixed(1)}s (target: ${demoEndTime.toFixed(1)}s)`);
+          
+          // 使用 setTimeout 來避免在狀態更新中調用其他狀態更新
+          setTimeout(() => {
+            this.endPracticeMode();
+          }, 0);
+        }
+        
+        return newState;
+      });
     }, 50);
   }
 
   private endPracticeMode(): void {
+    console.log('🎵 Practice mode demo ending...');
+    
     // 清理所有定時器
     if (this.gameRef.current) {
       clearInterval(this.gameRef.current);
@@ -298,15 +313,24 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     // 停止節拍器
     this.setUIState(prev => ({ ...prev, metronomeActive: false }));
     
-    // 重置遊戲狀態
-    this.setGameState(prev => ({
-      ...prev,
-      isPlaying: false,
-      isFirstRound: false,
-      currentTime: 0, // 重置時間，讓進度條歸零
-    }));
-    
-    console.log('🎵 Practice mode ended, ready for player input');
+    // 使用函數式更新確保狀態同步，並防止重複調用
+    this.setGameState(prev => {
+      // 防止重複調用
+      if (!prev.isPracticeMode || !prev.isFirstRound) {
+        console.log('🎵 Practice mode already ended, skipping...');
+        return prev;
+      }
+
+      console.log('🎵 Practice mode demo ended, ready for player practice');
+      
+      return {
+        ...prev,
+        isPlaying: false,      // 停止播放狀態，讓按鈕變回「開始」
+        gameStarted: false,    // 重置遊戲開始狀態
+        isFirstRound: false,   // 結束第一輪（示範），準備第二輪（玩家練習）
+        currentTime: 0,        // 重置時間，讓進度條歸零
+      };
+    });
   }
 
   private startGameLoop(): void {
