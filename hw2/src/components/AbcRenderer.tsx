@@ -94,6 +94,17 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       const svg = containerRef.current.querySelector('svg');
       if (!svg) return;
 
+      // 調試：檢查音符狀態
+      const hitNotes = notes.filter(n => n.hit);
+      const missedNotes = notes.filter(n => n.missed);
+      if (hitNotes.length > 0 || missedNotes.length > 0) {
+        console.log('AbcRenderer: 更新視覺效果', { 
+          hitCount: hitNotes.length, 
+          missedCount: missedNotes.length,
+          currentTime 
+        });
+      }
+
       // 重置所有音符樣式
       const allNotes = svg.querySelectorAll('.abcjs-note');
       allNotes.forEach((note: Element) => {
@@ -104,26 +115,76 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       const oldResults = svg.querySelectorAll('.note-result');
       oldResults.forEach(result => result.remove());
       
+      // 找到最接近當前時間的音符（只有一個會被標記為灰色）
+      let closestNoteIndex = -1;
+      let closestTimeDiff = Infinity;
+      
+      notes.forEach((note, index) => {
+        const timeDiff = Math.abs(note.time - currentTime);
+        if (timeDiff < 0.2 && timeDiff < closestTimeDiff) { // 在範圍內且最接近
+          closestTimeDiff = timeDiff;
+          closestNoteIndex = index;
+        }
+      });
+
       // 根據遊戲狀態更新音符顏色和結果
       notes.forEach((note, index) => {
         const noteElement = allNotes[index] as SVGElement;
         if (noteElement) {
-          // 只有當前演奏的音符顯示灰色
-          if (Math.abs(note.time - currentTime) < 0.3) {
+          // 只有最接近的音符顯示灰色
+          if (index === closestNoteIndex) {
             noteElement.classList.add('current');
           }
           
           // 在音符下方顯示結果
           if (note.hit || note.missed) {
             const bbox = (noteElement as SVGGraphicsElement).getBBox();
-            const resultText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             // 優先級：hit > missed（命中優先於錯過）
             const isHit = note.hit; // hit 優先
-            resultText.setAttribute('class', `note-result ${isHit ? 'hit' : 'missed'}`);
-            resultText.setAttribute('x', (bbox.x + bbox.width / 2).toString());
-            resultText.setAttribute('y', (bbox.y + bbox.height + 20).toString());
-            resultText.textContent = isHit ? '✓' : '✗';
-            svg.appendChild(resultText);
+            
+            if (isHit) {
+              // 綠色無邊框圓點
+              const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+              circle.setAttribute('class', 'note-result hit');
+              circle.setAttribute('cx', (bbox.x + bbox.width / 2).toString());
+              circle.setAttribute('cy', (svg.getBBox().y + svg.getBBox().height + 30).toString()); // 統一高度
+              circle.setAttribute('r', '8');
+              circle.setAttribute('fill', '#4caf50');
+              circle.setAttribute('stroke', 'none');
+              svg.appendChild(circle);
+            } else {
+              // 紅色標準小叉叉
+              const crossGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+              crossGroup.setAttribute('class', 'note-result missed');
+              
+              const centerX = bbox.x + bbox.width / 2;
+              const centerY = svg.getBBox().y + svg.getBBox().height + 30; // 統一高度
+              const size = 6; // 叉叉大小
+              
+              // 第一條線（左上到右下）
+              const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+              line1.setAttribute('x1', (centerX - size).toString());
+              line1.setAttribute('y1', (centerY - size).toString());
+              line1.setAttribute('x2', (centerX + size).toString());
+              line1.setAttribute('y2', (centerY + size).toString());
+              line1.setAttribute('stroke', '#f44336');
+              line1.setAttribute('stroke-width', '2');
+              line1.setAttribute('stroke-linecap', 'round');
+              
+              // 第二條線（右上到左下）
+              const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+              line2.setAttribute('x1', (centerX + size).toString());
+              line2.setAttribute('y1', (centerY - size).toString());
+              line2.setAttribute('x2', (centerX - size).toString());
+              line2.setAttribute('y2', (centerY + size).toString());
+              line2.setAttribute('stroke', '#f44336');
+              line2.setAttribute('stroke-width', '2');
+              line2.setAttribute('stroke-linecap', 'round');
+              
+              crossGroup.appendChild(line1);
+              crossGroup.appendChild(line2);
+              svg.appendChild(crossGroup);
+            }
           }
         }
       });
@@ -134,7 +195,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         existingCursor.remove();
       }
 
-      if (currentTime > 0 && notes.length > 0) {
+      if (currentTime >= 0 && notes.length > 0) { // 允許從 currentTime = 0 開始顯示游標
         const progress = Math.min(currentTime / (notes[notes.length - 1]?.time || 1), 1);
         const svgWidth = svg.getBBox().width;
         const cursorX = progress * svgWidth;
