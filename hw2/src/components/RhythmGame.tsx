@@ -71,6 +71,15 @@ const RhythmGame: React.FC = () => {
     handleTouchInput,
   } = viewModel;
 
+  // 異步處理開始遊戲
+  const handleStartGame = async () => {
+    try {
+      await startGame();
+    } catch (error) {
+      console.error('❌ Failed to start game:', error);
+    }
+  };
+
   // 計算顯示用的時間信息
   const displayTime = gameState.currentTime < 0 
     ? `預備拍: ${Math.ceil(-gameState.currentTime)}` 
@@ -103,7 +112,7 @@ const RhythmGame: React.FC = () => {
                 variant={gameState.isPlaying ? "outlined" : "contained"}
                 color={gameState.isPlaying ? "secondary" : "success"}
                 startIcon={gameState.isPlaying ? <Pause /> : <PlayArrow />}
-                onClick={gameState.isPlaying ? pauseGame : startGame}
+                onClick={gameState.isPlaying ? pauseGame : handleStartGame}
                 disabled={!abcNotation}
               >
                 {gameState.isPlaying ? '暫停' : '開始'}
@@ -290,6 +299,9 @@ const RhythmGame: React.FC = () => {
             </Typography>
             <Typography variant="body2" color="primary">
               💡 <strong>提示</strong>：注意觀察灰色標記，它指示當前應該演奏的音符
+            </Typography>
+            <Typography variant="body2" color="info.main">
+              🎯 <strong>判定結果</strong>：綠色圓點=命中，紅色叉叉=錯過，橙色叉叉=錯誤敲擊
             </Typography>
             {isMobileDevice && (
               <Typography variant="body2" color="success.main">

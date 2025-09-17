@@ -157,11 +157,16 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     }));
   };
 
-  startGame = (): void => {
+  startGame = async (): Promise<void> => {
     if (!this._abcNotation || this._notes.length === 0) return;
 
-    // 恢復音頻上下文
-    this.audioUtils.current.resumeAudioContext();
+    // 恢復音頻上下文 - 改進版本
+    try {
+      await this.audioUtils.current.resumeAudioContext();
+      console.log('🎮 Game starting, audio context state:', this.audioUtils.current.getAudioContextState());
+    } catch (error) {
+      console.error('❌ Failed to resume audio context:', error);
+    }
 
     // 計算預備拍時間 - 所有模式都有4拍預備拍
     const beatDuration = 60 / this._gameSettings.bpm;
@@ -213,7 +218,14 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     }
   };
 
-  handleTouchInput = (): void => {
+  handleTouchInput = async (): Promise<void> => {
+    // 首先嘗試恢復音頻上下文
+    try {
+      await this.audioUtils.current.resumeAudioContext();
+    } catch (error) {
+      console.error('❌ Failed to resume audio context on touch:', error);
+    }
+    
     if (this._gameState.isPlaying) {
       this.handleGameInput();
     }

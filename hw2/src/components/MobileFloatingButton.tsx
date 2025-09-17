@@ -16,8 +16,8 @@ import { MusicNote, TouchApp } from '@mui/icons-material';
 export interface MobileFloatingButtonProps {
   /** 是否顯示按鈕 */
   visible: boolean;
-  /** 按鈕點擊事件處理函數 */
-  onTap: () => void;
+  /** 按鈕點擊事件處理函數 - 改為異步 */
+  onTap: () => Promise<void>;
   /** 遊戲是否正在進行中 */
   isGameActive: boolean;
   /** 是否為練習模式的示範階段 */
@@ -61,31 +61,43 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
     }, 150);
   }, []);
 
-  // 處理觸控事件
-  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+  // 處理觸控事件 - 改為異步
+  const handleTouchStart = useCallback(async (event: React.TouchEvent) => {
     event.preventDefault(); // 防止滾動等默認行為
     
     if (!isGameActive || isPracticeDemo) {
       return;
     }
 
-    // 觸發點擊事件
-    onTap();
-    
-    // 添加視覺反饋
-    addVisualFeedback();
+    try {
+      // 觸發點擊事件
+      await onTap();
+      
+      // 添加視覺反饋
+      addVisualFeedback();
+      
+      console.log('🎯 Touch input processed successfully');
+    } catch (error) {
+      console.error('❌ Touch input failed:', error);
+    }
   }, [isGameActive, isPracticeDemo, onTap, addVisualFeedback]);
 
-  // 處理點擊事件（桌面版備用）
-  const handleClick = useCallback((event: React.MouseEvent) => {
+  // 處理點擊事件（桌面版備用） - 改為異步
+  const handleClick = useCallback(async (event: React.MouseEvent) => {
     event.preventDefault();
     
     if (!isGameActive || isPracticeDemo) {
       return;
     }
 
-    onTap();
-    addVisualFeedback();
+    try {
+      await onTap();
+      addVisualFeedback();
+      
+      console.log('🎯 Click input processed successfully');
+    } catch (error) {
+      console.error('❌ Click input failed:', error);
+    }
   }, [isGameActive, isPracticeDemo, onTap, addVisualFeedback]);
 
   // 清理 effect

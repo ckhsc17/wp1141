@@ -84,10 +84,57 @@ class AudioUtils {
     oscillator.stop(this.audioContext.currentTime + duration);
   }
 
-  // 恢復音頻上下文 (用戶交互後)
-  public resumeAudioContext(): void {
+  // 恢復音頻上下文 (用戶交互後) - 改進版本
+  public async resumeAudioContext(): Promise<void> {
     if (this.audioContext && this.audioContext.state === 'suspended') {
-      this.audioContext.resume();
+      try {
+        await this.audioContext.resume();
+        console.log('🔊 AudioContext resumed successfully, state:', this.audioContext.state);
+      } catch (error) {
+        console.error('❌ Failed to resume AudioContext:', error);
+        throw error;
+      }
+    } else if (this.audioContext) {
+      console.log('🔊 AudioContext state:', this.audioContext.state);
+    }
+  }
+
+  // 檢查音頻上下文狀態
+  public getAudioContextState(): string {
+    return this.audioContext?.state || 'no-context';
+  }
+
+  // 初始化音頻上下文（用於用戶首次交互）
+  public async initializeAudioContext(): Promise<void> {
+    if (!this.audioContext) {
+      try {
+        this.audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        console.log('🔊 AudioContext created, state:', this.audioContext.state);
+      } catch (error) {
+        console.error('❌ Failed to create AudioContext:', error);
+        throw error;
+      }
+    }
+    
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume();
+      console.log('🔊 AudioContext resumed during initialization, state:', this.audioContext.state);
+    }
+  }
+
+  // 檢查音頻是否可用
+  public isAudioAvailable(): boolean {
+    return this.audioContext !== null && this.audioContext.state === 'running';
+  }
+
+  // 測試音頻播放（用於調試）
+  public async testAudio(): Promise<void> {
+    try {
+      await this.resumeAudioContext();
+      this.createKeyPressSound(true);
+      console.log('🔊 Audio test completed');
+    } catch (error) {
+      console.error('❌ Audio test failed:', error);
     }
   }
 }

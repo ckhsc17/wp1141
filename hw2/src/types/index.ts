@@ -89,10 +89,10 @@ export interface IRhythmGameViewModel {
   
   // Actions
   generateNewRhythm(): void;
-  startGame(): void;
+  startGame(): Promise<void>; // 改為異步
   pauseGame(): void;
   handleKeyPress(event: KeyboardEvent): void;
-  handleTouchInput(): void;
+  handleTouchInput(): Promise<void>; // 改為異步
   updateGameSettings(settings: Partial<GameSettings>): void;
   updateGameState(state: Partial<GameState>): void;
   updateAudioSettings(settings: Partial<AudioSettings>): void;
