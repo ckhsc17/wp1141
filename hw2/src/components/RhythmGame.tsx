@@ -309,9 +309,6 @@ const RhythmGame: React.FC = () => {
       {/* 譜面顯示區域 */}
       <GlassCard glassLevel={4} animated={true} animationDelay={0.6} sx={{ mt: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, ...fontStyle }}>
-            <LibraryMusic /> {t('music.rhythmScore')}
-          </Typography>
           {abcNotation && (
             <AbcRenderer 
               abcNotation={abcNotation} 
