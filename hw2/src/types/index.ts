@@ -92,6 +92,7 @@ export interface IRhythmGameViewModel {
   startGame(): void;
   pauseGame(): void;
   handleKeyPress(event: KeyboardEvent): void;
+  handleTouchInput(): void;
   updateGameSettings(settings: Partial<GameSettings>): void;
   updateGameState(state: Partial<GameState>): void;
   updateAudioSettings(settings: Partial<AudioSettings>): void;

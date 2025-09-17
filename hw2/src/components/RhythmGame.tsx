@@ -30,7 +30,9 @@ import {
 } from '@mui/icons-material';
 import AbcRenderer from '@/components/AbcRenderer';
 import CustomMetronome from '@/components/CustomMetronome';
+import MobileFloatingButton from '@/components/MobileFloatingButton';
 import { useRhythmGameViewModel } from '@/viewModels/RhythmGameViewModel';
+import { useDeviceDetection } from '@/utils/deviceDetection';
 
 /**
  * 節奏遊戲主組件 - 純 UI 組件，遵循 MVVM 架構
@@ -45,6 +47,9 @@ import { useRhythmGameViewModel } from '@/viewModels/RhythmGameViewModel';
 const RhythmGame: React.FC = () => {
   // 使用 ViewModel Hook - 所有業務邏輯都在這裡
   const viewModel = useRhythmGameViewModel();
+  
+  // 設備檢測 Hook
+  const { isMobileDevice, isTouchDevice } = useDeviceDetection();
 
   // 解構 ViewModel 的狀態和方法
   const {
@@ -63,6 +68,7 @@ const RhythmGame: React.FC = () => {
     updateGameSettings,
     updateGameState,
     updateUIState,
+    handleTouchInput,
   } = viewModel;
 
   // 計算顯示用的時間信息
@@ -267,7 +273,7 @@ const RhythmGame: React.FC = () => {
           </Typography>
           <Stack spacing={1}>
             <Typography variant="body2">
-              • <strong>空格鍵</strong>：按照節拍點擊
+              • <strong>{isMobileDevice ? '觸控按鈕' : '空格鍵'}</strong>：按照節拍點擊
             </Typography>
             <Typography variant="body2">
               • <strong>練習模式</strong>：先播放示範，再進行練習
@@ -278,6 +284,14 @@ const RhythmGame: React.FC = () => {
             <Typography variant="body2" color="primary">
               💡 <strong>提示</strong>：注意觀察灰色標記，它指示當前應該演奏的音符
             </Typography>
+            <Typography variant="body2" color="info.main">
+              🎯 <strong>判定結果</strong>：綠色圓點=命中，紅色叉叉=錯過，橙色叉叉=錯誤敲擊
+            </Typography>
+            {isMobileDevice && (
+              <Typography variant="body2" color="success.main">
+                📱 <strong>手機版</strong>：使用右下角的綠色浮動按鈕進行操作
+              </Typography>
+            )}
           </Stack>
         </CardContent>
       </Card>
@@ -288,7 +302,7 @@ const RhythmGame: React.FC = () => {
         <DialogContent>
           <Stack spacing={2} alignItems="center">
             <Typography variant="h4" color="primary">
-              得分: {gameState.score}%
+              得分: {gameState.score}
             </Typography>
             <Stack direction="row" spacing={2}>
               <Box textAlign="center">
@@ -340,6 +354,14 @@ const RhythmGame: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* 手機版浮動按鈕 */}
+      <MobileFloatingButton
+        visible={isMobileDevice || isTouchDevice}
+        onTap={handleTouchInput}
+        isGameActive={isGameActive}
+        isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
+      />
     </Box>
   );
 };

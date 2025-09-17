@@ -209,15 +209,24 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   handleKeyPress = (event: KeyboardEvent): void => {
     if (event.code === 'Space' && this._gameState.isPlaying) {
       event.preventDefault();
-      
-      // 如果是練習模式的第一輪（示範），不處理按鍵
-      if (this._gameState.isPracticeMode && this._gameState.isFirstRound) {
-        return;
-      }
-      
-      this.processKeyPressWithCurrentState();
+      this.handleGameInput();
     }
   };
+
+  handleTouchInput = (): void => {
+    if (this._gameState.isPlaying) {
+      this.handleGameInput();
+    }
+  };
+
+  private handleGameInput(): void {
+    // 如果是練習模式的第一輪（示範），不處理輸入
+    if (this._gameState.isPracticeMode && this._gameState.isFirstRound) {
+      return;
+    }
+    
+    this.processKeyPressWithCurrentState();
+  }
 
   updateGameSettings = (settings: Partial<GameSettings>): void => {
     this.setGameSettings(prev => ({ ...prev, ...settings }));
