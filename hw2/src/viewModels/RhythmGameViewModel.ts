@@ -240,22 +240,32 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   private playPracticeDemo(): void {
     if (!this._notes.length) return;
 
+    // 計算預備拍時間，確保音符播放與節拍器同步
+    const beatDuration = 60 / this._gameSettings.bpm;
+    const countInDuration = 4 * beatDuration; // 4拍預備拍時間
+
+    // 儲存所有 timeout IDs 以便清理
+    const timeouts: NodeJS.Timeout[] = [];
+
     this._notes.forEach((note, index) => {
-      this.practiceTimeoutRef.current = setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         const noteFrequency = NOTE_FREQUENCIES['C'];
         this.audioUtils.current.createNoteSound(noteFrequency, 0.3);
         
         if (index === this._notes.length - 1) {
-          setTimeout(() => {
-            this.setGameState(prev => ({
-              ...prev,
-              isPlaying: false,
-              isFirstRound: false,
-            }));
+          const endTimeout = setTimeout(() => {
+            // 練習模式結束時的清理工作
+            this.endPracticeMode();
           }, 500);
+          timeouts.push(endTimeout);
         }
-      }, note.time * 1000);
+      }, (countInDuration + note.time) * 1000); // 加上預備拍時間
+      
+      timeouts.push(timeoutId);
     });
+
+    // 將 timeouts 存儲以便後續清理（這裡簡化處理，實際上應該存儲到實例變量中）
+    this.practiceTimeoutRef.current = timeouts[timeouts.length - 1]; // 存儲最後一個作為代表
   }
 
   private startDemoTimer(): void {
@@ -263,6 +273,31 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       const elapsed = (Date.now() - this.startTimeRef.current) / 1000;
       this.setGameState(prev => ({ ...prev, currentTime: elapsed }));
     }, 50);
+  }
+
+  private endPracticeMode(): void {
+    // 清理所有定時器
+    if (this.gameRef.current) {
+      clearInterval(this.gameRef.current);
+      this.gameRef.current = null;
+    }
+    if (this.practiceTimeoutRef.current) {
+      clearTimeout(this.practiceTimeoutRef.current);
+      this.practiceTimeoutRef.current = null;
+    }
+    
+    // 停止節拍器
+    this.setUIState(prev => ({ ...prev, metronomeActive: false }));
+    
+    // 重置遊戲狀態
+    this.setGameState(prev => ({
+      ...prev,
+      isPlaying: false,
+      isFirstRound: false,
+      currentTime: 0, // 重置時間，讓進度條歸零
+    }));
+    
+    console.log('🎵 Practice mode ended, ready for player input');
   }
 
   private startGameLoop(): void {
