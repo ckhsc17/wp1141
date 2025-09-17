@@ -43,6 +43,8 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           scale: 1.2,
           staffwidth: 600,
           add_classes: true,
+          paddingtop: 10,
+          paddingbottom: 50, // 增加底部空間給結果標記
           clickListener: (abcElem: unknown) => {
             console.log('Clicked element:', abcElem);
           }
@@ -94,9 +96,22 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       if (!svg) return;
 
       // 檢查音符狀態（用於調試）
+      console.log('Current notes state:', notes.map((note, i) => ({
+        index: i,
+        time: note.time,
+        hit: note.hit,
+        missed: note.missed,
+        wrong: note.wrong
+      })));
 
       // 重置所有音符樣式
       const allNotes = svg.querySelectorAll('.abcjs-note');
+      console.log(`Found ${allNotes.length} notes in SVG, expected ${notes.length} notes`);
+      
+      // 也嘗試查找其他可能的音符選擇器
+      const alternativeNotes = svg.querySelectorAll('[data-name*="note"], .abcjs-note-head, .abcjs-chord');
+      console.log(`Alternative note elements found: ${alternativeNotes.length}`);
+      
       allNotes.forEach((note: Element) => {
         (note as SVGElement).classList.remove('hit', 'missed', 'current');
       });
@@ -119,92 +134,126 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
 
       // 根據遊戲狀態更新音符顏色和結果
       notes.forEach((note, index) => {
-        const noteElement = allNotes[index] as SVGElement;
-        if (noteElement) {
-          // 只有最接近的音符顯示灰色
-          if (index === closestNoteIndex) {
-            noteElement.classList.add('current');
+        // 為每個有結果的音符創建標記，直接根據其在 notes 數組中的位置
+        if (note.hit || note.missed || note.wrong) {
+          // 嘗試找到對應的音符元素
+          let noteElement = null;
+          let centerX = 0;
+          let centerY = 0;
+          
+          if (index < allNotes.length) {
+            // 如果有對應的 SVG 元素，使用其位置
+            noteElement = allNotes[index] as SVGElement;
+            try {
+              const bbox = (noteElement as SVGGraphicsElement).getBBox();
+              centerX = bbox.x + bbox.width / 2;
+              centerY = bbox.y + bbox.height + 15; // 放在音符正下方 15px
+              
+              console.log(`Note ${index} using SVG position:`, { centerX, centerY, bbox });
+            } catch (error) {
+              console.error(`Error getting bbox for note ${index}:`, error);
+              noteElement = null; // 標記為失敗，使用備用方案
+            }
           }
           
-          // 在音符下方顯示結果
-          if (note.hit || note.missed || note.wrong) {
-            const bbox = (noteElement as SVGGraphicsElement).getBBox();
-            const centerX = bbox.x + bbox.width / 2;
-            const centerY = svg.getBBox().y + svg.getBBox().height + 30; // 統一高度
+          // 如果沒有對應的 SVG 元素或 bbox 計算失敗，使用備用定位
+          if (!noteElement || centerX === 0) {
+            const svgBBox = svg.getBBox();
+            const svgWidth = svgBBox.width;
+            const totalDuration = notes.length > 0 ? notes[notes.length - 1].time : 1;
+            const relativePosition = note.time / totalDuration;
+            centerX = svgBBox.x + (svgWidth * relativePosition);
+            centerY = svgBBox.y + svgBBox.height + 25;
             
-            // 優先級：hit > missed > wrong
+            console.log(`Note ${index} using fallback position:`, { centerX, centerY, relativePosition });
+          }
+          
+          // 創建結果標記
+          try {
             if (note.hit) {
-              // 綠色無邊框圓點
+              // 綠色圓點 - 調小一點
               const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
               circle.setAttribute('class', 'note-result hit');
               circle.setAttribute('cx', centerX.toString());
               circle.setAttribute('cy', centerY.toString());
-              circle.setAttribute('r', '8');
+              circle.setAttribute('r', '4'); // 從 6 改為 4
               circle.setAttribute('fill', '#4caf50');
               circle.setAttribute('stroke', 'none');
               svg.appendChild(circle);
+              
+              console.log(`✅ Created hit marker for note ${index} at (${centerX}, ${centerY})`);
+              
             } else if (note.missed) {
-              // 紅色標準小叉叉 (錯過)
+              // 紅色叉叉 - 調小一點
               const crossGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
               crossGroup.setAttribute('class', 'note-result missed');
               
-              const size = 6; // 叉叉大小
+              const size = 3.5; // 從 5 改為 3.5
               
-              // 第一條線（左上到右下）
               const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
               line1.setAttribute('x1', (centerX - size).toString());
               line1.setAttribute('y1', (centerY - size).toString());
               line1.setAttribute('x2', (centerX + size).toString());
               line1.setAttribute('y2', (centerY + size).toString());
               line1.setAttribute('stroke', '#f44336');
-              line1.setAttribute('stroke-width', '2');
+              line1.setAttribute('stroke-width', '2'); // 從 2.5 改為 2
               line1.setAttribute('stroke-linecap', 'round');
               
-              // 第二條線（右上到左下）
               const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
               line2.setAttribute('x1', (centerX + size).toString());
               line2.setAttribute('y1', (centerY - size).toString());
               line2.setAttribute('x2', (centerX - size).toString());
               line2.setAttribute('y2', (centerY + size).toString());
               line2.setAttribute('stroke', '#f44336');
-              line2.setAttribute('stroke-width', '2');
+              line2.setAttribute('stroke-width', '2'); // 從 2.5 改為 2
               line2.setAttribute('stroke-linecap', 'round');
               
               crossGroup.appendChild(line1);
               crossGroup.appendChild(line2);
               svg.appendChild(crossGroup);
+              
+              console.log(`❌ Created missed marker for note ${index} at (${centerX}, ${centerY})`);
+              
             } else if (note.wrong) {
-              // 橙色叉叉 (錯誤敲擊)
+              // 橙色叉叉 - 調小一點
               const crossGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
               crossGroup.setAttribute('class', 'note-result wrong');
               
-              const size = 6; // 叉叉大小
+              const size = 3.5; // 從 5 改為 3.5
               
-              // 第一條線（左上到右下）
               const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
               line1.setAttribute('x1', (centerX - size).toString());
               line1.setAttribute('y1', (centerY - size).toString());
               line1.setAttribute('x2', (centerX + size).toString());
               line1.setAttribute('y2', (centerY + size).toString());
               line1.setAttribute('stroke', '#ff9800');
-              line1.setAttribute('stroke-width', '2');
+              line1.setAttribute('stroke-width', '2'); // 從 2.5 改為 2
               line1.setAttribute('stroke-linecap', 'round');
               
-              // 第二條線（右上到左下）
               const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
               line2.setAttribute('x1', (centerX + size).toString());
               line2.setAttribute('y1', (centerY - size).toString());
               line2.setAttribute('x2', (centerX - size).toString());
               line2.setAttribute('y2', (centerY + size).toString());
               line2.setAttribute('stroke', '#ff9800');
-              line2.setAttribute('stroke-width', '2');
+              line2.setAttribute('stroke-width', '2'); // 從 2.5 改為 2
               line2.setAttribute('stroke-linecap', 'round');
               
               crossGroup.appendChild(line1);
               crossGroup.appendChild(line2);
               svg.appendChild(crossGroup);
+              
+              console.log(`⚠️ Created wrong marker for note ${index} at (${centerX}, ${centerY})`);
             }
+          } catch (error) {
+            console.error(`Error creating result marker for note ${index}:`, error);
           }
+        }
+        
+        // 處理當前音符的灰色高亮
+        if (index < allNotes.length && index === closestNoteIndex) {
+          const noteElement = allNotes[index] as SVGElement;
+          noteElement.classList.add('current');
         }
       });
 
@@ -219,7 +268,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       ref={containerRef}
       sx={{
         width: '100%',
-        minHeight: 200,
+        minHeight: 250, // 增加高度以容納音符下方的標記
         border: '1px solid #e0e0e0',
         borderRadius: 1,
         p: 2,
@@ -228,6 +277,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         '& svg': {
           maxWidth: '100%',
           height: 'auto',
+          minHeight: '200px', // 確保 SVG 有足夠高度
         }
       }}
     />
