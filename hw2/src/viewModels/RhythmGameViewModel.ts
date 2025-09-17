@@ -22,6 +22,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   private _uiState: UIState = DEFAULT_UI_STATE;
   private _notes: Note[] = [];
   private _abcNotation: string = '';
+  private demoTimeouts: NodeJS.Timeout[] = [];
   
   // Private refs
   private gameRef: React.MutableRefObject<NodeJS.Timeout | null>;
@@ -264,6 +265,9 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
         const noteFrequency = NOTE_FREQUENCIES['C'];
         this.audioUtils.current.createNoteSound(noteFrequency, 0.3);
       }, (countInDuration + note.time) * 1000); // 加上預備拍時間
+      
+      // 儲存 timeout ID 以便後續清理
+      this.demoTimeouts.push(timeoutId);
     });
 
     console.log(`🎵 Demo will end automatically after ${totalDemoTime.toFixed(1)} seconds`);
@@ -309,6 +313,10 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       clearTimeout(this.practiceTimeoutRef.current);
       this.practiceTimeoutRef.current = null;
     }
+    
+    // 清理 demo 音符播放的 timeouts
+    this.demoTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    this.demoTimeouts = [];
     
     // 停止節拍器
     this.setUIState(prev => ({ ...prev, metronomeActive: false }));

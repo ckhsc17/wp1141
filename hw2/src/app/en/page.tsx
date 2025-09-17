@@ -17,7 +17,7 @@ const theme = createTheme({
   },
 });
 
-export default function Home() {
+export default function EnglishHome() {
   const { t, locale } = useTranslation();
 
   // 根據語言設置字體樣式

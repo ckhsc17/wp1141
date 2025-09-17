@@ -1,0 +1,66 @@
+{
+  "common": {
+    "title": "TempoGame - Rhythm Practice Game",
+    "description": "An interactive rhythm practice game that helps you improve your musical timing and beat sense. Features practice mode and quiz mode with real-time feedback for easy rhythm mastery.",
+    "language": "Language",
+    "chinese": "中文",
+    "english": "English"
+  },
+  "game": {
+    "title": "🎵 Rhythm Practice Game",
+    "generateRhythm": "Generate New Rhythm",
+    "start": "Start",
+    "pause": "Pause",
+    "gameSettings": "Game Settings",
+    "bpm": "BPM (Speed)",
+    "measures": "Measures",
+    "practiceMode": "Practice Mode",
+    "metronomeRunning": "Metronome Running",
+    "metronomeStopped": "Metronome Stopped",
+    "slow": "Slow",
+    "medium": "Medium",
+    "fast": "Fast"
+  },
+  "stats": {
+    "score": "Score",
+    "hit": "Hit",
+    "missed": "Missed",
+    "wrong": "Wrong",
+    "total": "Total",
+    "demoRunning": "🎵 System Demo Playing...",
+    "demoComplete": "✅ Demo Complete, Click Start to Practice!",
+    "timeProgress": "Time Progress",
+    "countDown": "Count In"
+  },
+  "music": {
+    "rhythmScore": "Rhythm Score"
+  },
+  "instructions": {
+    "title": "🎮 Instructions",
+    "keyboardInput": "Spacebar",
+    "touchInput": "Touch Button",
+    "inputDescription": "Tap according to the beat",
+    "practiceMode": "Practice Mode: Play demo first, then practice",
+    "testMode": "Quiz Mode: Start directly with 4-beat count-in",
+    "tip": "💡 Tip: Watch the gray marker indicating the current note to play",
+    "results": "🎯 Results: Green dot=Hit, Red X=Missed, Orange X=Wrong tap",
+    "mobileVersion": "📱 Mobile: Use the green floating button in bottom-right corner"
+  },
+  "results": {
+    "title": "🎉 Game Results",
+    "hit": "Hit",
+    "missed": "Missed",
+    "wrong": "Wrong",
+    "total": "Total",
+    "close": "Close",
+    "playAgain": "Play Again",
+    "perfect": "🏆 Perfect!",
+    "great": "👏 Great!",
+    "good": "👍 Good!",
+    "keepTrying": "💪 Keep Trying!"
+  },
+  "mobile": {
+    "tapBeat": "Tap Beat",
+    "demo": "Demo..."
+  }
+}

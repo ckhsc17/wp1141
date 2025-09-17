@@ -31,8 +31,10 @@ import {
 import AbcRenderer from '@/components/AbcRenderer';
 import CustomMetronome from '@/components/CustomMetronome';
 import MobileFloatingButton from '@/components/MobileFloatingButton';
+import LanguageToggle from '@/components/LanguageToggle';
 import { useRhythmGameViewModel } from '@/viewModels/RhythmGameViewModel';
 import { useDeviceDetection } from '@/utils/deviceDetection';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * 節奏遊戲主組件 - 純 UI 組件，遵循 MVVM 架構
@@ -45,6 +47,9 @@ import { useDeviceDetection } from '@/utils/deviceDetection';
  * 業務邏輯完全委託給 RhythmGameViewModel
  */
 const RhythmGame: React.FC = () => {
+  // 國際化 Hook
+  const { t, locale } = useTranslation();
+  
   // 使用 ViewModel Hook - 所有業務邏輯都在這裡
   const viewModel = useRhythmGameViewModel();
   
@@ -71,20 +76,51 @@ const RhythmGame: React.FC = () => {
     handleTouchInput,
   } = viewModel;
 
+  // 異步處理開始遊戲
+  const handleStartGame = async () => {
+    try {
+      await startGame();
+    } catch (error) {
+      console.error('❌ Failed to start game:', error);
+    }
+  };
+
+  // 異步處理觸控輸入（為 MobileFloatingButton 創建異步包裝）
+  const handleAsyncTouchInput = async (): Promise<void> => {
+    try {
+      // 調用同步的 handleTouchInput，但包裝為異步
+      handleTouchInput();
+      return Promise.resolve();
+    } catch (error) {
+      console.error('❌ Touch input failed:', error);
+      return Promise.reject(error);
+    }
+  };
+
   // 計算顯示用的時間信息
   const displayTime = gameState.currentTime < 0 
-    ? `預備拍: ${Math.ceil(-gameState.currentTime)}` 
-    : `時間進度: ${gameState.currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`;
+    ? `${t('stats.countDown')}: ${Math.ceil(-gameState.currentTime)}` 
+    : `${t('stats.timeProgress')}: ${gameState.currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`;
+
+  // 根據語言設置字體樣式
+  const fontStyle = {
+    fontFamily: locale === 'en' ? '"Times New Roman", serif' : 'inherit',
+  };
 
   return (
-    <Box>
+    <Box sx={fontStyle}>
+      {/* 語言切換按鈕 */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <LanguageToggle />
+      </Box>
+
       {/* 主遊戲區域 */}
       <Card elevation={3} sx={{ mb: 3 }}>
         <CardContent>
           <Stack spacing={3}>
             {/* 標題 */}
-            <Typography variant="h4" component="h1" align="center" gutterBottom>
-              🎵 節奏練習遊戲
+            <Typography variant="h4" component="h1" align="center" gutterBottom sx={fontStyle}>
+              {t('game.title')}
             </Typography>
 
             {/* 遊戲控制區 */}
@@ -95,18 +131,20 @@ const RhythmGame: React.FC = () => {
                 startIcon={<Refresh />}
                 onClick={generateNewRhythm}
                 disabled={isGameActive}
+                sx={fontStyle}
               >
-                生成新節奏
+                {t('game.generateRhythm')}
               </Button>
               
               <Button
                 variant={gameState.isPlaying ? "outlined" : "contained"}
                 color={gameState.isPlaying ? "secondary" : "success"}
                 startIcon={gameState.isPlaying ? <Pause /> : <PlayArrow />}
-                onClick={gameState.isPlaying ? pauseGame : startGame}
+                onClick={gameState.isPlaying ? pauseGame : handleStartGame}
                 disabled={!abcNotation}
+                sx={fontStyle}
               >
-                {gameState.isPlaying ? '暫停' : '開始'}
+                {gameState.isPlaying ? t('game.pause') : t('game.start')}
               </Button>
             </Stack>
 
@@ -118,14 +156,16 @@ const RhythmGame: React.FC = () => {
               backgroundColor: '#fafafa' 
             }}>
               <Stack spacing={2}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Speed /> 遊戲設置
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, ...fontStyle }}>
+                  <Speed /> {t('game.gameSettings')}
                 </Typography>
                 
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
                   {/* BPM 設置 */}
                   <Box sx={{ minWidth: 200 }}>
-                    <Typography gutterBottom>BPM (速度): {gameSettings.bpm}</Typography>
+                    <Typography gutterBottom sx={fontStyle}>
+                      {t('game.bpm')}: {gameSettings.bpm}
+                    </Typography>
                     <Slider
                       value={gameSettings.bpm}
                       onChange={(_, value) => updateGameSettings({ bpm: value as number })}
@@ -133,9 +173,9 @@ const RhythmGame: React.FC = () => {
                       max={180}
                       step={10}
                       marks={[
-                        { value: 60, label: '慢' },
-                        { value: 120, label: '中' },
-                        { value: 180, label: '快' }
+                        { value: 60, label: t('game.slow') },
+                        { value: 120, label: t('game.medium') },
+                        { value: 180, label: t('game.fast') }
                       ]}
                       disabled={isGameActive}
                     />
@@ -143,7 +183,9 @@ const RhythmGame: React.FC = () => {
 
                   {/* 小節數設置 */}
                   <Box sx={{ minWidth: 200 }}>
-                    <Typography gutterBottom>小節數: {gameSettings.measures}</Typography>
+                    <Typography gutterBottom sx={fontStyle}>
+                      {t('game.measures')}: {gameSettings.measures}
+                    </Typography>
                     <Slider
                       value={gameSettings.measures}
                       onChange={(_, value) => updateGameSettings({ measures: value as number })}
@@ -172,7 +214,7 @@ const RhythmGame: React.FC = () => {
                           disabled={isGameActive}
                         />
                       }
-                      label="練習模式"
+                      label={<Typography sx={fontStyle}>{t('game.practiceMode')}</Typography>}
                     />
                   </Box>
                 </Stack>
@@ -180,8 +222,8 @@ const RhythmGame: React.FC = () => {
                 {/* 節拍器狀態 */}
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <VolumeUp color={uiState.metronomeActive ? "primary" : "disabled"} />
-                  <Typography variant="body2" color={uiState.metronomeActive ? "primary" : "text.secondary"}>
-                    {uiState.metronomeActive ? '節拍器運行中' : '節拍器已停止'}
+                  <Typography variant="body2" color={uiState.metronomeActive ? "primary" : "text.secondary"} sx={fontStyle}>
+                    {uiState.metronomeActive ? t('game.metronomeRunning') : t('game.metronomeStopped')}
                   </Typography>
                 </Stack>
 
@@ -204,44 +246,51 @@ const RhythmGame: React.FC = () => {
       <Divider sx={{ my: 3 }} />
 
       {/* 遊戲統計 */}
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">
         <Chip 
           icon={<MusicNote />} 
-          label={`得分: ${gameState.score}`} 
+          label={`${t('stats.score')}: ${gameState.score}`} 
           color="primary" 
           variant="outlined"
+          sx={fontStyle}
         />
         <Chip 
-          label={`命中: ${gameState.hitNotes}`} 
+          label={`${t('stats.hit')}: ${gameState.hitNotes}`} 
           color="success" 
           variant="outlined"
+          sx={fontStyle}
         />
         <Chip 
-          label={`錯過: ${gameState.missedNotes}`} 
+          label={`${t('stats.missed')}: ${gameState.missedNotes}`} 
           color="error" 
           variant="outlined"
+          sx={fontStyle}
         />
         <Chip 
-          label={`錯誤: ${gameState.wrongNotes}`} 
+          label={`${t('stats.wrong')}: ${gameState.wrongNotes}`} 
           color="warning" 
           variant="outlined"
+          sx={fontStyle}
         />
         <Chip 
-          label={`總計: ${gameState.totalNotes}`} 
+          label={`${t('stats.total')}: ${gameState.totalNotes}`} 
           variant="outlined"
+          sx={fontStyle}
         />
         {gameState.isPracticeMode && gameState.isFirstRound && gameState.isPlaying && (
           <Chip 
-            label="🎵 系統示範中..." 
+            label={t('stats.demoRunning')}
             color="info" 
             variant="filled"
+            sx={fontStyle}
           />
         )}
         {gameState.isPracticeMode && !gameState.isFirstRound && !gameState.isPlaying && gameState.gameStarted === false && (
           <Chip 
-            label="✅ 示範完成，點擊開始練習！" 
+            label={t('stats.demoComplete')}
             color="success" 
             variant="filled"
+            sx={fontStyle}
           />
         )}
       </Stack>
@@ -252,15 +301,15 @@ const RhythmGame: React.FC = () => {
         value={progress} 
         sx={{ height: 8, borderRadius: 4 }}
       />
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, ...fontStyle }}>
         {displayTime}
       </Typography>
 
       {/* 譜面顯示區域 */}
       <Card elevation={2} sx={{ mt: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <LibraryMusic /> 節奏譜面
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, ...fontStyle }}>
+            <LibraryMusic /> {t('music.rhythmScore')}
           </Typography>
           {abcNotation && (
             <AbcRenderer 
@@ -275,25 +324,28 @@ const RhythmGame: React.FC = () => {
       {/* 操作說明 */}
       <Card elevation={1} sx={{ mt: 3, backgroundColor: '#f5f5f5' }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            🎮 操作說明
+          <Typography variant="h6" gutterBottom sx={fontStyle}>
+            {t('instructions.title')}
           </Typography>
           <Stack spacing={1}>
-            <Typography variant="body2">
-              • <strong>{isMobileDevice ? '觸控按鈕' : '空格鍵'}</strong>：按照節拍點擊
+            <Typography variant="body2" sx={fontStyle}>
+              • <strong>{isMobileDevice ? t('instructions.touchInput') : t('instructions.keyboardInput')}</strong>：{t('instructions.inputDescription')}
             </Typography>
-            <Typography variant="body2">
-              • <strong>練習模式</strong>：先播放示範，再進行練習
+            <Typography variant="body2" sx={fontStyle}>
+              • <strong>{t('game.practiceMode')}</strong>：{t('instructions.practiceMode')}
             </Typography>
-            <Typography variant="body2">
-              • <strong>測驗模式</strong>：直接開始，有4拍預備拍
+            <Typography variant="body2" sx={fontStyle}>
+              • <strong>{t('instructions.testMode').split('：')[0]}</strong>：{t('instructions.testMode').split('：')[1]}
             </Typography>
-            <Typography variant="body2" color="primary">
-              💡 <strong>提示</strong>：注意觀察灰色標記，它指示當前應該演奏的音符
+            <Typography variant="body2" color="primary" sx={fontStyle}>
+              {t('instructions.tip')}
+            </Typography>
+            <Typography variant="body2" color="info.main" sx={fontStyle}>
+              {t('instructions.results')}
             </Typography>
             {isMobileDevice && (
-              <Typography variant="body2" color="success.main">
-                📱 <strong>手機版</strong>：使用右下角的綠色浮動按鈕進行操作
+              <Typography variant="body2" color="success.main" sx={fontStyle}>
+                {t('instructions.mobileVersion')}
               </Typography>
             )}
           </Stack>
@@ -302,50 +354,50 @@ const RhythmGame: React.FC = () => {
 
       {/* 結果對話框 */}
       <Dialog open={uiState.showResults} maxWidth="sm" fullWidth>
-        <DialogTitle align="center">🎉 遊戲結果</DialogTitle>
+        <DialogTitle align="center" sx={fontStyle}>{t('results.title')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} alignItems="center">
-            <Typography variant="h4" color="primary">
-              得分: {gameState.score}
+            <Typography variant="h4" color="primary" sx={fontStyle}>
+              {t('stats.score')}: {gameState.score}
             </Typography>
             <Stack direction="row" spacing={2}>
               <Box textAlign="center">
-                <Typography variant="h6" color="success.main">
+                <Typography variant="h6" color="success.main" sx={fontStyle}>
                   {gameState.hitNotes}
                 </Typography>
-                <Typography variant="body2">命中</Typography>
+                <Typography variant="body2" sx={fontStyle}>{t('results.hit')}</Typography>
               </Box>
               <Box textAlign="center">
-                <Typography variant="h6" color="error.main">
+                <Typography variant="h6" color="error.main" sx={fontStyle}>
                   {gameState.missedNotes}
                 </Typography>
-                <Typography variant="body2">錯過</Typography>
+                <Typography variant="body2" sx={fontStyle}>{t('results.missed')}</Typography>
               </Box>
               <Box textAlign="center">
-                <Typography variant="h6" color="warning.main">
+                <Typography variant="h6" color="warning.main" sx={fontStyle}>
                   {gameState.wrongNotes}
                 </Typography>
-                <Typography variant="body2">錯誤</Typography>
+                <Typography variant="body2" sx={fontStyle}>{t('results.wrong')}</Typography>
               </Box>
               <Box textAlign="center">
-                <Typography variant="h6">
+                <Typography variant="h6" sx={fontStyle}>
                   {gameState.totalNotes}
                 </Typography>
-                <Typography variant="body2">總計</Typography>
+                <Typography variant="body2" sx={fontStyle}>{t('results.total')}</Typography>
               </Box>
             </Stack>
-            <Typography variant="body1" align="center">
-              {gameState.score >= 90 ? '🏆 完美！' :
-               gameState.score >= 70 ? '👏 很好！' :
-               gameState.score >= 50 ? '👍 不錯！' : '💪 繼續努力！'}
+            <Typography variant="body1" align="center" sx={fontStyle}>
+              {gameState.score >= 90 ? t('results.perfect') :
+               gameState.score >= 70 ? t('results.great') :
+               gameState.score >= 50 ? t('results.good') : t('results.keepTrying')}
             </Typography>
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {
             updateUIState({ showResults: false });
-          }}>
-            關閉
+          }} sx={fontStyle}>
+            {t('results.close')}
           </Button>
           <Button 
             variant="contained" 
@@ -353,8 +405,9 @@ const RhythmGame: React.FC = () => {
               updateUIState({ showResults: false });
               generateNewRhythm();
             }}
+            sx={fontStyle}
           >
-            再玩一次
+            {t('results.playAgain')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -362,7 +415,7 @@ const RhythmGame: React.FC = () => {
       {/* 手機版浮動按鈕 */}
       <MobileFloatingButton
         visible={isMobileDevice || isTouchDevice}
-        onTap={handleTouchInput}
+        onTap={handleAsyncTouchInput}
         isGameActive={isGameActive}
         isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
       />

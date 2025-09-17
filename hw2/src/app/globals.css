@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-times: "Times New Roman", "Times", serif;
 }
 
 @theme inline {
@@ -23,4 +24,24 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Times New Roman 字體樣式 */
+.times-font {
+  font-family: var(--font-times) !important;
+}
+
+/* 全局應用 Times New Roman 到特定元素 */
+.MuiTypography-root.times-font,
+.times-font .MuiTypography-root {
+  font-family: var(--font-times) !important;
+}
+
+/* 為英文內容優化字體渲染 */
+html[lang="en"] {
+  font-family: var(--font-times);
+}
+
+html[lang="en"] .MuiTypography-root {
+  font-family: var(--font-times) !important;
 }
