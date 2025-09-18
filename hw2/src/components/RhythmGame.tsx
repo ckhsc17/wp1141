@@ -97,6 +97,35 @@ const RhythmGame: React.FC = () => {
     fontFamily: locale === 'en' ? '"Times New Roman", serif' : 'inherit',
   };
 
+  // 計算等級
+  const getScoreGrade = (score: number): { grade: string; color: string; bgGradient: string } => {
+    if (score >= 90) {
+      return { 
+        grade: 'S', 
+        color: '#FFD700', 
+        bgGradient: 'linear-gradient(135deg, #FFD700, #FFA500)' 
+      };
+    } else if (score >= 70) {
+      return { 
+        grade: 'A', 
+        color: '#4CAF50', 
+        bgGradient: 'linear-gradient(135deg, #4CAF50, #8BC34A)' 
+      };
+    } else if (score >= 50) {
+      return { 
+        grade: 'B', 
+        color: '#2196F3', 
+        bgGradient: 'linear-gradient(135deg, #2196F3, #03DAC6)' 
+      };
+    } else {
+      return { 
+        grade: 'C', 
+        color: '#FF5722', 
+        bgGradient: 'linear-gradient(135deg, #FF5722, #FF9800)' 
+      };
+    }
+  };
+
   return (
     <Box sx={{ 
       ...fontStyle,
@@ -177,14 +206,14 @@ const RhythmGame: React.FC = () => {
       </Box>
 
 
-      {/* 結果覆蓋層 */}
+      {/* 結果覆蓋層 - 優化位置避免遮擋譜面 */}
       {uiState.showResults && (
         <Box sx={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
-          bottom: 0,
+          bottom: '15vh', // 避免遮擋底部的譜面區域
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -192,22 +221,91 @@ const RhythmGame: React.FC = () => {
           p: 2,
         }}>
           <GlassCard 
-            glassLevel={3} 
+            glassLevel={5} // 提高不透明度
             animated={true} 
             animationDelay={0}
             sx={{
-              maxWidth: 500,
+              maxWidth: 400,
               width: '100%',
-              maxHeight: '80vh',
+              maxHeight: '70vh', // 調整最大高度
               overflow: 'auto',
+              // 額外的不透明度增強
+              background: 'rgba(255, 255, 255, 0.7) !important',
+              backdropFilter: 'blur(15px) !important',
             }}
           >
             <Box sx={{ p: 4 }}>
               <Stack spacing={3} alignItems="center">
-                {/* 分數顯示 */}
-                <Typography variant="h4" color="primary" sx={fontStyle}>
-                  {t('stats.score')}: {gameState.score}
-                </Typography>
+                {/* 等級顯示 - 大大的動感等級 */}
+                {(() => {
+                  const { grade, color, bgGradient } = getScoreGrade(gameState.score);
+                  return (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 120,
+                        height: 120,
+                        borderRadius: '50%',
+                        background: bgGradient,
+                        boxShadow: `0 8px 32px ${color}40`,
+                        position: 'relative',
+                        animation: 'gradeAnimation 0.8s ease-out',
+                        '@keyframes gradeAnimation': {
+                          '0%': {
+                            transform: 'scale(0.5) rotate(-180deg)',
+                            opacity: 0,
+                          },
+                          '50%': {
+                            transform: 'scale(1.2) rotate(-90deg)',
+                            opacity: 0.8,
+                          },
+                          '100%': {
+                            transform: 'scale(1) rotate(0deg)',
+                            opacity: 1,
+                          },
+                        },
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: -4,
+                          left: -4,
+                          right: -4,
+                          bottom: -4,
+                          borderRadius: '50%',
+                          background: bgGradient,
+                          opacity: 0.3,
+                          animation: 'pulse 2s infinite',
+                        },
+                        '@keyframes pulse': {
+                          '0%, 100%': {
+                            transform: 'scale(1)',
+                            opacity: 0.3,
+                          },
+                          '50%': {
+                            transform: 'scale(1.1)',
+                            opacity: 0.1,
+                          },
+                        },
+                      }}
+                    >
+                      <Typography
+                        variant="h1"
+                        sx={{
+                          ...fontStyle,
+                          fontSize: '4rem',
+                          fontWeight: 'bold',
+                          color: 'white',
+                          textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+                          letterSpacing: '0.1em',
+                        }}
+                      >
+                        {grade}
+                      </Typography>
+                    </Box>
+                  );
+                })()}
                 
                 {/* 統計數據 */}
                 <Stack direction="row" spacing={2} flexWrap="wrap" justifyContent="center">
@@ -229,19 +327,11 @@ const RhythmGame: React.FC = () => {
                     </Typography>
                     <Typography variant="body2" sx={fontStyle}>{t('results.wrong')}</Typography>
                   </Box>
-                  <Box textAlign="center">
-                    <Typography variant="h6" sx={fontStyle}>
-                      {gameState.totalNotes}
-                    </Typography>
-                    <Typography variant="body2" sx={fontStyle}>{t('results.total')}</Typography>
-                  </Box>
                 </Stack>
                 
-                {/* 評價文字 */}
-                <Typography variant="h6" align="center" sx={fontStyle}>
-                  {gameState.score >= 90 ? t('results.perfect') :
-                   gameState.score >= 70 ? t('results.great') :
-                   gameState.score >= 50 ? t('results.good') : t('results.keepTrying')}
+                {/* 得分顯示 - 替換原本的評價文字 */}
+                <Typography variant="h5" align="center" sx={{ ...fontStyle, fontWeight: 'bold', color: 'primary.main' }}>
+                  {t('stats.score')}: {gameState.score}
                 </Typography>
                 
                 {/* 按鈕區域 */}
