@@ -10,10 +10,6 @@ import {
   LinearProgress,
   Chip,
   Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Slider,
   FormControlLabel,
   Switch,
@@ -293,65 +289,100 @@ const RhythmGame: React.FC = () => {
       </Box>
 
 
-      {/* 結果對話框 */}
-      <Dialog open={uiState.showResults} maxWidth="sm" fullWidth>
-        <DialogTitle align="center" sx={fontStyle}>{t('results.title')}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} alignItems="center">
-            <Typography variant="h4" color="primary" sx={fontStyle}>
-              {t('stats.score')}: {gameState.score}
-            </Typography>
-            <Stack direction="row" spacing={2}>
-              <Box textAlign="center">
-                <Typography variant="h6" color="success.main" sx={fontStyle}>
-                  {gameState.hitNotes}
-                </Typography>
-                <Typography variant="body2" sx={fontStyle}>{t('results.hit')}</Typography>
-              </Box>
-              <Box textAlign="center">
-                <Typography variant="h6" color="error.main" sx={fontStyle}>
-                  {gameState.missedNotes}
-                </Typography>
-                <Typography variant="body2" sx={fontStyle}>{t('results.missed')}</Typography>
-              </Box>
-              <Box textAlign="center">
-                <Typography variant="h6" color="warning.main" sx={fontStyle}>
-                  {gameState.wrongNotes}
-                </Typography>
-                <Typography variant="body2" sx={fontStyle}>{t('results.wrong')}</Typography>
-              </Box>
-              <Box textAlign="center">
-                <Typography variant="h6" sx={fontStyle}>
-                  {gameState.totalNotes}
-                </Typography>
-                <Typography variant="body2" sx={fontStyle}>{t('results.total')}</Typography>
-              </Box>
-            </Stack>
-            <Typography variant="body1" align="center" sx={fontStyle}>
-              {gameState.score >= 90 ? t('results.perfect') :
-               gameState.score >= 70 ? t('results.great') :
-               gameState.score >= 50 ? t('results.good') : t('results.keepTrying')}
-            </Typography>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => {
-            updateUIState({ showResults: false });
-          }} sx={fontStyle}>
-            {t('results.close')}
-          </Button>
-          <Button 
-            variant="contained" 
-            onClick={() => {
-              updateUIState({ showResults: false });
-              generateNewRhythm();
+      {/* 結果覆蓋層 */}
+      {uiState.showResults && (
+        <Box sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1300, // 高於其他元素
+          p: 2,
+        }}>
+          <GlassCard 
+            glassLevel={3} 
+            animated={true} 
+            animationDelay={0}
+            sx={{
+              maxWidth: 500,
+              width: '100%',
+              maxHeight: '80vh',
+              overflow: 'auto',
             }}
-            sx={fontStyle}
           >
-            {t('results.playAgain')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Box sx={{ p: 4 }}>
+              <Stack spacing={3} alignItems="center">
+                {/* 分數顯示 */}
+                <Typography variant="h4" color="primary" sx={fontStyle}>
+                  {t('stats.score')}: {gameState.score}
+                </Typography>
+                
+                {/* 統計數據 */}
+                <Stack direction="row" spacing={2} flexWrap="wrap" justifyContent="center">
+                  <Box textAlign="center">
+                    <Typography variant="h6" color="success.main" sx={fontStyle}>
+                      {gameState.hitNotes}
+                    </Typography>
+                    <Typography variant="body2" sx={fontStyle}>{t('results.hit')}</Typography>
+                  </Box>
+                  <Box textAlign="center">
+                    <Typography variant="h6" color="error.main" sx={fontStyle}>
+                      {gameState.missedNotes}
+                    </Typography>
+                    <Typography variant="body2" sx={fontStyle}>{t('results.missed')}</Typography>
+                  </Box>
+                  <Box textAlign="center">
+                    <Typography variant="h6" color="warning.main" sx={fontStyle}>
+                      {gameState.wrongNotes}
+                    </Typography>
+                    <Typography variant="body2" sx={fontStyle}>{t('results.wrong')}</Typography>
+                  </Box>
+                  <Box textAlign="center">
+                    <Typography variant="h6" sx={fontStyle}>
+                      {gameState.totalNotes}
+                    </Typography>
+                    <Typography variant="body2" sx={fontStyle}>{t('results.total')}</Typography>
+                  </Box>
+                </Stack>
+                
+                {/* 評價文字 */}
+                <Typography variant="h6" align="center" sx={fontStyle}>
+                  {gameState.score >= 90 ? t('results.perfect') :
+                   gameState.score >= 70 ? t('results.great') :
+                   gameState.score >= 50 ? t('results.good') : t('results.keepTrying')}
+                </Typography>
+                
+                {/* 按鈕區域 */}
+                <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                  <Button 
+                    variant="outlined"
+                    onClick={() => {
+                      updateUIState({ showResults: false });
+                    }} 
+                    sx={fontStyle}
+                  >
+                    {t('results.close')}
+                  </Button>
+                  <Button 
+                    variant="contained" 
+                    onClick={() => {
+                      updateUIState({ showResults: false });
+                      generateNewRhythm();
+                    }}
+                    sx={fontStyle}
+                  >
+                    {t('results.playAgain')}
+                  </Button>
+                </Stack>
+              </Stack>
+            </Box>
+          </GlassCard>
+        </Box>
+      )}
 
       {/* 手機版浮動按鈕 */}
       <MobileFloatingButton
