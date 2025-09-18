@@ -122,78 +122,16 @@ const RhythmGame: React.FC = () => {
         <Stack spacing={3}>
 
 
-            {/* 遊戲設置區 */}
-            <GlassCard glassLevel={3} animated={true} animationDelay={0.3}>
-              <Box sx={{ p: 2 }}>
-                <Stack spacing={2}>
-                  <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, ...fontStyle }}>
-                    <Speed /> {t('game.gameSettings')}
-                  </Typography>
-                  
-                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-                    {/* BPM 設置 */}
-                    <Box sx={{ minWidth: 200 }}>
-                      <Typography gutterBottom sx={fontStyle}>
-                        {t('game.bpm')}: {gameSettings.bpm}
-                      </Typography>
-                      <Slider
-                        value={gameSettings.bpm}
-                        onChange={(_, value) => updateGameSettings({ bpm: value as number })}
-                        min={60}
-                        max={180}
-                        step={10}
-                        marks={[
-                          { value: 60, label: t('game.slow') },
-                          { value: 120, label: t('game.medium') },
-                          { value: 180, label: t('game.fast') }
-                        ]}
-                        disabled={isGameActive}
-                      />
-                    </Box>
-
-                    {/* 小節數設置 */}
-                    <Box sx={{ minWidth: 200 }}>
-                      <Typography gutterBottom sx={fontStyle}>
-                        {t('game.measures')}: {gameSettings.measures}
-                      </Typography>
-                      <Slider
-                        value={gameSettings.measures}
-                        onChange={(_, value) => updateGameSettings({ measures: value as number })}
-                        min={1}
-                        max={8}
-                        step={1}
-                        marks={[
-                          { value: 1, label: '1' },
-                          { value: 4, label: '4' },
-                          { value: 8, label: '8' }
-                        ]}
-                        disabled={isGameActive}
-                      />
-                    </Box>
-
-                  </Stack>
-
-                  {/* 節拍器狀態 */}
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <VolumeUp color={uiState.metronomeActive ? "primary" : "disabled"} />
-                    <Typography variant="body2" color={uiState.metronomeActive ? "primary" : "text.secondary"} sx={fontStyle}>
-                      {uiState.metronomeActive ? t('game.metronomeRunning') : t('game.metronomeStopped')}
-                    </Typography>
-                  </Stack>
-
-                  {/* 隱藏的節拍器組件 */}
-                  <Box sx={{ display: 'none' }}>
-                    <CustomMetronome
-                      bpm={gameSettings.bpm}
-                      isRunning={uiState.metronomeActive}
-                      soundEnabled={audioSettings.soundEnabled}
-                      gameTime={gameState.currentTime}
-                      countInBeats={gameState.isPracticeMode && gameState.isFirstRound ? 0 : 4}
-                    />
-                  </Box>
-                </Stack>
-              </Box>
-            </GlassCard>
+            {/* 隱藏的節拍器組件 */}
+            <Box sx={{ display: 'none' }}>
+              <CustomMetronome
+                bpm={gameSettings.bpm}
+                isRunning={uiState.metronomeActive}
+                soundEnabled={audioSettings.soundEnabled}
+                gameTime={gameState.currentTime}
+                countInBeats={gameState.isPracticeMode && gameState.isFirstRound ? 0 : 4}
+              />
+            </Box>
 
             {/* 遊戲統計和進度 */}
             <GlassCard glassLevel={2} animated={true} animationDelay={0.5}>
@@ -254,19 +192,23 @@ const RhythmGame: React.FC = () => {
         </Stack>
       </Box>
 
-      {/* 譜面顯示區域 - 固定在距離底部10%的位置 */}
+
+      {/* 譜面顯示區域 - 固定在距離底部10%的位置，增加高度 */}
       <Box sx={{ 
         position: 'absolute',
         bottom: '10vh', // 距離底部10%視窗高度
+        top: '65vh', // 從頂部30%開始，增加整體高度
         left: 0,
         right: 0,
         px: { xs: 2, sm: 3 }, // 左右邊距與主內容一致
         zIndex: 10,
         '@media (max-height: 600px)': {
           bottom: '5vh', // 小屏幕時調整為5%
+          top: '25vh',
         },
         '@media (max-height: 400px)': {
           bottom: '15vh', // 非常小的屏幕時調整為15%
+          top: '20vh',
         }
       }}>
         {abcNotation && (
@@ -284,6 +226,9 @@ const RhythmGame: React.FC = () => {
             isPlaying={gameState.isPlaying}
             isGameActive={isGameActive}
             isPracticeMode={gameState.isPracticeMode}
+            // 新增控制桿相關 props
+            gameSettings={gameSettings}
+            updateGameSettings={updateGameSettings}
           />
         )}
       </Box>

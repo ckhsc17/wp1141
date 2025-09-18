@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Box, IconButton, Stack } from '@mui/material';
+import { Box, IconButton, Stack, Typography, Slider } from '@mui/material';
 import { Refresh, PlayArrow, Pause, Hearing } from '@mui/icons-material';
 
 interface Note {
@@ -11,6 +11,11 @@ interface Note {
   hit?: boolean;
   missed?: boolean;
   wrong?: boolean;
+}
+
+interface GameSettings {
+  bpm: number;
+  measures: number;
 }
 
 interface AbcRendererProps {
@@ -24,6 +29,8 @@ interface AbcRendererProps {
   isPlaying?: boolean;
   isGameActive?: boolean;
   isPracticeMode?: boolean;
+  gameSettings?: GameSettings;
+  updateGameSettings?: (settings: Partial<GameSettings>) => void;
 }
 
 const AbcRenderer: React.FC<AbcRendererProps> = ({ 
@@ -36,7 +43,9 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
   onTogglePracticeMode,
   isPlaying = false,
   isGameActive = false,
-  isPracticeMode = true
+  isPracticeMode = true,
+  gameSettings,
+  updateGameSettings
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const visualObjRef = useRef<unknown>(null);
@@ -234,7 +243,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       sx={{
         position: 'relative',
         width: '100%',
-        minHeight: 200,
+        minHeight: 275,
         borderRadius: 2,
         overflow: 'auto',
         
@@ -316,6 +325,118 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           zIndex: 10,
         }}
       >
+        {/* BPM 控制桿 - 小型版本 */}
+        {gameSettings && updateGameSettings && (
+          <Box sx={{
+            background: 'transparent',
+            borderRadius: 1,
+            p: 0.5,
+            minWidth: 100,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}>
+            <Typography variant="caption" sx={{ 
+              fontSize: 10, 
+              fontWeight: 'bold', 
+              mb: 0.2,
+              color: 'white',
+              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
+            }}>
+              BPM: {gameSettings.bpm}
+            </Typography>
+            <Slider
+              value={gameSettings.bpm}
+              onChange={(_, value) => updateGameSettings({ bpm: value as number })}
+              min={60}
+              max={180}
+              step={10}
+              disabled={isGameActive}
+              size="small"
+              sx={{
+                width: 80,
+                height: 4,
+                color: 'white',
+                '& .MuiSlider-thumb': {
+                  width: 12,
+                  height: 12,
+                  backgroundColor: 'white',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                },
+                '& .MuiSlider-track': {
+                  height: 2,
+                  backgroundColor: 'white',
+                },
+                '& .MuiSlider-rail': {
+                  height: 2,
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                },
+              }}
+            />
+          </Box>
+        )}
+
+        {/* 小節數控制桿 - 小型版本 */}
+        {gameSettings && updateGameSettings && (
+          <Box sx={{
+            background: 'transparent',
+            borderRadius: 1,
+            p: 0.5,
+            minWidth: 100,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}>
+            <Typography variant="caption" sx={{ 
+              fontSize: 10, 
+              fontWeight: 'bold', 
+              mb: 0.2,
+              color: 'white',
+              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
+            }}>
+              小節: {gameSettings.measures}
+            </Typography>
+            <Slider
+              value={gameSettings.measures}
+              onChange={(_, value) => updateGameSettings({ measures: value as number })}
+              min={1}
+              max={8}
+              step={1}
+              disabled={isGameActive}
+              size="small"
+              marks={[
+                { value: 1, label: '' },
+                { value: 4, label: '' },
+                { value: 8, label: '' }
+              ]}
+              sx={{
+                width: 80,
+                height: 4,
+                color: 'white',
+                '& .MuiSlider-thumb': {
+                  width: 12,
+                  height: 12,
+                  backgroundColor: 'white',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                },
+                '& .MuiSlider-track': {
+                  height: 2,
+                  backgroundColor: 'white',
+                },
+                '& .MuiSlider-rail': {
+                  height: 2,
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                },
+                '& .MuiSlider-mark': {
+                  width: 2,
+                  height: 2,
+                  backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                },
+              }}
+            />
+          </Box>
+        )}
+
         {/* 練習模式按鈕 */}
         <IconButton
           onClick={() => onTogglePracticeMode && onTogglePracticeMode(!isPracticeMode)}
