@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Box, IconButton, Stack, Typography, Slider, Select, MenuItem } from '@mui/material';
-import { Refresh, PlayArrow, Pause, Hearing } from '@mui/icons-material';
+import { Box, IconButton, Stack, Typography, Slider, Select, MenuItem, Chip } from '@mui/material';
+import { Refresh, PlayArrow, Pause, Hearing, EmojiEvents, CheckCircle, Cancel, Error } from '@mui/icons-material';
 
 interface Note {
   id: string;
@@ -21,10 +21,18 @@ interface GameSettings {
   difficulty: Difficulty;
 }
 
+interface GameStats {
+  score: number;
+  hitNotes: number;
+  missedNotes: number;
+  wrongNotes: number;
+}
+
 interface AbcRendererProps {
   abcNotation: string;
   currentTime?: number;
   notes?: Note[];
+  gameStats?: GameStats;
   onGenerateNewRhythm?: () => void;
   onStartGame?: () => void;
   onPauseGame?: () => void;
@@ -40,6 +48,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
   abcNotation, 
   currentTime = 0, 
   notes = [],
+  gameStats,
   onGenerateNewRhythm,
   onStartGame,
   onPauseGame,
@@ -377,17 +386,117 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         },
       }}
     >
-      {/* 浮動控制按鈕 */}
-      <Stack
-        direction="row"
-        spacing={1}
+      {/* 統計信息和控制按鈕 */}
+      <Box
         sx={{
           position: 'absolute',
           top: 12,
+          left: 12,
           right: 12,
           zIndex: 10,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
+        {/* 左側統計信息 */}
+        {gameStats && (
+          <Stack direction="row" spacing={1}>
+            {/* 得分 */}
+            <Chip
+              icon={<EmojiEvents sx={{ fontSize: '32px !important', color: '#FFD700 !important', opacity: 0.8 }} />}
+              label={gameStats.score}
+              size="medium"
+              sx={{
+                background: 'transparent !important',
+                backgroundColor: 'transparent !important',
+                color: 'white',
+                fontSize: 20,
+                height: 32,
+                '& .MuiChip-label': { px: 0.5, fontSize: 20, fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' },
+                '& .MuiChip-icon': { 
+                  ml: 1, 
+                  color: '#FFD700 !important',
+                  '& svg': { color: '#FFD700 !important', opacity: 0.8 }
+                },
+                border: 'none',
+                boxShadow: 'none',
+              }}
+            />
+            
+            {/* 命中 */}
+            <Chip
+              icon={<CheckCircle sx={{ fontSize: '32px !important', color: '#4CAF50 !important', opacity: 0.8 }} />}
+              label={gameStats.hitNotes}
+              size="medium"
+              sx={{
+                background: 'transparent !important',
+                backgroundColor: 'transparent !important',
+                color: 'white',
+                fontSize: 20,
+                height: 32,
+                '& .MuiChip-label': { px: 0.5, fontSize: 20, fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' },
+                '& .MuiChip-icon': { 
+                  ml: 1, 
+                  color: '#4CAF50 !important',
+                  '& svg': { color: '#4CAF50 !important', opacity: 0.8 }
+                },
+                border: 'none',
+                boxShadow: 'none',
+              }}
+            />
+            
+            {/* 錯過 */}
+            <Chip
+              icon={<Cancel sx={{ fontSize: '32px !important', color: '#FF9800 !important', opacity: 0.8 }} />}
+              label={gameStats.missedNotes}
+              size="medium"
+              sx={{
+                background: 'transparent !important',
+                backgroundColor: 'transparent !important',
+                color: 'white',
+                fontSize: 20,
+                height: 32,
+                '& .MuiChip-label': { px: 0.5, fontSize: 20, fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' },
+                '& .MuiChip-icon': { 
+                  ml: 1, 
+                  color: '#FF9800 !important',
+                  '& svg': { color: '#FF9800 !important', opacity: 0.8 }
+                },
+                border: 'none',
+                boxShadow: 'none',
+              }}
+            />
+            
+            {/* 錯誤 */}
+            <Chip
+              icon={<Error sx={{ fontSize: '32px !important', color: '#F44336 !important', opacity: 0.8 }} />}
+              label={gameStats.wrongNotes}
+              size="medium"
+              sx={{
+                background: 'transparent !important',
+                backgroundColor: 'transparent !important',
+                color: 'white',
+                fontSize: 20,
+                height: 32,
+                '& .MuiChip-label': { px: 0.5, fontSize: 20, fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' },
+                '& .MuiChip-icon': { 
+                  ml: 1, 
+                  color: '#F44336 !important',
+                  '& svg': { color: '#F44336 !important', opacity: 0.8 }
+                },
+                border: 'none',
+                boxShadow: 'none',
+              }}
+            />
+          </Stack>
+        )}
+
+        {/* 右側控制按鈕 */}
+        <Stack
+          direction="row"
+          spacing={1}
+        >
         {/* BPM 控制桿 - 小型版本 */}
         {gameSettings && updateGameSettings && (
           <Box sx={{
@@ -675,7 +784,8 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         >
           {isPlaying ? <Pause fontSize="small" /> : <PlayArrow fontSize="small" />}
         </IconButton>
-      </Stack>
+        </Stack>
+      </Box>
 
       {/* ABC 記譜容器 */}
       <Box

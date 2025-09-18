@@ -126,53 +126,6 @@ const RhythmGame: React.FC = () => {
               />
             </Box>
 
-            {/* 遊戲統計和進度 */}
-            <GlassCard glassLevel={2} animated={true} animationDelay={0.5}>
-              <Box sx={{ p: 2 }}>
-                {/* 遊戲統計 */}
-                <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">
-                  <Chip 
-                    icon={<MusicNote />} 
-                    label={`${t('stats.score')}: ${gameState.score}`} 
-                    color="primary" 
-                    variant="outlined"
-                    sx={fontStyle}
-                  />
-                  <Chip 
-                    label={`${t('stats.hit')}: ${gameState.hitNotes}`} 
-                    color="success" 
-                    variant="outlined"
-                    sx={fontStyle}
-                  />
-                  <Chip 
-                    label={`${t('stats.missed')}: ${gameState.missedNotes}`} 
-                    color="error" 
-                    variant="outlined"
-                    sx={fontStyle}
-                  />
-                  <Chip 
-                    label={`${t('stats.wrong')}: ${gameState.wrongNotes}`} 
-                    color="warning" 
-                    variant="outlined"
-                    sx={fontStyle}
-                  />
-                  <Chip 
-                    label={`${t('stats.total')}: ${gameState.totalNotes}`} 
-                    variant="outlined"
-                    sx={fontStyle}
-                  />
-                  {gameState.isPracticeMode && gameState.isFirstRound && gameState.isPlaying && (
-                    <Chip 
-                      label={t('stats.demoRunning')}
-                      color="info" 
-                      variant="filled"
-                      sx={fontStyle}
-                    />
-                  )}
-                </Stack>
-
-              </Box>
-            </GlassCard>
         </Stack>
       </Box>
 
@@ -200,6 +153,12 @@ const RhythmGame: React.FC = () => {
             abcNotation={abcNotation} 
             currentTime={gameState.currentTime}
             notes={notes}
+            gameStats={{
+              score: gameState.score,
+              hitNotes: gameState.hitNotes,
+              missedNotes: gameState.missedNotes,
+              wrongNotes: gameState.wrongNotes,
+            }}
             onGenerateNewRhythm={generateNewRhythm}
             onStartGame={handleStartGame}
             onPauseGame={pauseGame}
