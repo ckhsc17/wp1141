@@ -1,13 +1,10 @@
 {
   "common": {
-    "title": "TempoGame - Rhythm Practice Game",
-    "description": "An interactive rhythm practice game that helps you improve your musical timing and beat sense. Features practice mode and quiz mode with real-time feedback for easy rhythm mastery.",
     "language": "Language",
     "chinese": "中文",
     "english": "English"
   },
   "game": {
-    "title": "🎵 Rhythm Practice Game",
     "generateRhythm": "Generate New Rhythm",
     "start": "Start",
     "pause": "Pause",

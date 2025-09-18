@@ -33,45 +33,10 @@ export default function EnglishHome() {
       <BackgroundContainer>
         <Container maxWidth="lg">
           <Box sx={{ py: 4 }}>
-            {/* 標題卡片 */}
-            <GlassCard 
-              glassLevel={2} 
-              animated={true} 
-              animationDelay={0.2}
-              sx={{ mb: 4, textAlign: 'center' }}
-            >
-              <Box sx={{ p: 3 }}>
-                <Typography 
-                  variant="h3" 
-                  component="h1" 
-                  gutterBottom 
-                  sx={{ 
-                    fontWeight: 'bold', 
-                    color: 'rgba(0, 0, 0, 0.8)',
-                    textShadow: '0 2px 4px rgba(255, 255, 255, 0.3)',
-                    ...fontStyle 
-                  }}
-                >
-                  {t('common.title')}
-                </Typography>
-                
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    color: 'rgba(0, 0, 0, 0.7)',
-                    textShadow: '0 1px 2px rgba(255, 255, 255, 0.2)',
-                    ...fontStyle 
-                  }}
-                >
-                  {t('common.description')}
-                </Typography>
-              </Box>
-            </GlassCard>
-
             {/* 遊戲區域 */}
             <Box 
               sx={{ 
-                animation: 'slideInUp 1s ease-out 0.5s both',
+                animation: 'slideInUp 1s ease-out 0.2s both',
                 '@keyframes slideInUp': {
                   '0%': {
                     opacity: 0,

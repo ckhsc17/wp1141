@@ -60,6 +60,9 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     this.setUIState = setUIState;
     this.setNotes = setNotes;
     this.setAbcNotation = setAbcNotation;
+    
+    // 初始化時自動生成節奏
+    this.generateNewRhythm();
   }
 
   // ==================== Public Getters ====================
@@ -158,11 +161,11 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     }));
   };
 
-  startGame = (): void => {
+  startGame = async (): Promise<void> => {
     if (!this._abcNotation || this._notes.length === 0) return;
 
     // 恢復音頻上下文
-    this.audioUtils.current.resumeAudioContext();
+    await this.audioUtils.current.resumeAudioContext();
 
     // 計算預備拍時間 - 所有模式都有4拍預備拍
     const beatDuration = 60 / this._gameSettings.bpm;

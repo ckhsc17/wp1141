@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Box } from '@mui/material';
+import { Box, IconButton, Stack } from '@mui/material';
+import { Refresh, PlayArrow, Pause, Hearing } from '@mui/icons-material';
 
 interface Note {
   id: string;
@@ -16,12 +17,26 @@ interface AbcRendererProps {
   abcNotation: string;
   currentTime?: number;
   notes?: Note[];
+  onGenerateNewRhythm?: () => void;
+  onStartGame?: () => void;
+  onPauseGame?: () => void;
+  onTogglePracticeMode?: (enabled: boolean) => void;
+  isPlaying?: boolean;
+  isGameActive?: boolean;
+  isPracticeMode?: boolean;
 }
 
 const AbcRenderer: React.FC<AbcRendererProps> = ({ 
   abcNotation, 
   currentTime = 0, 
-  notes = [] 
+  notes = [],
+  onGenerateNewRhythm,
+  onStartGame,
+  onPauseGame,
+  onTogglePracticeMode,
+  isPlaying = false,
+  isGameActive = false,
+  isPracticeMode = true
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const visualObjRef = useRef<unknown>(null);
@@ -216,12 +231,11 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
 
   return (
     <Box
-      ref={containerRef}
       sx={{
+        position: 'relative',
         width: '100%',
         minHeight: 200,
         borderRadius: 2,
-        p: 3,
         overflow: 'auto',
         
         // 玻璃態效果
@@ -246,7 +260,6 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           backdropFilter: 'blur(5px)',
           WebkitBackdropFilter: 'blur(5px)',
           background: 'rgba(255, 255, 255, 0.35)',
-          p: 2,
         },
         
         // 動畫關鍵幀
@@ -291,7 +304,125 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           border: '1px solid rgba(0, 0, 0, 0.1)',
         },
       }}
-    />
+    >
+      {/* 浮動控制按鈕 */}
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          zIndex: 10,
+        }}
+      >
+        {/* 練習模式按鈕 */}
+        <IconButton
+          onClick={() => onTogglePracticeMode && onTogglePracticeMode(!isPracticeMode)}
+          disabled={isGameActive}
+          sx={{
+            background: isPracticeMode 
+              ? 'rgba(156, 39, 176, 0.8)' 
+              : 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(5px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: isPracticeMode ? 'white' : '#9c27b0',
+            width: 40,
+            height: 40,
+            transition: 'all 0.2s ease',
+            transform: isPracticeMode ? 'scale(0.95)' : 'scale(1)', // 按下去的視覺效果
+            boxShadow: isPracticeMode 
+              ? 'inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(156, 39, 176, 0.3)'
+              : '0 4px 12px rgba(0, 0, 0, 0.1)',
+            '&:hover': {
+              background: isPracticeMode 
+                ? 'rgba(156, 39, 176, 0.9)' 
+                : 'rgba(255, 255, 255, 0.9)',
+              transform: isPracticeMode ? 'scale(0.97)' : 'scale(1.05)',
+              boxShadow: isPracticeMode
+                ? 'inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(156, 39, 176, 0.4)'
+                : '0 4px 12px rgba(156, 39, 176, 0.3)',
+            },
+            '&:disabled': {
+              background: 'rgba(255, 255, 255, 0.5)',
+              color: 'rgba(156, 39, 176, 0.5)',
+              transform: 'scale(1)',
+            },
+          }}
+        >
+          <Hearing fontSize="small" />
+        </IconButton>
+
+        {/* 生成新節奏按鈕 */}
+        <IconButton
+          onClick={onGenerateNewRhythm}
+          disabled={isGameActive}
+          sx={{
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(5px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: '#1976d2',
+            width: 40,
+            height: 40,
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              background: 'rgba(255, 255, 255, 0.9)',
+              transform: 'scale(1.05)',
+              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+            },
+            '&:disabled': {
+              background: 'rgba(255, 255, 255, 0.5)',
+              color: 'rgba(25, 118, 210, 0.5)',
+            },
+          }}
+        >
+          <Refresh fontSize="small" />
+        </IconButton>
+
+        {/* 開始/暫停按鈕 */}
+        <IconButton
+          onClick={isPlaying ? onPauseGame : onStartGame}
+          disabled={!abcNotation}
+          sx={{
+            background: isPlaying 
+              ? 'rgba(255, 152, 0, 0.8)' 
+              : 'rgba(76, 175, 80, 0.8)',
+            backdropFilter: 'blur(5px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: 'white',
+            width: 40,
+            height: 40,
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              background: isPlaying 
+                ? 'rgba(255, 152, 0, 0.9)' 
+                : 'rgba(76, 175, 80, 0.9)',
+              transform: 'scale(1.05)',
+              boxShadow: isPlaying
+                ? '0 4px 12px rgba(255, 152, 0, 0.4)'
+                : '0 4px 12px rgba(76, 175, 80, 0.4)',
+            },
+            '&:disabled': {
+              background: 'rgba(158, 158, 158, 0.5)',
+              color: 'rgba(255, 255, 255, 0.7)',
+            },
+          }}
+        >
+          {isPlaying ? <Pause fontSize="small" /> : <PlayArrow fontSize="small" />}
+        </IconButton>
+      </Stack>
+
+      {/* ABC 記譜容器 */}
+      <Box
+        ref={containerRef}
+        sx={{
+          p: 3,
+          '@media (max-width: 768px)': {
+            p: 2,
+          },
+        }}
+      />
+    </Box>
   );
 };
 

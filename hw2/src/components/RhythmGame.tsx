@@ -116,195 +116,149 @@ const RhythmGame: React.FC = () => {
       </Box>
 
       {/* 主遊戲區域 */}
-      <GlassCard glassLevel={3} animated={true} animationDelay={0.3} sx={{ mb: 3 }}>
-        <CardContent>
-          <Stack spacing={3}>
-            {/* 標題 */}
-            <Typography variant="h4" component="h1" align="center" gutterBottom sx={fontStyle}>
-              {t('game.title')}
-            </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Stack spacing={3}>
 
-            {/* 遊戲控制區 */}
-            <Stack direction="row" spacing={2} justifyContent="center" alignItems="center">
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Refresh />}
-                onClick={generateNewRhythm}
-                disabled={isGameActive}
-                sx={fontStyle}
-              >
-                {t('game.generateRhythm')}
-              </Button>
-              
-              <Button
-                variant={gameState.isPlaying ? "outlined" : "contained"}
-                color={gameState.isPlaying ? "secondary" : "success"}
-                startIcon={gameState.isPlaying ? <Pause /> : <PlayArrow />}
-                onClick={gameState.isPlaying ? pauseGame : handleStartGame}
-                disabled={!abcNotation}
-                sx={fontStyle}
-              >
-                {gameState.isPlaying ? t('game.pause') : t('game.start')}
-              </Button>
-            </Stack>
 
             {/* 遊戲設置區 */}
-            <Box sx={{ 
-              border: '1px solid #e0e0e0', 
-              borderRadius: 2, 
-              p: 2, 
-              backgroundColor: '#fafafa' 
-            }}>
-              <Stack spacing={2}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, ...fontStyle }}>
-                  <Speed /> {t('game.gameSettings')}
-                </Typography>
-                
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-                  {/* BPM 設置 */}
-                  <Box sx={{ minWidth: 200 }}>
-                    <Typography gutterBottom sx={fontStyle}>
-                      {t('game.bpm')}: {gameSettings.bpm}
-                    </Typography>
-                    <Slider
-                      value={gameSettings.bpm}
-                      onChange={(_, value) => updateGameSettings({ bpm: value as number })}
-                      min={60}
-                      max={180}
-                      step={10}
-                      marks={[
-                        { value: 60, label: t('game.slow') },
-                        { value: 120, label: t('game.medium') },
-                        { value: 180, label: t('game.fast') }
-                      ]}
-                      disabled={isGameActive}
-                    />
-                  </Box>
-
-                  {/* 小節數設置 */}
-                  <Box sx={{ minWidth: 200 }}>
-                    <Typography gutterBottom sx={fontStyle}>
-                      {t('game.measures')}: {gameSettings.measures}
-                    </Typography>
-                    <Slider
-                      value={gameSettings.measures}
-                      onChange={(_, value) => updateGameSettings({ measures: value as number })}
-                      min={1}
-                      max={8}
-                      step={1}
-                      marks={[
-                        { value: 1, label: '1' },
-                        { value: 4, label: '4' },
-                        { value: 8, label: '8' }
-                      ]}
-                      disabled={isGameActive}
-                    />
-                  </Box>
-
-                  {/* 遊戲模式切換 */}
-                  <Box>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={gameState.isPracticeMode}
-                          onChange={(e) => updateGameState({ 
-                            isPracticeMode: e.target.checked,
-                            isFirstRound: e.target.checked // 切換到練習模式時重置為第一輪
-                          })}
-                          disabled={isGameActive}
-                        />
-                      }
-                      label={<Typography sx={fontStyle}>{t('game.practiceMode')}</Typography>}
-                    />
-                  </Box>
-                </Stack>
-
-                {/* 節拍器狀態 */}
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <VolumeUp color={uiState.metronomeActive ? "primary" : "disabled"} />
-                  <Typography variant="body2" color={uiState.metronomeActive ? "primary" : "text.secondary"} sx={fontStyle}>
-                    {uiState.metronomeActive ? t('game.metronomeRunning') : t('game.metronomeStopped')}
+            <GlassCard glassLevel={3} animated={true} animationDelay={0.3}>
+              <Box sx={{ p: 2 }}>
+                <Stack spacing={2}>
+                  <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, ...fontStyle }}>
+                    <Speed /> {t('game.gameSettings')}
                   </Typography>
+                  
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
+                    {/* BPM 設置 */}
+                    <Box sx={{ minWidth: 200 }}>
+                      <Typography gutterBottom sx={fontStyle}>
+                        {t('game.bpm')}: {gameSettings.bpm}
+                      </Typography>
+                      <Slider
+                        value={gameSettings.bpm}
+                        onChange={(_, value) => updateGameSettings({ bpm: value as number })}
+                        min={60}
+                        max={180}
+                        step={10}
+                        marks={[
+                          { value: 60, label: t('game.slow') },
+                          { value: 120, label: t('game.medium') },
+                          { value: 180, label: t('game.fast') }
+                        ]}
+                        disabled={isGameActive}
+                      />
+                    </Box>
+
+                    {/* 小節數設置 */}
+                    <Box sx={{ minWidth: 200 }}>
+                      <Typography gutterBottom sx={fontStyle}>
+                        {t('game.measures')}: {gameSettings.measures}
+                      </Typography>
+                      <Slider
+                        value={gameSettings.measures}
+                        onChange={(_, value) => updateGameSettings({ measures: value as number })}
+                        min={1}
+                        max={8}
+                        step={1}
+                        marks={[
+                          { value: 1, label: '1' },
+                          { value: 4, label: '4' },
+                          { value: 8, label: '8' }
+                        ]}
+                        disabled={isGameActive}
+                      />
+                    </Box>
+
+                  </Stack>
+
+                  {/* 節拍器狀態 */}
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <VolumeUp color={uiState.metronomeActive ? "primary" : "disabled"} />
+                    <Typography variant="body2" color={uiState.metronomeActive ? "primary" : "text.secondary"} sx={fontStyle}>
+                      {uiState.metronomeActive ? t('game.metronomeRunning') : t('game.metronomeStopped')}
+                    </Typography>
+                  </Stack>
+
+                  {/* 隱藏的節拍器組件 */}
+                  <Box sx={{ display: 'none' }}>
+                    <CustomMetronome
+                      bpm={gameSettings.bpm}
+                      isRunning={uiState.metronomeActive}
+                      soundEnabled={audioSettings.soundEnabled}
+                      gameTime={gameState.currentTime}
+                      countInBeats={gameState.isPracticeMode && gameState.isFirstRound ? 0 : 4}
+                    />
+                  </Box>
                 </Stack>
-
-                {/* 隱藏的節拍器組件 */}
-                <Box sx={{ display: 'none' }}>
-                  <CustomMetronome
-                    bpm={gameSettings.bpm}
-                    isRunning={uiState.metronomeActive}
-                    soundEnabled={audioSettings.soundEnabled}
-                    gameTime={gameState.currentTime}
-                    countInBeats={gameState.isPracticeMode && gameState.isFirstRound ? 0 : 4}
-                  />
-                </Box>
-              </Stack>
-            </Box>
+              </Box>
+            </GlassCard>
           </Stack>
-        </CardContent>
+      </Box>
+
+      {/* 遊戲統計和進度 */}
+      <GlassCard glassLevel={2} animated={true} animationDelay={0.5} sx={{ mt: 3, mb: 3 }}>
+        <Box sx={{ p: 2 }}>
+          {/* 遊戲統計 */}
+          <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">
+            <Chip 
+              icon={<MusicNote />} 
+              label={`${t('stats.score')}: ${gameState.score}`} 
+              color="primary" 
+              variant="outlined"
+              sx={fontStyle}
+            />
+            <Chip 
+              label={`${t('stats.hit')}: ${gameState.hitNotes}`} 
+              color="success" 
+              variant="outlined"
+              sx={fontStyle}
+            />
+            <Chip 
+              label={`${t('stats.missed')}: ${gameState.missedNotes}`} 
+              color="error" 
+              variant="outlined"
+              sx={fontStyle}
+            />
+            <Chip 
+              label={`${t('stats.wrong')}: ${gameState.wrongNotes}`} 
+              color="warning" 
+              variant="outlined"
+              sx={fontStyle}
+            />
+            <Chip 
+              label={`${t('stats.total')}: ${gameState.totalNotes}`} 
+              variant="outlined"
+              sx={fontStyle}
+            />
+            {gameState.isPracticeMode && gameState.isFirstRound && gameState.isPlaying && (
+              <Chip 
+                label={t('stats.demoRunning')}
+                color="info" 
+                variant="filled"
+                sx={fontStyle}
+              />
+            )}
+            {gameState.isPracticeMode && !gameState.isFirstRound && !gameState.isPlaying && gameState.gameStarted === false && (
+              <Chip 
+                label={t('stats.demoComplete')}
+                color="success" 
+                variant="filled"
+                sx={fontStyle}
+              />
+            )}
+          </Stack>
+
+          {/* 進度條和時間顯示 */}
+          <LinearProgress 
+            variant="determinate" 
+            value={progress} 
+            sx={{ height: 8, borderRadius: 4, mb: 1 }}
+          />
+          <Typography variant="body2" color="text.secondary" sx={fontStyle}>
+            {displayTime}
+          </Typography>
+        </Box>
       </GlassCard>
-
-      <Divider sx={{ my: 3 }} />
-
-      {/* 遊戲統計 */}
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">
-        <Chip 
-          icon={<MusicNote />} 
-          label={`${t('stats.score')}: ${gameState.score}`} 
-          color="primary" 
-          variant="outlined"
-          sx={fontStyle}
-        />
-        <Chip 
-          label={`${t('stats.hit')}: ${gameState.hitNotes}`} 
-          color="success" 
-          variant="outlined"
-          sx={fontStyle}
-        />
-        <Chip 
-          label={`${t('stats.missed')}: ${gameState.missedNotes}`} 
-          color="error" 
-          variant="outlined"
-          sx={fontStyle}
-        />
-        <Chip 
-          label={`${t('stats.wrong')}: ${gameState.wrongNotes}`} 
-          color="warning" 
-          variant="outlined"
-          sx={fontStyle}
-        />
-        <Chip 
-          label={`${t('stats.total')}: ${gameState.totalNotes}`} 
-          variant="outlined"
-          sx={fontStyle}
-        />
-        {gameState.isPracticeMode && gameState.isFirstRound && gameState.isPlaying && (
-          <Chip 
-            label={t('stats.demoRunning')}
-            color="info" 
-            variant="filled"
-            sx={fontStyle}
-          />
-        )}
-        {gameState.isPracticeMode && !gameState.isFirstRound && !gameState.isPlaying && gameState.gameStarted === false && (
-          <Chip 
-            label={t('stats.demoComplete')}
-            color="success" 
-            variant="filled"
-            sx={fontStyle}
-          />
-        )}
-      </Stack>
-
-      {/* 進度條和時間顯示 */}
-      <LinearProgress 
-        variant="determinate" 
-        value={progress} 
-        sx={{ height: 8, borderRadius: 4 }}
-      />
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, ...fontStyle }}>
-        {displayTime}
-      </Typography>
 
       {/* 譜面顯示區域 */}
       <Box sx={{ mt: 3 }}>
@@ -313,6 +267,16 @@ const RhythmGame: React.FC = () => {
             abcNotation={abcNotation} 
             currentTime={gameState.currentTime}
             notes={notes}
+            onGenerateNewRhythm={generateNewRhythm}
+            onStartGame={handleStartGame}
+            onPauseGame={pauseGame}
+            onTogglePracticeMode={(enabled) => updateGameState({ 
+              isPracticeMode: enabled,
+              isFirstRound: enabled // 切換到練習模式時重置為第一輪
+            })}
+            isPlaying={gameState.isPlaying}
+            isGameActive={isGameActive}
+            isPracticeMode={gameState.isPracticeMode}
           />
         )}
       </Box>

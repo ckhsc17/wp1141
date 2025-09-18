@@ -85,9 +85,14 @@ class AudioUtils {
   }
 
   // 恢復音頻上下文 (用戶交互後)
-  public resumeAudioContext(): void {
+  public async resumeAudioContext(): Promise<void> {
     if (this.audioContext && this.audioContext.state === 'suspended') {
-      this.audioContext.resume();
+      try {
+        await this.audioContext.resume();
+        console.log('🎵 Audio context resumed successfully');
+      } catch (error) {
+        console.warn('Failed to resume audio context:', error);
+      }
     }
   }
 }

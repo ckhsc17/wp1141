@@ -89,7 +89,7 @@ export interface IRhythmGameViewModel {
   
   // Actions
   generateNewRhythm(): void;
-  startGame(): void;
+  startGame(): Promise<void>;
   pauseGame(): void;
   handleKeyPress(event: KeyboardEvent): void;
   handleTouchInput(): void;
@@ -130,7 +130,7 @@ export type GamePhase = 'idle' | 'countdown' | 'playing' | 'paused' | 'finished'
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   bpm: 100,
-  measures: 2,
+  measures: 4,
   tolerance: 0.2,
 };
 

@@ -32,11 +32,21 @@ const CustomMetronome: React.FC<CustomMetronomeProps> = ({
     };
   }, []);
 
-  const createMetronomeClick = React.useCallback(() => {
+  const createMetronomeClick = React.useCallback(async () => {
     if (!soundEnabled || !audioContextRef.current) return;
 
-    // 創建木頭聲效果：使用多個頻率和噪音
+    // 確保音頻上下文處於運行狀態
     const audioContext = audioContextRef.current;
+    if (audioContext.state === 'suspended') {
+      try {
+        await audioContext.resume();
+      } catch (error) {
+        console.warn('Failed to resume audio context for metronome:', error);
+        return;
+      }
+    }
+
+    // 創建木頭聲效果：使用多個頻率和噪音
     const now = audioContext.currentTime;
     
     // 主要木頭敲擊聲（低頻）
@@ -115,7 +125,9 @@ const CustomMetronome: React.FC<CustomMetronomeProps> = ({
       
       // 如果到了新的拍子且還沒播放過這一拍
       if (currentBeat > lastBeatRef.current) {
-        createMetronomeClick();
+        createMetronomeClick().catch(error => {
+          console.warn('Failed to play metronome click:', error);
+        });
         lastBeatRef.current = currentBeat;
       }
     } else if (!isRunning) {
