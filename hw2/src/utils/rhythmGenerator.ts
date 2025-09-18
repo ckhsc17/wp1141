@@ -11,39 +11,46 @@ interface RhythmPattern {
   noteList: Note[];
 }
 
-// 基本節奏模式
-const RHYTHM_PATTERNS = [
-  // 簡單的四分音符模式
-  {
-    notes: ['C', 'D', 'E', 'F'],
-    durations: [1, 1, 1, 1], // 四分音符
-    pattern: 'simple_quarter'
-  },
-  // 混合節奏
-  {
-    notes: ['C', 'C', 'D', 'E', 'E', 'F'],
-    durations: [0.5, 0.5, 1, 0.5, 0.5, 1], // 八分音符和四分音符混合
-    pattern: 'mixed_rhythm'
-  },
-  // 快速節奏
-  {
-    notes: ['C', 'D', 'C', 'E', 'D', 'F', 'E', 'G'],
-    durations: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], // 全八分音符
-    pattern: 'eighth_notes'
-  },
-  // 附點節奏
-  {
-    notes: ['C', 'D', 'E', 'F', 'G'],
-    durations: [1.5, 0.5, 1, 1, 1], // 附點四分音符模式
-    pattern: 'dotted_rhythm'
-  },
-  // 三連音模式
-  {
-    notes: ['C', 'D', 'E', 'C', 'D', 'E'],
-    durations: [0.67, 0.67, 0.66, 0.67, 0.67, 0.66], // 三連音
-    pattern: 'triplets'
-  }
-];
+type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
+interface RhythmElement {
+  durations: number[];
+  name: string;
+  hasRests?: boolean;
+}
+
+// 基本節奏元素（確保每個元素都是完整的拍數組合）
+const RHYTHM_ELEMENTS: Record<Difficulty, RhythmElement[]> = {
+  // 簡單難度：只有四分音符和八分音符
+  Easy: [
+    { durations: [1, 1, 1, 1], name: 'quarter_notes' }, // 四個四分音符 = 4拍
+    { durations: [0.5, 0.5, 1, 1, 1], name: 'mixed_easy_1' }, // 八分+四分 = 4拍
+    { durations: [1, 0.5, 0.5, 1, 1], name: 'mixed_easy_2' }, // 四分+八分+四分 = 4拍
+    { durations: [0.5, 0.5, 0.5, 0.5, 1, 1], name: 'eighth_and_quarter' }, // 八分音符+四分音符 = 4拍
+    { durations: [1, 1, 0.5, 0.5, 1], name: 'quarter_eighth_quarter' }, // 4拍
+  ],
+  
+  // 中等難度：加入十六分音符和休止符
+  Medium: [
+    { durations: [1, 1, 1, 1], name: 'quarter_notes' },
+    { durations: [0.5, 0.5, 1, 1, 1], name: 'mixed_medium_1' },
+    { durations: [0.25, 0.25, 0.25, 0.25, 1, 1, 1], name: 'sixteenth_notes' }, // 十六分音符 = 4拍
+    { durations: [1, 0.25, 0.25, 0.25, 0.25, 1, 1], name: 'quarter_sixteenth_mix' }, // 4拍
+    { durations: [0.5, 0.5, 0.25, 0.25, 0.5, 1, 1], name: 'eighth_sixteenth_mix' }, // 4拍
+    { durations: [1, 1, 1, 1], name: 'with_rests', hasRests: true }, // 包含休止符的四分音符
+  ],
+  
+  // 困難難度：加入附點音符和三連音
+  Hard: [
+    { durations: [1, 1, 1, 1], name: 'quarter_notes' },
+    { durations: [0.25, 0.25, 0.25, 0.25, 1, 1, 1], name: 'sixteenth_notes' },
+    { durations: [1.5, 0.5, 1, 1], name: 'dotted_quarter' }, // 附點四分音符 = 4拍
+    { durations: [1, 1.5, 0.5, 1], name: 'dotted_mix' }, // 4拍
+    { durations: [0.67, 0.67, 0.66, 1, 1, 1], name: 'triplets_1' }, // 三連音 = 4拍
+    { durations: [1, 0.67, 0.67, 0.66, 1, 1], name: 'triplets_2' }, // 4拍
+    { durations: [1.5, 0.25, 0.25, 1, 1], name: 'dotted_sixteenth' }, // 附點+十六分音符 = 4拍
+  ]
+};
 
 // 音符到 ABC 記譜法的映射
 const NOTE_TO_ABC: { [key: string]: string } = {
@@ -69,37 +76,54 @@ const DURATION_TO_ABC: { [key: number]: string } = {
 };
 
 // 生成隨機節奏
-export function generateRandomRhythm(measures: number = 1, bpm: number = 100): RhythmPattern {
+export function generateRandomRhythm(
+  measures: number = 1, 
+  bpm: number = 100, 
+  difficulty: Difficulty = 'Medium'
+): RhythmPattern {
   // 限制小節數在 1-8 之間
   const numMeasures = Math.max(1, Math.min(8, measures));
   
-  // 隨機選擇一個節奏模式
-  const basePattern = RHYTHM_PATTERNS[Math.floor(Math.random() * RHYTHM_PATTERNS.length)];
+  // 根據難度選擇可用的節奏元素
+  const availableElements = RHYTHM_ELEMENTS[difficulty];
   
-  // 根據小節數重複或擴展模式
-  let notes: string[] = [];
-  let durations: number[] = [];
+  // 生成每個小節的節奏
+  let allDurations: number[] = [];
+  let hasRests = false;
   
   for (let measure = 0; measure < numMeasures; measure++) {
-    // 每個小節可能使用不同的模式或相同模式的變化
-    const shouldVaryPattern = Math.random() > 0.3;
-    const currentPattern = shouldVaryPattern ? 
-      RHYTHM_PATTERNS[Math.floor(Math.random() * RHYTHM_PATTERNS.length)] : 
-      basePattern;
+    // 隨機選擇一個節奏元素
+    const element = availableElements[Math.floor(Math.random() * availableElements.length)];
     
-    notes = notes.concat(currentPattern.notes);
-    durations = durations.concat(currentPattern.durations);
+    // 確保每個小節正好是4拍
+    const measureDurations = [...element.durations];
+    const totalDuration = measureDurations.reduce((sum, dur) => sum + dur, 0);
+    
+    // 如果不是正好4拍，調整到4拍
+    if (Math.abs(totalDuration - 4) > 0.01) {
+      // 按比例縮放到4拍
+      const scale = 4 / totalDuration;
+      measureDurations.forEach((dur, i) => {
+        measureDurations[i] = dur * scale;
+      });
+    }
+    
+    allDurations = allDurations.concat(measureDurations);
+    if (element.hasRests) hasRests = true;
   }
   
-  // 隨機調整音符
+  // 生成音符序列
   const availableNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-  const shouldRandomizeNotes = Math.random() > 0.5;
+  const notes: string[] = [];
   
-  if (shouldRandomizeNotes) {
-    notes = notes.map(() => 
-      availableNotes[Math.floor(Math.random() * availableNotes.length)]
-    );
-  }
+  allDurations.forEach((duration, index) => {
+    // 如果該元素支持休止符，有20%概率生成休止符
+    if (hasRests && Math.random() < 0.2) {
+      notes.push('z'); // ABC 記譜法中的休止符
+    } else {
+      notes.push(availableNotes[Math.floor(Math.random() * availableNotes.length)]);
+    }
+  });
 
   // 生成 ABC 記譜法字符串
   let abc = 'X:1\n';
@@ -107,24 +131,32 @@ export function generateRandomRhythm(measures: number = 1, bpm: number = 100): R
   abc += 'L:1/4\n';
   abc += 'K:C\n';
 
-  // 構建音符序列，每4拍一個小節
+  // 構建音符序列，嚴格按小節分組
   const abcNotes: string[] = [];
   let currentMeasureDuration = 0;
+  let measureNotes: string[] = [];
   
-  durations.forEach((duration, index) => {
+  allDurations.forEach((duration, index) => {
     const note = notes[index];
     const durationSuffix = DURATION_TO_ABC[duration] || '';
-    abcNotes.push(NOTE_TO_ABC[note] + durationSuffix);
+    
+    if (note === 'z') {
+      measureNotes.push('z' + durationSuffix); // 休止符
+    } else {
+      measureNotes.push(NOTE_TO_ABC[note] + durationSuffix);
+    }
     
     currentMeasureDuration += duration;
-    // 每當累積到約4拍時，添加小節線
-    if (currentMeasureDuration >= 4) {
-      abcNotes.push('|');
+    
+    // 每當累積到4拍時，完成一個小節
+    if (Math.abs(currentMeasureDuration - 4) < 0.01) {
+      abcNotes.push(...measureNotes, '|');
+      measureNotes = [];
       currentMeasureDuration = 0;
     }
   });
   
-  // 結束符號
+  // 確保以結束符號結尾
   if (abcNotes[abcNotes.length - 1] !== '|') {
     abcNotes.push('||');
   } else {
@@ -133,85 +165,23 @@ export function generateRandomRhythm(measures: number = 1, bpm: number = 100): R
 
   abc += abcNotes.join(' ') + '\n';
 
-  // 生成音符列表（用於遊戲邏輯）
+  // 生成音符列表（用於遊戲邏輯，跳過休止符）
   const noteList: Note[] = [];
   const beatDuration = 60 / bpm; // 根據 BPM 計算每拍時間
-  // 音符時間從 0 開始，預備拍在遊戲時間中處理
   let currentTime = 0; // 音符從時間 0 開始
+  let noteIndex = 0;
   
-  durations.forEach((duration, index) => {
-    noteList.push({
-      id: `note-${index}`,
-      time: currentTime,
-      duration: duration,
-    });
+  allDurations.forEach((duration, index) => {
+    // 只為非休止符創建 Note 對象
+    if (notes[index] !== 'z') {
+      noteList.push({
+        id: `note-${noteIndex}`,
+        time: currentTime,
+        duration: duration,
+      });
+      noteIndex++;
+    }
     currentTime += duration * beatDuration;
-  });
-
-  return {
-    abc,
-    noteList
-  };
-}
-
-// 根據難度生成節奏
-export function generateRhythmByDifficulty(difficulty: 'easy' | 'medium' | 'hard'): RhythmPattern {
-  let selectedPatterns: typeof RHYTHM_PATTERNS;
-  
-  switch (difficulty) {
-    case 'easy':
-      selectedPatterns = RHYTHM_PATTERNS.filter(p => 
-        p.pattern === 'simple_quarter' || p.pattern === 'mixed_rhythm'
-      );
-      break;
-    case 'medium':
-      selectedPatterns = RHYTHM_PATTERNS.filter(p => 
-        p.pattern === 'mixed_rhythm' || p.pattern === 'eighth_notes' || p.pattern === 'dotted_rhythm'
-      );
-      break;
-    case 'hard':
-      selectedPatterns = RHYTHM_PATTERNS.filter(p => 
-        p.pattern === 'eighth_notes' || p.pattern === 'triplets' || p.pattern === 'dotted_rhythm'
-      );
-      break;
-    default:
-      selectedPatterns = RHYTHM_PATTERNS;
-  }
-
-  const pattern = selectedPatterns[Math.floor(Math.random() * selectedPatterns.length)];
-  
-  // 使用相同的邏輯生成 ABC 和音符列表
-  const availableNotes = ['C', 'D', 'E', 'F', 'G'];
-  const notes = pattern.notes.map(() => 
-    availableNotes[Math.floor(Math.random() * availableNotes.length)]
-  );
-
-  let abc = 'X:1\n';
-  abc += 'M:4/4\n';
-  abc += 'L:1/4\n';
-  abc += 'K:C\n';
-
-  const abcNotes = notes.map((note, index) => {
-    const duration = pattern.durations[index];
-    const durationSuffix = DURATION_TO_ABC[duration] || '';
-    return NOTE_TO_ABC[note] + durationSuffix;
-  });
-
-  abc += abcNotes.join(' ') + ' ||\n';
-
-  const noteList: Note[] = [];
-  // 音符從時間 0 開始
-  let currentTime = 0;
-  
-  pattern.durations.forEach((duration, index) => {
-    noteList.push({
-      id: `note-${index}`,
-      time: currentTime,
-      duration: duration,
-    });
-    // 根據難度調整速度
-    const speedMultiplier = difficulty === 'easy' ? 0.8 : difficulty === 'medium' ? 0.6 : 0.4;
-    currentTime += duration * speedMultiplier;
   });
 
   return {

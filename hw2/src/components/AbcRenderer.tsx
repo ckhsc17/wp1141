@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Box, IconButton, Stack, Typography, Slider } from '@mui/material';
+import { Box, IconButton, Stack, Typography, Slider, Select, MenuItem } from '@mui/material';
 import { Refresh, PlayArrow, Pause, Hearing } from '@mui/icons-material';
 
 interface Note {
@@ -13,9 +13,12 @@ interface Note {
   wrong?: boolean;
 }
 
+type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
 interface GameSettings {
   bpm: number;
   measures: number;
+  difficulty: Difficulty;
 }
 
 interface AbcRendererProps {
@@ -434,6 +437,87 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
                 },
               }}
             />
+          </Box>
+        )}
+
+        {/* 難度選擇器 - 小型版本 */}
+        {gameSettings && updateGameSettings && (
+          <Box sx={{
+            background: 'transparent',
+            borderRadius: 1,
+            p: 0.5,
+            minWidth: 100,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}>
+            <Typography variant="caption" sx={{ 
+              fontSize: 10, 
+              fontWeight: 'bold', 
+              mb: 0.2,
+              color: 'white',
+              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
+            }}>
+              難度: {gameSettings.difficulty}
+            </Typography>
+            <Select
+              value={gameSettings.difficulty}
+              onChange={(e) => updateGameSettings({ difficulty: e.target.value as Difficulty })}
+              disabled={isGameActive}
+              size="small"
+              sx={{
+                minWidth: 80,
+                height: 24,
+                color: 'white',
+                fontSize: 10,
+                '& .MuiSelect-select': {
+                  padding: '2px 8px',
+                  color: 'white',
+                  fontSize: 10,
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  borderWidth: 1,
+                },
+                '& .MuiSvgIcon-root': {
+                  color: 'white',
+                  fontSize: 14,
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'white',
+                  borderWidth: 1,
+                },
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    bgcolor: 'rgba(0, 0, 0, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    '& .MuiMenuItem-root': {
+                      color: 'white',
+                      fontSize: 10,
+                      minHeight: 24,
+                      '&:hover': {
+                        bgcolor: 'rgba(255, 255, 255, 0.1)',
+                      },
+                      '&.Mui-selected': {
+                        bgcolor: 'rgba(255, 255, 255, 0.2)',
+                        '&:hover': {
+                          bgcolor: 'rgba(255, 255, 255, 0.3)',
+                        },
+                      },
+                    },
+                  },
+                },
+              }}
+            >
+              <MenuItem value="Easy">Easy</MenuItem>
+              <MenuItem value="Medium">Medium</MenuItem>
+              <MenuItem value="Hard">Hard</MenuItem>
+            </Select>
           </Box>
         )}
 

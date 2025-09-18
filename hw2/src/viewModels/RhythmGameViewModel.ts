@@ -136,7 +136,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
 
   generateNewRhythm = (): void => {
     // 使用當前的 React 狀態，而不是內部狀態
-    const { abc, noteList } = generateRandomRhythm(this._gameSettings.measures, this._gameSettings.bpm);
+    const { abc, noteList } = generateRandomRhythm(this._gameSettings.measures, this._gameSettings.bpm, this._gameSettings.difficulty);
     
     this.setAbcNotation(abc);
     this.setNotes(noteList);

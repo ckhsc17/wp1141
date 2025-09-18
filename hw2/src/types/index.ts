@@ -23,10 +23,13 @@ export interface GameState {
   isFirstRound: boolean; // 練習模式的第一輪（系統示範）
 }
 
+export type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
 export interface GameSettings {
   bpm: number;
   measures: number;
   tolerance: number; // 容錯時間 (秒)
+  difficulty: Difficulty;
 }
 
 // ==================== Rhythm Generation ====================
@@ -132,6 +135,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   bpm: 100,
   measures: 4,
   tolerance: 0.2,
+  difficulty: 'Medium',
 };
 
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
