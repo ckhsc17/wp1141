@@ -109,14 +109,20 @@ const RhythmGame: React.FC = () => {
   };
 
   return (
-    <Box sx={fontStyle}>
+    <Box sx={{ 
+      ...fontStyle,
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative'
+    }}>
       {/* 語言切換按鈕 */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <LanguageToggle />
       </Box>
 
-      {/* 主遊戲區域 */}
-      <Box sx={{ mb: 3 }}>
+      {/* 上方內容區域 */}
+      <Box sx={{ flex: '0 0 auto', mb: 3 }}>
         <Stack spacing={3}>
 
 
@@ -192,68 +198,81 @@ const RhythmGame: React.FC = () => {
                 </Stack>
               </Box>
             </GlassCard>
-          </Stack>
+
+            {/* 遊戲統計和進度 */}
+            <GlassCard glassLevel={2} animated={true} animationDelay={0.5}>
+              <Box sx={{ p: 2 }}>
+                {/* 遊戲統計 */}
+                <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">
+                  <Chip 
+                    icon={<MusicNote />} 
+                    label={`${t('stats.score')}: ${gameState.score}`} 
+                    color="primary" 
+                    variant="outlined"
+                    sx={fontStyle}
+                  />
+                  <Chip 
+                    label={`${t('stats.hit')}: ${gameState.hitNotes}`} 
+                    color="success" 
+                    variant="outlined"
+                    sx={fontStyle}
+                  />
+                  <Chip 
+                    label={`${t('stats.missed')}: ${gameState.missedNotes}`} 
+                    color="error" 
+                    variant="outlined"
+                    sx={fontStyle}
+                  />
+                  <Chip 
+                    label={`${t('stats.wrong')}: ${gameState.wrongNotes}`} 
+                    color="warning" 
+                    variant="outlined"
+                    sx={fontStyle}
+                  />
+                  <Chip 
+                    label={`${t('stats.total')}: ${gameState.totalNotes}`} 
+                    variant="outlined"
+                    sx={fontStyle}
+                  />
+                  {gameState.isPracticeMode && gameState.isFirstRound && gameState.isPlaying && (
+                    <Chip 
+                      label={t('stats.demoRunning')}
+                      color="info" 
+                      variant="filled"
+                      sx={fontStyle}
+                    />
+                  )}
+                </Stack>
+
+                {/* 進度條和時間顯示 */}
+                <LinearProgress 
+                  variant="determinate" 
+                  value={progress} 
+                  sx={{ height: 8, borderRadius: 4, mb: 1 }}
+                />
+                <Typography variant="body2" color="text.secondary" sx={fontStyle}>
+                  {displayTime}
+                </Typography>
+              </Box>
+            </GlassCard>
+        </Stack>
       </Box>
 
-      {/* 遊戲統計和進度 */}
-      <GlassCard glassLevel={2} animated={true} animationDelay={0.5} sx={{ mt: 3, mb: 3 }}>
-        <Box sx={{ p: 2 }}>
-          {/* 遊戲統計 */}
-          <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">
-            <Chip 
-              icon={<MusicNote />} 
-              label={`${t('stats.score')}: ${gameState.score}`} 
-              color="primary" 
-              variant="outlined"
-              sx={fontStyle}
-            />
-            <Chip 
-              label={`${t('stats.hit')}: ${gameState.hitNotes}`} 
-              color="success" 
-              variant="outlined"
-              sx={fontStyle}
-            />
-            <Chip 
-              label={`${t('stats.missed')}: ${gameState.missedNotes}`} 
-              color="error" 
-              variant="outlined"
-              sx={fontStyle}
-            />
-            <Chip 
-              label={`${t('stats.wrong')}: ${gameState.wrongNotes}`} 
-              color="warning" 
-              variant="outlined"
-              sx={fontStyle}
-            />
-            <Chip 
-              label={`${t('stats.total')}: ${gameState.totalNotes}`} 
-              variant="outlined"
-              sx={fontStyle}
-            />
-            {gameState.isPracticeMode && gameState.isFirstRound && gameState.isPlaying && (
-              <Chip 
-                label={t('stats.demoRunning')}
-                color="info" 
-                variant="filled"
-                sx={fontStyle}
-              />
-            )}
-          </Stack>
-
-          {/* 進度條和時間顯示 */}
-          <LinearProgress 
-            variant="determinate" 
-            value={progress} 
-            sx={{ height: 8, borderRadius: 4, mb: 1 }}
-          />
-          <Typography variant="body2" color="text.secondary" sx={fontStyle}>
-            {displayTime}
-          </Typography>
-        </Box>
-      </GlassCard>
-
-      {/* 譜面顯示區域 */}
-      <Box sx={{ mt: 3 }}>
+      {/* 譜面顯示區域 - 固定在距離底部10%的位置 */}
+      <Box sx={{ 
+        position: 'absolute',
+        bottom: '10vh', // 距離底部10%視窗高度
+        left: 0,
+        right: 0,
+        px: { xs: 2, sm: 3 }, // 左右邊距與主內容一致
+        zIndex: 10,
+        '@media (max-height: 600px)': {
+          bottom: '5vh', // 小屏幕時調整為5%
+        },
+        '@media (max-height: 400px)': {
+          bottom: '15vh', // 非常小的屏幕時調整為15%
+        }
+      }}>
         {abcNotation && (
           <AbcRenderer 
             abcNotation={abcNotation} 
