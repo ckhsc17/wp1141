@@ -53,6 +53,49 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const visualObjRef = useRef<unknown>(null);
 
+  // 自動滾動到當前音符（手機版）
+  useEffect(() => {
+    if (!containerRef.current || !currentTime || !notes.length) return;
+    
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile) return; // 只在手機版啟用自動滾動
+    
+    // 找到當前應該播放的音符（更寬鬆的時間容錯）
+    const currentNoteIndex = notes.findIndex(note => 
+      currentTime >= note.time - 0.2 && currentTime <= note.time + note.duration + 0.2
+    );
+    
+    if (currentNoteIndex >= 0) {
+      // 使用音符索引來定位 DOM 元素（更可靠）
+      const noteElements = containerRef.current.querySelectorAll('.abcjs-note');
+      const currentNoteElement = noteElements[currentNoteIndex];
+      
+      if (currentNoteElement) {
+        // 獲取容器的滾動位置
+        const container = containerRef.current;
+        const noteRect = currentNoteElement.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        
+        // 計算是否需要滾動
+        const isNoteVisible = noteRect.top >= containerRect.top && 
+                             noteRect.bottom <= containerRect.bottom;
+        
+        if (!isNoteVisible) {
+          // 滾動到音符位置，讓音符出現在容器中央
+          const scrollTop = container.scrollTop + 
+                           (noteRect.top - containerRect.top) - 
+                           (containerRect.height / 2) + 
+                           (noteRect.height / 2);
+          
+          container.scrollTo({
+            top: Math.max(0, scrollTop),
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+  }, [currentTime, notes]);
+
   useEffect(() => {
     if (!containerRef.current || !abcNotation) return;
 
@@ -64,16 +107,33 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         // 清除之前的內容
         containerRef.current.innerHTML = '';
 
-        // 渲染 ABC 記譜法
-        const visualObj = abcjs.renderAbc(containerRef.current, abcNotation, {
-          responsive: 'resize',
-          scale: 1.2,
-          staffwidth: 600,
+        // 動態計算渲染參數
+        const containerWidth = containerRef.current.offsetWidth || 800;
+        const isMobile = window.innerWidth < 768;
+        
+        // 根據設備調整參數
+        const renderOptions = {
+          responsive: 'resize' as const,
+          scale: isMobile ? 0.75 : 1.0, // 手機上進一步縮小比例
+          staffwidth: Math.max(isMobile ? 300 : 400, containerWidth - 40), // 手機上更小的寬度
           add_classes: true,
+          paddingleft: 10,
+          paddingright: 10,
+          paddingtop: isMobile ? 80 : 60, // 手機上更多頂部間距
+          paddingbottom: 20,
+          wrap: {
+            minSpacing: isMobile ? 1.5 : 1.8, // 手機上更緊湊的間距
+            maxSpacing: isMobile ? 2.0 : 2.5, // 手機上更小的最大間距
+            maxWidth: isMobile ? 280 : 500, // 手機上更窄的換行寬度
+            preferredMeasuresPerLine: isMobile ? 2 : 4 // 手機上每行2小節，桌面4小節
+          },
           clickListener: (abcElem: unknown) => {
             console.log('Clicked element:', abcElem);
           }
-        });
+        };
+        
+        // 渲染 ABC 記譜法
+        const visualObj = abcjs.renderAbc(containerRef.current, abcNotation, renderOptions);
 
         visualObjRef.current = visualObj;
 
@@ -246,7 +306,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       sx={{
         position: 'relative',
         width: '100%',
-        minHeight: 275,
+        minHeight: 250,
         borderRadius: 2,
         overflow: 'auto',
         
@@ -622,9 +682,32 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         ref={containerRef}
         sx={{
           p: 3,
+          pt: 8, // 增加頂部內邊距，為功能列留出空間
+          minHeight: 200, // 確保最小高度
+          position: 'relative',
+          overflow: 'visible', // 允許內容溢出，避免被截斷
           '@media (max-width: 768px)': {
             p: 2,
+            pt: 12, // 手機上需要更多頂部空間
+            maxHeight: '60vh', // 限制手機版最大高度
+            overflowY: 'auto', // 允許垂直滾動
+            scrollBehavior: 'smooth', // 平滑滾動
+            WebkitOverflowScrolling: 'touch', // iOS 滾動優化
           },
+          // 確保五線譜有足夠的顯示空間
+          '& svg': {
+            maxWidth: '100%',
+            height: 'auto',
+            // 防止五線譜過小
+            minHeight: '120px',
+          },
+          // 優化五線譜在小屏幕上的顯示
+          '& .abcjs-staff': {
+            minHeight: '40px',
+          },
+          '& .abcjs-top-space': {
+            minHeight: '20px',
+          }
         }}
       />
     </Box>

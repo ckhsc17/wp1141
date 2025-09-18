@@ -103,7 +103,8 @@ const DURATION_TO_ABC: { [key: number]: string } = {
 export function generateRandomRhythm(
   measures: number = 1, 
   bpm: number = 100, 
-  difficulty: Difficulty = 'Medium'
+  difficulty: Difficulty = 'Medium',
+  isMobile: boolean = false
 ): RhythmPattern {
   // 限制小節數在 1-8 之間
   const numMeasures = Math.max(1, Math.min(8, measures));
@@ -216,7 +217,38 @@ export function generateRandomRhythm(
     abcNotes[abcNotes.length - 1] = '||';
   }
 
-  abc += abcNotes.join(' ') + '\n';
+  // 處理換行：根據設備類型決定換行策略
+  const measuresPerLine = isMobile ? 2 : 4; // 手機版2小節換行，桌面版4小節換行
+  let finalAbc = '';
+  let currentLine: string[] = [];
+  let measureCount = 0;
+  
+  for (let i = 0; i < abcNotes.length; i++) {
+    const element = abcNotes[i];
+    currentLine.push(element);
+    
+    if (element === '|' || element === '||') {
+      measureCount++;
+      
+      // 根據設備類型決定換行頻率，或者到達結尾
+      if (measureCount % measuresPerLine === 0 || element === '||') {
+        finalAbc += currentLine.join(' ');
+        if (element !== '||') {
+          finalAbc += ' $\n'; // ABC 記譜法的換行符
+        } else {
+          finalAbc += '\n';
+        }
+        currentLine = [];
+      }
+    }
+  }
+  
+  // 處理剩餘的音符
+  if (currentLine.length > 0) {
+    finalAbc += currentLine.join(' ') + '\n';
+  }
+
+  abc += finalAbc;
 
   // 生成音符列表（用於遊戲邏輯，跳過休止符）
   const noteList: Note[] = [];
