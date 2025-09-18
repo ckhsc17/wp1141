@@ -386,34 +386,54 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         },
       }}
     >
-      {/* 統計信息和控制按鈕 */}
+      {/* 統計信息和控制按鈕 - 自適應布局 */}
       <Box
         sx={{
           position: 'absolute',
-          top: 12,
-          left: 12,
-          right: 12,
+          top: 8,
+          left: 8,
+          right: 8,
           zIndex: 10,
           display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' }, // 手機版垂直排列，桌面版水平排列
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: { xs: 'stretch', sm: 'center' },
+          gap: { xs: 1, sm: 0 }, // 手機版元素間距
+          minHeight: { xs: 'auto', sm: 40 }, // 確保桌面版有足夠高度
         }}
       >
-        {/* 左側統計信息 */}
+        {/* 統計信息 - 自適應 */}
         {gameStats && (
-          <Stack direction="row" spacing={1}>
+          <Stack 
+            direction="row" 
+            spacing={{ xs: 0.5, sm: 1 }} // 手機版更緊湊的間距
+            sx={{
+              flexWrap: 'wrap', // 允許換行
+              justifyContent: { xs: 'center', sm: 'flex-start' },
+              order: { xs: 2, sm: 1 }, // 手機版統計信息在下方
+            }}
+          >
             {/* 得分 */}
             <Chip
-              icon={<EmojiEvents sx={{ fontSize: '32px !important', color: '#FFD700 !important', opacity: 0.8 }} />}
+              icon={<EmojiEvents sx={{ 
+                fontSize: { xs: '20px !important', sm: '32px !important' }, 
+                color: '#FFD700 !important', 
+                opacity: 0.8 
+              }} />}
               label={gameStats.score}
               size="medium"
               sx={{
                 background: 'transparent !important',
                 backgroundColor: 'transparent !important',
                 color: 'white',
-                fontSize: 20,
-                height: 32,
-                '& .MuiChip-label': { px: 0.5, fontSize: 20, fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' },
+                fontSize: { xs: 14, sm: 20 },
+                height: { xs: 24, sm: 32 },
+                '& .MuiChip-label': { 
+                  px: 0.5, 
+                  fontSize: { xs: 14, sm: 20 }, 
+                  fontWeight: 'bold', 
+                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' 
+                },
                 '& .MuiChip-icon': { 
                   ml: 1, 
                   color: '#FFD700 !important',
@@ -426,16 +446,25 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             
             {/* 命中 */}
             <Chip
-              icon={<CheckCircle sx={{ fontSize: '32px !important', color: '#4CAF50 !important', opacity: 0.8 }} />}
+              icon={<CheckCircle sx={{ 
+                fontSize: { xs: '20px !important', sm: '32px !important' }, 
+                color: '#4CAF50 !important', 
+                opacity: 0.8 
+              }} />}
               label={gameStats.hitNotes}
               size="medium"
               sx={{
                 background: 'transparent !important',
                 backgroundColor: 'transparent !important',
                 color: 'white',
-                fontSize: 20,
-                height: 32,
-                '& .MuiChip-label': { px: 0.5, fontSize: 20, fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' },
+                fontSize: { xs: 14, sm: 20 },
+                height: { xs: 24, sm: 32 },
+                '& .MuiChip-label': { 
+                  px: 0.5, 
+                  fontSize: { xs: 14, sm: 20 }, 
+                  fontWeight: 'bold', 
+                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' 
+                },
                 '& .MuiChip-icon': { 
                   ml: 1, 
                   color: '#4CAF50 !important',
@@ -448,16 +477,25 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             
             {/* 錯過 */}
             <Chip
-              icon={<Cancel sx={{ fontSize: '32px !important', color: '#FF9800 !important', opacity: 0.8 }} />}
+              icon={<Cancel sx={{ 
+                fontSize: { xs: '20px !important', sm: '32px !important' }, 
+                color: '#FF9800 !important', 
+                opacity: 0.8 
+              }} />}
               label={gameStats.missedNotes}
               size="medium"
               sx={{
                 background: 'transparent !important',
                 backgroundColor: 'transparent !important',
                 color: 'white',
-                fontSize: 20,
-                height: 32,
-                '& .MuiChip-label': { px: 0.5, fontSize: 20, fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' },
+                fontSize: { xs: 14, sm: 20 },
+                height: { xs: 24, sm: 32 },
+                '& .MuiChip-label': { 
+                  px: 0.5, 
+                  fontSize: { xs: 14, sm: 20 }, 
+                  fontWeight: 'bold', 
+                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' 
+                },
                 '& .MuiChip-icon': { 
                   ml: 1, 
                   color: '#FF9800 !important',
@@ -470,16 +508,25 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             
             {/* 錯誤 */}
             <Chip
-              icon={<Error sx={{ fontSize: '32px !important', color: '#F44336 !important', opacity: 0.8 }} />}
+              icon={<Error sx={{ 
+                fontSize: { xs: '20px !important', sm: '32px !important' }, 
+                color: '#F44336 !important', 
+                opacity: 0.8 
+              }} />}
               label={gameStats.wrongNotes}
               size="medium"
               sx={{
                 background: 'transparent !important',
                 backgroundColor: 'transparent !important',
                 color: 'white',
-                fontSize: 20,
-                height: 32,
-                '& .MuiChip-label': { px: 0.5, fontSize: 20, fontWeight: 'bold', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' },
+                fontSize: { xs: 14, sm: 20 },
+                height: { xs: 24, sm: 32 },
+                '& .MuiChip-label': { 
+                  px: 0.5, 
+                  fontSize: { xs: 14, sm: 20 }, 
+                  fontWeight: 'bold', 
+                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' 
+                },
                 '& .MuiChip-icon': { 
                   ml: 1, 
                   color: '#F44336 !important',
@@ -492,24 +539,32 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           </Stack>
         )}
 
-        {/* 右側控制按鈕 */}
+        {/* 控制按鈕 - 自適應 */}
         <Stack
-          direction="row"
-          spacing={1}
+          direction={{ xs: 'row', sm: 'row' }}
+          spacing={{ xs: 0.5, sm: 1 }}
+          sx={{
+            flexWrap: 'wrap',
+            justifyContent: { xs: 'center', sm: 'flex-end' },
+            order: { xs: 1, sm: 2 }, // 手機版控制按鈕在上方
+            '& > *': { // 所有子元素
+              flexShrink: 0, // 防止按鈕被壓縮
+            }
+          }}
         >
-        {/* BPM 控制桿 - 小型版本 */}
+        {/* BPM 控制桿 - 響應式 */}
         {gameSettings && updateGameSettings && (
           <Box sx={{
             background: 'transparent',
             borderRadius: 1,
-            p: 0.5,
-            minWidth: 100,
+            p: { xs: 0.3, sm: 0.5 },
+            minWidth: { xs: 70, sm: 100 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
           }}>
             <Typography variant="caption" sx={{ 
-              fontSize: 10, 
+              fontSize: { xs: 8, sm: 10 }, 
               fontWeight: 'bold', 
               mb: 0.2,
               color: 'white',
@@ -526,12 +581,12 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
               disabled={isGameActive}
               size="small"
               sx={{
-                width: 80,
+                width: { xs: 60, sm: 80 },
                 height: 4,
                 color: 'white',
                 '& .MuiSlider-thumb': {
-                  width: 12,
-                  height: 12,
+                  width: { xs: 10, sm: 12 },
+                  height: { xs: 10, sm: 12 },
                   backgroundColor: 'white',
                   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
                 },
@@ -548,19 +603,19 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           </Box>
         )}
 
-        {/* 小節數控制桿 - 小型版本 */}
+        {/* 小節數控制桿 - 響應式 */}
         {gameSettings && updateGameSettings && (
           <Box sx={{
             background: 'transparent',
             borderRadius: 1,
-            p: 0.5,
-            minWidth: 100,
+            p: { xs: 0.3, sm: 0.5 },
+            minWidth: { xs: 70, sm: 100 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
           }}>
             <Typography variant="caption" sx={{ 
-              fontSize: 10, 
+              fontSize: { xs: 8, sm: 10 }, 
               fontWeight: 'bold', 
               mb: 0.2,
               color: 'white',
@@ -582,7 +637,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
                 { value: 8, label: '' }
               ]}
               sx={{
-                width: 80,
+                width: { xs: 60, sm: 80 },
                 height: 4,
                 color: 'white',
                 '& .MuiSlider-thumb': {
@@ -787,19 +842,20 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         </Stack>
       </Box>
 
-      {/* ABC 記譜容器 */}
+      {/* ABC 記譜容器 - 自適應高度 */}
       <Box
         ref={containerRef}
         sx={{
-          p: 3,
-          pt: 8, // 增加頂部內邊距，為功能列留出空間
-          minHeight: 200, // 確保最小高度
+          p: { xs: 2, sm: 3 },
+          pt: { xs: 14, sm: 10 }, // 為功能列留出更多空間，手機版需要更多
+          minHeight: { xs: 180, sm: 200 }, // 響應式最小高度
           position: 'relative',
           overflow: 'visible', // 允許內容溢出，避免被截斷
+          // 允許容器根據內容向上伸展
+          height: 'auto',
+          maxHeight: 'none', // 桌面版不限制高度
           '@media (max-width: 768px)': {
-            p: 2,
-            pt: 12, // 手機上需要更多頂部空間
-            maxHeight: '60vh', // 限制手機版最大高度
+            maxHeight: '50vh', // 手機版適度限制高度
             overflowY: 'auto', // 允許垂直滾動
             scrollBehavior: 'smooth', // 平滑滾動
             WebkitOverflowScrolling: 'touch', // iOS 滾動優化
