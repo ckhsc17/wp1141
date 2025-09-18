@@ -4,25 +4,9 @@ import React from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Typography,
-  Chip,
   Stack,
-  Slider,
-  FormControlLabel,
-  Switch,
-  Divider,
 } from '@mui/material';
-import { 
-  PlayArrow, 
-  Pause, 
-  Refresh, 
-  MusicNote,
-  Speed,
-  LibraryMusic,
-  VolumeUp,
-} from '@mui/icons-material';
 import AbcRenderer from '@/components/AbcRenderer';
 import CustomMetronome from '@/components/CustomMetronome';
 import MobileFloatingButton from '@/components/MobileFloatingButton';

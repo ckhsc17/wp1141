@@ -1,11 +1,9 @@
 'use client';
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Container, Typography, Box } from '@mui/material';
+import { CssBaseline, Container, Box } from '@mui/material';
 import RhythmGame from '@/components/RhythmGame';
 import BackgroundContainer from '@/components/BackgroundContainer';
-import GlassCard from '@/components/GlassCard';
-import { useTranslation } from '@/hooks/useTranslation';
 
 const theme = createTheme({
   palette: {
@@ -20,12 +18,7 @@ const theme = createTheme({
 });
 
 export default function Home() {
-  const { t, locale } = useTranslation();
-
-  // 根據語言設置字體樣式
-  const fontStyle = {
-    fontFamily: locale === 'en' ? '"Times New Roman", serif' : 'inherit',
-  };
+  //const { t, locale } = useTranslation();
 
   return (
     <ThemeProvider theme={theme}>

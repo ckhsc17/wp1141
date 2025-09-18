@@ -113,7 +113,7 @@ export function generateRandomRhythm(
   const availableElements = RHYTHM_ELEMENTS[difficulty];
   
   // 生成每個小節的節奏
-  let allMeasures: Array<{
+  const allMeasures: Array<{
     durations: number[];
     hasRests: boolean;
     hasTriplets: boolean;
@@ -157,7 +157,7 @@ export function generateRandomRhythm(
   const allDurations: number[] = [];
   const availableNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
   
-  allMeasures.forEach((measure, measureIndex) => {
+  allMeasures.forEach((measure) => {
     const measureNotes: string[] = [];
     let i = 0;
     
@@ -257,7 +257,7 @@ export function generateRandomRhythm(
   let noteIndex = 0;
   let allNotesIndex = 0;
   
-  allDurations.forEach((duration, index) => {
+  allDurations.forEach((duration) => {
     // 只為非休止符創建 Note 對象
     if (allNotesIndex < allNotes.length) {
       noteList.push({
