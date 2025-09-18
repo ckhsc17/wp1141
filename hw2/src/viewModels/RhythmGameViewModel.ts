@@ -93,24 +93,6 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
 
   // ==================== Computed Properties ====================
 
-  get progress(): number {
-    // 遊戲結束時進度歸零
-    if (this._gameState.gameEnded) {
-      return 0;
-    }
-    
-    const totalDuration = this.totalDuration;
-    const firstNoteTime = this._notes.length > 0 ? this._notes[0]?.time || 0 : 0;
-    const musicDuration = totalDuration - firstNoteTime;
-    
-    return musicDuration > 0 && this._gameState.currentTime >= firstNoteTime
-      ? Math.min(((this._gameState.currentTime - firstNoteTime) / musicDuration) * 100, 100)
-      : 0;
-  }
-
-  get totalDuration(): number {
-    return this._notes.length > 0 ? this._notes[this._notes.length - 1]?.time || 0 : 0;
-  }
 
   get isGameActive(): boolean {
     return this._gameState.isPlaying && this._gameState.gameStarted;

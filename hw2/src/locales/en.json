@@ -24,9 +24,7 @@
     "missed": "Missed",
     "wrong": "Wrong",
     "total": "Total",
-    "demoRunning": "🎵 System Demo Playing...",
-    "timeProgress": "Time Progress",
-    "countDown": "Count In"
+    "demoRunning": "🎵 System Demo Playing..."
   },
   "results": {
     "title": "🎉 Game Results",

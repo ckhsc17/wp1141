@@ -24,9 +24,7 @@
     "missed": "錯過",
     "wrong": "錯誤",
     "total": "總計",
-    "demoRunning": "🎵 系統示範中...",
-    "timeProgress": "時間進度",
-    "countDown": "預備拍"
+    "demoRunning": "🎵 系統示範中..."
   },
   "results": {
     "title": "🎉 遊戲結果",

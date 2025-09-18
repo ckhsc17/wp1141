@@ -102,8 +102,6 @@ export interface IRhythmGameViewModel {
   updateUIState(state: Partial<UIState>): void;
   
   // Computed Properties
-  progress: number;
-  totalDuration: number;
   isGameActive: boolean;
 }
 

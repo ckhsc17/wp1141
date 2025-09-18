@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Typography,
-  LinearProgress,
   Chip,
   Stack,
   Slider,
@@ -61,8 +60,6 @@ const RhythmGame: React.FC = () => {
     uiState,
     notes,
     abcNotation,
-    progress,
-    totalDuration,
     isGameActive,
     generateNewRhythm,
     startGame,
@@ -94,10 +91,6 @@ const RhythmGame: React.FC = () => {
     }
   };
 
-  // 計算顯示用的時間信息
-  const displayTime = gameState.currentTime < 0 
-    ? `${t('stats.countDown')}: ${Math.ceil(-gameState.currentTime)}` 
-    : `${t('stats.timeProgress')}: ${gameState.currentTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`;
 
   // 根據語言設置字體樣式
   const fontStyle = {
@@ -178,15 +171,6 @@ const RhythmGame: React.FC = () => {
                   )}
                 </Stack>
 
-                {/* 進度條和時間顯示 */}
-                <LinearProgress 
-                  variant="determinate" 
-                  value={progress} 
-                  sx={{ height: 8, borderRadius: 4, mb: 1 }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={fontStyle}>
-                  {displayTime}
-                </Typography>
               </Box>
             </GlassCard>
         </Stack>
