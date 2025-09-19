@@ -329,15 +329,19 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         border: '1px solid rgba(255, 255, 255, 0.3)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
         
-        // 進入動畫
-        animation: 'scoreGlassFadeIn 1s ease-out 0.8s both',
+        // 進入動畫 - 減少動畫時間避免阻擋交互
+        animation: 'scoreGlassFadeIn 0.5s ease-out both',
         
-        // 懸停效果
-        transition: 'all 0.3s ease',
+        // 懸停效果 - 減少過渡時間
+        transition: 'background 0.2s ease, box-shadow 0.2s ease',
         '&:hover': {
           background: 'rgba(255, 255, 255, 0.3)',
           boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
         },
+        
+        // 確保點擊事件正常工作
+        pointerEvents: 'auto',
+        userSelect: 'none', // 防止文字選取干擾點擊
         
         // 響應式調整
         '@media (max-width: 768px)': {
@@ -399,6 +403,9 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           justifyContent: 'space-between',
           alignItems: { xs: 'stretch', sm: 'center' },
           gap: { xs: 1, sm: 2 }, // 手機版元素間距
+          // 確保功能列不阻擋交互
+          pointerEvents: 'auto',
+          userSelect: 'none',
           // 使用與 renderer 相同的背景色
           // background: 'transparent',
           // borderRadius: 1,
@@ -579,7 +586,10 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             </Typography>
             <Slider
               value={gameSettings.bpm}
-              onChange={(_, value) => updateGameSettings({ bpm: value as number })}
+              onChange={(e, value) => {
+                e.stopPropagation(); // 防止事件冒泡
+                updateGameSettings({ bpm: value as number });
+              }}
               min={60}
               max={180}
               step={10}
@@ -589,6 +599,8 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
                 width: { xs: 60, sm: 80 },
                 height: 4,
                 color: 'white',
+                // 確保滑桿可以正常交互
+                pointerEvents: 'auto',
                 '& .MuiSlider-thumb': {
                   width: { xs: 10, sm: 12 },
                   height: { xs: 10, sm: 12 },
@@ -630,7 +642,10 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             </Typography>
             <Slider
               value={gameSettings.measures}
-              onChange={(_, value) => updateGameSettings({ measures: value as number })}
+              onChange={(e, value) => {
+                e.stopPropagation(); // 防止事件冒泡
+                updateGameSettings({ measures: value as number });
+              }}
               min={1}
               max={8}
               step={1}
@@ -645,6 +660,8 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
                 width: { xs: 60, sm: 80 },
                 height: 4,
                 color: 'white',
+                // 確保滑桿可以正常交互
+                pointerEvents: 'auto',
                 '& .MuiSlider-thumb': {
                   width: 12,
                   height: 12,
@@ -691,7 +708,13 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             </Typography>
             <Select
               value={gameSettings.difficulty}
-              onChange={(e) => updateGameSettings({ difficulty: e.target.value as Difficulty })}
+              onChange={(e) => {
+                e.stopPropagation(); // 防止事件冒泡
+                updateGameSettings({ difficulty: e.target.value as Difficulty });
+              }}
+              onOpen={(e) => {
+                e?.stopPropagation(); // 防止打開時的事件冒泡
+              }}
               disabled={isGameActive}
               size="small"
               sx={{
@@ -699,10 +722,13 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
                 height: 24,
                 color: 'white',
                 fontSize: 10,
+                // 確保點擊事件正常工作
+                pointerEvents: 'auto',
                 '& .MuiSelect-select': {
                   padding: '2px 8px',
                   color: 'white',
                   fontSize: 10,
+                  pointerEvents: 'auto', // 確保選擇框可點擊
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: 'rgba(255, 255, 255, 0.3)',
@@ -752,7 +778,10 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
 
         {/* 練習模式按鈕 */}
         <IconButton
-          onClick={() => onTogglePracticeMode && onTogglePracticeMode(!isPracticeMode)}
+          onClick={(e) => {
+            e.stopPropagation(); // 防止事件冒泡
+            onTogglePracticeMode && onTogglePracticeMode(!isPracticeMode);
+          }}
           disabled={isGameActive}
           sx={{
             background: isPracticeMode 
@@ -763,6 +792,9 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             color: isPracticeMode ? 'white' : '#9c27b0',
             width: 40,
             height: 40,
+            // 確保按鈕可以正常點擊
+            pointerEvents: 'auto',
+            userSelect: 'none',
             transition: 'all 0.2s ease',
             transform: isPracticeMode ? 'scale(0.95)' : 'scale(1)', // 按下去的視覺效果
             boxShadow: isPracticeMode 
@@ -789,7 +821,10 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
 
         {/* 生成新節奏按鈕 */}
         <IconButton
-          onClick={onGenerateNewRhythm}
+          onClick={(e) => {
+            e.stopPropagation(); // 防止事件冒泡
+            onGenerateNewRhythm && onGenerateNewRhythm();
+          }}
           disabled={isGameActive}
           sx={{
             background: 'rgba(255, 255, 255, 0.8)',
@@ -798,6 +833,9 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             color: '#1976d2',
             width: 40,
             height: 40,
+            // 確保按鈕可以正常點擊
+            pointerEvents: 'auto',
+            userSelect: 'none',
             transition: 'all 0.2s ease',
             '&:hover': {
               background: 'rgba(255, 255, 255, 0.9)',
@@ -815,7 +853,10 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
 
         {/* 開始/暫停按鈕 */}
         <IconButton
-          onClick={isPlaying ? onPauseGame : onStartGame}
+          onClick={(e) => {
+            e.stopPropagation(); // 防止事件冒泡
+            isPlaying ? onPauseGame && onPauseGame() : onStartGame && onStartGame();
+          }}
           disabled={!abcNotation}
           sx={{
             background: isPlaying 
@@ -826,6 +867,9 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             color: 'white',
             width: 40,
             height: 40,
+            // 確保按鈕可以正常點擊
+            pointerEvents: 'auto',
+            userSelect: 'none',
             transition: 'all 0.2s ease',
             '&:hover': {
               background: isPlaying 

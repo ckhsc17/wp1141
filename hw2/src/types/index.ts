@@ -92,6 +92,7 @@ export interface IRhythmGameViewModel {
   
   // Actions
   generateNewRhythm(): void;
+  generateNewRhythmImmediate(): void; // 立即生成節奏，使用最新的 React 狀態
   startGame(): Promise<void>;
   pauseGame(): void;
   handleKeyPress(event: KeyboardEvent): void;

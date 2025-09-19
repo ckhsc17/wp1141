@@ -117,7 +117,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   }
 
   generateNewRhythm = (): void => {
-    // 使用當前的 React 狀態，而不是內部狀態
+    // 使用 ViewModel 的內部狀態（原有邏輯）
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const { abc, noteList } = generateRandomRhythm(this._gameSettings.measures, this._gameSettings.bpm, this._gameSettings.difficulty, isMobile);
     
@@ -142,6 +142,49 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       showResults: false, 
       metronomeActive: false 
     }));
+  };
+
+  // 使用最新 React 狀態立即生成新節奏
+  generateNewRhythmImmediate = (): void => {
+    console.log('🚀 generateNewRhythmImmediate 被調用'); // 調試日誌
+    // 使用 functional update 來獲取最新狀態
+    this.setGameSettings(currentGameSettings => {
+      console.log('📊 當前遊戲設置:', currentGameSettings); // 調試日誌
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      const { abc, noteList } = generateRandomRhythm(
+        currentGameSettings.measures, 
+        currentGameSettings.bpm, 
+        currentGameSettings.difficulty, 
+        isMobile
+      );
+      
+      console.log('🎼 新生成的 ABC:', abc.substring(0, 100) + '...'); // 調試日誌（截斷顯示）
+      
+      // 立即更新狀態
+      this.setAbcNotation(abc);
+      this.setNotes(noteList);
+      this.setGameState(prev => ({
+        ...prev,
+        totalNotes: noteList.length,
+        score: 0,
+        hitNotes: 0,
+        missedNotes: 0,
+        wrongNotes: 0,
+        currentTime: 0,
+        gameStarted: false,
+        gameEnded: false,
+        isPlaying: false,
+        isFirstRound: prev.isPracticeMode,
+      }));
+      
+      this.setUIState(prev => ({ 
+        ...prev, 
+        showResults: false, 
+        metronomeActive: false 
+      }));
+      
+      return currentGameSettings; // 返回不變的狀態
+    });
   };
 
   startGame = async (): Promise<void> => {
@@ -220,6 +263,7 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   };
 
   updateGameState = (state: Partial<GameState>): void => {
+    console.log('🔄 updateGameState 被調用:', state); // 調試日誌
     this.setGameState(prev => ({ ...prev, ...state }));
   };
 
@@ -559,12 +603,12 @@ export const useRhythmGameViewModel = (): IRhythmGameViewModel => {
     }
   }, [gameState, gameSettings, audioSettings, uiState, notes, abcNotation]);
   
-  // Initialize rhythm on mount and when settings change
+  // Initialize rhythm on mount and when difficulty changes
   useEffect(() => {
     if (viewModelRef.current) {
       viewModelRef.current.generateNewRhythm();
     }
-  }, [gameSettings.measures, gameSettings.bpm]);
+  }, [gameSettings.difficulty]); // 只在難度改變時重新生成，而不是 BPM 或小節數
   
   // Keyboard event listener
   useEffect(() => {

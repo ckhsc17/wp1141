@@ -54,6 +54,21 @@ const RhythmGame: React.FC = () => {
     handleTouchInput,
   } = viewModel;
 
+  // 立即處理生成新節奏（使用最新的 React 狀態）
+  const handleGenerateNewRhythm = () => {
+    console.log('🎵 生成新節奏被點擊'); // 調試日誌
+    viewModel.generateNewRhythmImmediate(); // 使用新的立即執行方法
+  };
+
+  // 立即處理練習模式切換
+  const handleTogglePracticeMode = (enabled: boolean) => {
+    console.log('🎧 練習模式切換被點擊:', enabled); // 調試日誌
+    updateGameState({ 
+      isPracticeMode: enabled,
+      isFirstRound: enabled // 切換到練習模式時重置為第一輪
+    });
+  };
+
   // 異步處理開始遊戲
   const handleStartGame = async () => {
     try {
@@ -162,13 +177,10 @@ const RhythmGame: React.FC = () => {
                 missedNotes: gameState.missedNotes,
                 wrongNotes: gameState.wrongNotes,
               }}
-              onGenerateNewRhythm={generateNewRhythm}
+              onGenerateNewRhythm={handleGenerateNewRhythm}
               onStartGame={handleStartGame}
               onPauseGame={pauseGame}
-              onTogglePracticeMode={(enabled) => updateGameState({ 
-                isPracticeMode: enabled,
-                isFirstRound: enabled // 切換到練習模式時重置為第一輪
-              })}
+              onTogglePracticeMode={handleTogglePracticeMode}
               isPlaying={gameState.isPlaying}
               isGameActive={isGameActive}
               isPracticeMode={gameState.isPracticeMode}
@@ -323,7 +335,7 @@ const RhythmGame: React.FC = () => {
                       variant="contained" 
                       onClick={() => {
                         updateUIState({ showResults: false });
-                        generateNewRhythm();
+                        handleGenerateNewRhythm(); // 使用包裝的處理方法
                       }}
                       sx={fontStyle}
                     >
