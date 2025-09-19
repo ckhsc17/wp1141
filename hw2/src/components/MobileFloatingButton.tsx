@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import { Fab, Box, Typography } from '@mui/material';
+import { Fab, Box } from '@mui/material';
 import { MusicNote, TouchApp } from '@mui/icons-material';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -38,15 +38,10 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
   isPracticeDemo,
   sx = {},
 }) => {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const rippleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-
-  // 根據語言設置字體樣式
-  const fontStyle = {
-    fontFamily: locale === 'en' ? '"Times New Roman", serif' : 'inherit',
-  };
 
   // 檢查是否為手機模式
   useEffect(() => {
@@ -128,17 +123,7 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
   const buttonOpacity = isDisabled ? 0.5 : 1;
   
   // 簡化顯示邏輯：使用父組件傳入的 visible 或內部的 isMobile 檢測
-  const shouldShow = visible && (isMobile || window.innerWidth <= 768);
-  
-  // 調試日誌
-  console.log('🔍 MobileFloatingButton Debug:', {
-    visible,
-    isMobile,
-    windowWidth: window.innerWidth,
-    shouldShow,
-    isGameActive,
-    isPracticeDemo
-  });
+  const shouldShow = visible && isMobile;
   
   if (!shouldShow) {
     return null;

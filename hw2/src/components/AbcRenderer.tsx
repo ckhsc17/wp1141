@@ -58,7 +58,6 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
   isPlaying = false,
   isGameActive = false,
   isPracticeMode = true,
-  isFirstRound = false,
   gameSettings,
   updateGameSettings
 }) => {
@@ -227,10 +226,6 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           closestNoteIndex = index;
         }
       });
-
-      // 建立音符到 DOM 元素的映射（過濾掉休止符）
-      const nonRestNotes = notes.filter(note => !note.isRest);
-      const allVisualElements = [...allNotes, ...allRests];
 
       // 根據遊戲狀態更新音符顏色和結果
       notes.forEach((note, index) => {
