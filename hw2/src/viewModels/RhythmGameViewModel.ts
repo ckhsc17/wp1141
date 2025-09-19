@@ -61,8 +61,8 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     this.setNotes = setNotes;
     this.setAbcNotation = setAbcNotation;
     
-    // 初始化時自動生成節奏
-    this.generateNewRhythm();
+    // 移除構造函數中的初始化，讓 useEffect 處理
+    // this.generateNewRhythm();
   }
 
   // ==================== Public Getters ====================
@@ -117,9 +117,13 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   }
 
   generateNewRhythm = (): void => {
+    console.log('🎼 generateNewRhythm 被調用，當前設置:', this._gameSettings); // 調試日誌
+    
     // 使用 ViewModel 的內部狀態（原有邏輯）
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const { abc, noteList } = generateRandomRhythm(this._gameSettings.measures, this._gameSettings.bpm, this._gameSettings.difficulty, isMobile);
+    
+    console.log('🎵 生成的 ABC 長度:', abc.length, '音符數量:', noteList.length); // 調試日誌
     
     this.setAbcNotation(abc);
     this.setNotes(noteList);
@@ -604,11 +608,22 @@ export const useRhythmGameViewModel = (): IRhythmGameViewModel => {
   }, [gameState, gameSettings, audioSettings, uiState, notes, abcNotation]);
   
   // Initialize rhythm on mount and when difficulty changes
+  const [isInitialized, setIsInitialized] = useState(false);
+  
   useEffect(() => {
-    if (viewModelRef.current) {
+    if (viewModelRef.current && gameSettings && !isInitialized) {
+      console.log('🚀 首次初始化生成節奏，設置:', gameSettings); // 調試日誌
+      viewModelRef.current.generateNewRhythm();
+      setIsInitialized(true);
+    }
+  }, [gameSettings, isInitialized]); // 首次載入時執行
+  
+  useEffect(() => {
+    if (viewModelRef.current && isInitialized) {
+      console.log('🔄 難度改變，重新生成節奏:', gameSettings?.difficulty); // 調試日誌
       viewModelRef.current.generateNewRhythm();
     }
-  }, [gameSettings.difficulty]); // 只在難度改變時重新生成，而不是 BPM 或小節數
+  }, [gameSettings?.difficulty, isInitialized]); // 只在難度改變時重新生成
   
   // Keyboard event listener
   useEffect(() => {
