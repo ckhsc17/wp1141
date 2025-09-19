@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { Fab, Box, Typography } from '@mui/material';
 import { MusicNote, TouchApp } from '@mui/icons-material';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -41,11 +41,26 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
   const { t, locale } = useTranslation();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const rippleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // 根據語言設置字體樣式
   const fontStyle = {
     fontFamily: locale === 'en' ? '"Times New Roman", serif' : 'inherit',
   };
+
+  // 檢查是否為手機模式
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768); // 設定手機模式的閾值
+    };
+
+    checkMobile(); // 初始化檢查
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   // 添加視覺反饋效果
   const addVisualFeedback = useCallback(() => {
@@ -120,21 +135,20 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
   const isDisabled = !isGameActive || isPracticeDemo;
   const buttonOpacity = isDisabled ? 0.5 : 1;
   
-  if (!visible) {
+  if (!visible || !isMobile) {
     return null;
   }
 
   return (
     <Box
       sx={{
-        position: 'fixed',
-        bottom: { xs: 80, sm: 100 }, // 響應式底部距離
-        right: { xs: 20, sm: 30 },   // 響應式右側距離
-        zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: 1,
+        padding: { xs: 2, sm: 3 }, // 添加內邊距
+        marginTop: 'auto', // 推到底部
+        marginLeft: 'auto', // 推到右側
       }}
     >
       {/* 提示文字 */}

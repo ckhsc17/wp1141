@@ -372,11 +372,11 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         userSelect: 'none', // 防止文字選取干擾點擊
         
         // 響應式調整
-        '@media (max-width: 768px)': {
-          backdropFilter: 'blur(5px)',
-          WebkitBackdropFilter: 'blur(5px)',
-          background: 'rgba(255, 255, 255, 0.35)',
-        },
+        // '@media (max-width: 768px)': {
+        //   backdropFilter: 'blur(5px)',
+        //   WebkitBackdropFilter: 'blur(5px)',
+        //   background: 'rgba(255, 255, 255, 0.35)',
+        // },
         
         // 動畫關鍵幀
         '@keyframes scoreGlassFadeIn': {

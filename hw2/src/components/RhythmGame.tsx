@@ -348,13 +348,25 @@ const RhythmGame: React.FC = () => {
           </Box>
         )}
 
-        {/* 手機版浮動按鈕 */}
-        <MobileFloatingButton
-          visible={isMobileDevice || isTouchDevice}
-          onTap={handleAsyncTouchInput}
-          isGameActive={isGameActive}
-          isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
-        />
+        {/* 手機版浮動按鈕容器 */}
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            right: 0,
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'flex-end',
+          }}
+        >
+          <MobileFloatingButton
+            visible={isMobileDevice || isTouchDevice}
+            onTap={handleAsyncTouchInput}
+            isGameActive={isGameActive}
+            isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
+          />
+        </Box>
       </Box>
     </>
   );
