@@ -293,11 +293,15 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     const bufferTime = 2 * beatDuration; // 2拍緩衝時間
     const totalDemoTime = countInDuration + lastNoteTime + bufferTime;
 
-    // 播放每個音符
+    // 播放每個音符（跳過休止符）
     this._notes.forEach((note) => {
       const timeoutId = setTimeout(() => {
-        const noteFrequency = NOTE_FREQUENCIES['C'];
-        this.audioUtils.current.createNoteSound(noteFrequency, 0.3);
+        // 只有非休止符才播放聲音
+        if (!note.isRest) {
+          const noteFrequency = NOTE_FREQUENCIES['C'];
+          this.audioUtils.current.createNoteSound(noteFrequency, 0.3);
+        }
+        // 休止符不播放聲音，但仍然會等待其時間
       }, (countInDuration + note.time) * 1000); // 加上預備拍時間
       
       // 儲存 timeout ID 以便後續清理
@@ -387,13 +391,19 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     this.setGameState(prev => {
       const newState = { ...prev, currentTime: currentGameTime };
       
-      // 檢查錯過的音符
+      // 檢查錯過的音符和自動通過的休止符
       let latestNotes = this._notes;
       
       this.setNotes(currentNotes => {
         const updatedNotes = currentNotes.map(note => {
           if (!note.hit && !note.missed && currentGameTime > note.time + this._gameSettings.tolerance) {
-            return { ...note, missed: true };
+            if (note.isRest) {
+              // 休止符：如果沒有被點擊（錯誤標記），則自動標記為正確
+              return note.wrong ? note : { ...note, hit: true };
+            } else {
+              // 普通音符：標記為錯過
+              return { ...note, missed: true };
+            }
           }
           return note;
         });
@@ -447,9 +457,32 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
         return timeDiff <= this._gameSettings.tolerance;
       });
       
-      if (validNotes.length > 0) {
-        // 有效敲擊
-        const closestNote = this.findClosestNote(validNotes, currentTime);
+      // 檢查是否點擊了休止符
+      const restNotesInRange = validNotes.filter(note => note.isRest);
+      
+      if (restNotesInRange.length > 0) {
+        // 錯誤敲擊 - 點擊了休止符
+        const closestRestNote = this.findClosestNote(restNotesInRange, currentTime);
+        this.audioUtils.current.createKeyPressSound(false);
+        
+        // 增加錯誤敲擊計數
+        this.setGameState(prev => ({
+          ...prev,
+          wrongNotes: prev.wrongNotes + 1
+        }));
+        
+        // 標記休止符為錯誤點擊
+        return currentNotes.map(note => 
+          note.id === closestRestNote.id ? { ...note, wrong: true } : note
+        );
+      }
+      
+      // 過濾出非休止符的有效音符
+      const validMusicNotes = validNotes.filter(note => !note.isRest);
+      
+      if (validMusicNotes.length > 0) {
+        // 有效敲擊 - 點擊了音符
+        const closestNote = this.findClosestNote(validMusicNotes, currentTime);
         this.audioUtils.current.createKeyPressSound(true);
         
         // 更新音符狀態
@@ -466,9 +499,10 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
           wrongNotes: prev.wrongNotes + 1
         }));
         
-        // 找到最接近當前時間的音符來顯示錯誤標記
-        if (availableNotes.length > 0) {
-          const closestNote = this.findClosestNote(availableNotes, currentTime);
+        // 找到最接近當前時間的非休止符音符來顯示錯誤標記
+        const availableMusicNotes = availableNotes.filter(note => !note.isRest);
+        if (availableMusicNotes.length > 0) {
+          const closestNote = this.findClosestNote(availableMusicNotes, currentTime);
           return currentNotes.map(note => 
             note.id === closestNote.id ? { ...note, wrong: true } : note
           );

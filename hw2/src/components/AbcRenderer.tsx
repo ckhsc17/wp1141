@@ -11,6 +11,7 @@ interface Note {
   hit?: boolean;
   missed?: boolean;
   wrong?: boolean;
+  isRest?: boolean; // 是否為休止符
 }
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard';
@@ -158,6 +159,15 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             stroke: rgba(128, 128, 128, 0.6) !important;
             stroke-width: 2px !important;
           }
+          .abcjs-rest {
+            fill: #000000 !important;
+            stroke: #000000 !important;
+          }
+          .abcjs-rest.current {
+            fill: rgba(128, 128, 128, 0.4) !important;
+            stroke: rgba(128, 128, 128, 0.6) !important;
+            stroke-width: 2px !important;
+          }
           .note-result {
             font-size: 16px;
             font-weight: bold;
@@ -191,10 +201,13 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
 
       // 檢查音符狀態（用於調試）
 
-      // 重置所有音符樣式
+      // 重置所有音符和休止符樣式
       const allNotes = svg.querySelectorAll('.abcjs-note');
-      allNotes.forEach((note: Element) => {
-        (note as SVGElement).classList.remove('hit', 'missed', 'current');
+      const allRests = svg.querySelectorAll('.abcjs-rest');
+      
+      // 清除所有視覺元素的樣式
+      [...allNotes, ...allRests].forEach((element: Element) => {
+        (element as SVGElement).classList.remove('hit', 'missed', 'current');
       });
 
       // 清除舊的結果標記
@@ -213,18 +226,33 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         }
       });
 
+      // 建立音符到 DOM 元素的映射（過濾掉休止符）
+      const nonRestNotes = notes.filter(note => !note.isRest);
+      const allVisualElements = [...allNotes, ...allRests];
+
       // 根據遊戲狀態更新音符顏色和結果
       notes.forEach((note, index) => {
-        const noteElement = allNotes[index] as SVGElement;
-        if (noteElement) {
-          // 只有最接近的音符顯示灰色
+        let visualElement: SVGElement | null = null;
+        
+        if (note.isRest) {
+          // 休止符：通過在休止符數組中的位置來找到對應的 DOM 元素
+          const restIndex = notes.slice(0, index).filter(n => n.isRest).length;
+          visualElement = allRests[restIndex] as SVGElement;
+        } else {
+          // 音符：通過在非休止符數組中的位置來找到對應的 DOM 元素
+          const noteIndex = notes.slice(0, index).filter(n => !n.isRest).length;
+          visualElement = allNotes[noteIndex] as SVGElement;
+        }
+        
+        if (visualElement) {
+          // 只有最接近的音符顯示灰色（包括休止符）
           if (index === closestNoteIndex) {
-            noteElement.classList.add('current');
+            visualElement.classList.add('current');
           }
           
           // 在音符下方顯示結果
           if (note.hit || note.missed || note.wrong) {
-            const bbox = (noteElement as SVGGraphicsElement).getBBox();
+            const bbox = (visualElement as SVGGraphicsElement).getBBox();
             const centerX = bbox.x + bbox.width / 2;
             const centerY = svg.getBBox().y + svg.getBBox().height + 30; // 統一高度
             

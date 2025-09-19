@@ -7,6 +7,7 @@ export interface Note {
   hit?: boolean;
   missed?: boolean;
   wrong?: boolean; // 錯誤敲擊標記
+  isRest?: boolean; // 是否為休止符
 }
 
 export interface GameState {
