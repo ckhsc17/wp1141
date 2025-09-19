@@ -10,11 +10,11 @@ import {
 import AbcRenderer from '@/components/AbcRenderer';
 import CustomMetronome from '@/components/CustomMetronome';
 import MobileFloatingButton from '@/components/MobileFloatingButton';
-import LanguageToggle from '@/components/LanguageToggle';
 import GlassCard from '@/components/GlassCard';
 import { useRhythmGameViewModel } from '@/viewModels/RhythmGameViewModel';
 import { useDeviceDetection } from '@/utils/deviceDetection';
 import { useTranslation } from '@/hooks/useTranslation';
+import { Global } from '@emotion/react';
 
 /**
  * 節奏遊戲主組件 - 純 UI 組件，遵循 MVVM 架構
@@ -111,249 +111,240 @@ const RhythmGame: React.FC = () => {
   };
 
   return (
-    <Box sx={{ 
-      ...fontStyle,
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative'
-    }}>
-      {/* 語言切換按鈕 */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <LanguageToggle />
-      </Box>
-
-      {/* 上方內容區域 */}
-      <Box sx={{ flex: '0 0 auto', mb: 3 }}>
-        <Stack spacing={3}>
-
-
-            {/* 隱藏的節拍器組件 */}
-            <Box sx={{ display: 'none' }}>
-              <CustomMetronome
-                bpm={gameSettings.bpm}
-                isRunning={uiState.metronomeActive}
-                soundEnabled={audioSettings.soundEnabled}
-                gameTime={gameState.currentTime}
-                countInBeats={gameState.isPracticeMode && gameState.isFirstRound ? 0 : 4}
-              />
-            </Box>
-
-        </Stack>
-      </Box>
-
-
-      {/* 譜面顯示區域 - 固定在距離底部10%的位置，增加高度 */}
+    <>
+      <Global
+        styles={{
+          body: {
+            margin: 0, // 移除預設的 margin
+            padding: 0, // 確保沒有額外的內邊距
+            boxSizing: 'border-box', // 設置全局 box-sizing
+            overflow: 'hidden', // 禁止滾動
+          },
+        }}
+      />
       <Box sx={{ 
-        position: 'absolute',
-        bottom: '10vh', // 距離底部10%視窗高度
-        top: '65vh', // 從頂部30%開始，增加整體高度
-        left: 0,
-        right: 0,
-        px: { xs: 2, sm: 3 }, // 左右邊距與主內容一致
-        zIndex: 10,
-        '@media (max-height: 600px)': {
-          bottom: '5vh', // 小屏幕時調整為5%
-          top: '25vh',
-        },
-        '@media (max-height: 400px)': {
-          bottom: '15vh', // 非常小的屏幕時調整為15%
-          top: '20vh',
-        }
+        ...fontStyle,
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative'
       }}>
-        {abcNotation && (
-          <AbcRenderer 
-            abcNotation={abcNotation} 
-            currentTime={gameState.currentTime}
-            notes={notes}
-            gameStats={{
-              score: gameState.score,
-              hitNotes: gameState.hitNotes,
-              missedNotes: gameState.missedNotes,
-              wrongNotes: gameState.wrongNotes,
-            }}
-            onGenerateNewRhythm={generateNewRhythm}
-            onStartGame={handleStartGame}
-            onPauseGame={pauseGame}
-            onTogglePracticeMode={(enabled) => updateGameState({ 
-              isPracticeMode: enabled,
-              isFirstRound: enabled // 切換到練習模式時重置為第一輪
-            })}
-            isPlaying={gameState.isPlaying}
-            isGameActive={isGameActive}
-            isPracticeMode={gameState.isPracticeMode}
-            // 新增控制桿相關 props
-            gameSettings={gameSettings}
-            updateGameSettings={updateGameSettings}
+
+        {/* 隱藏的節拍器組件 - 保留但隱藏，供業務邏輯使用 */}
+        <Box sx={{ display: 'none' }}>
+          <CustomMetronome
+            bpm={gameSettings.bpm}
+            isRunning={uiState.metronomeActive}
+            soundEnabled={audioSettings.soundEnabled}
+            gameTime={gameState.currentTime}
+            countInBeats={gameState.isPracticeMode && gameState.isFirstRound ? 0 : 4}
           />
-        )}
-      </Box>
+        </Box>
+
+        {/* 譜面顯示區域 - 改為彈性布局，自適應高度 */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '120vh',
+          }}
+        >
+          {abcNotation && (
+            <AbcRenderer 
+              abcNotation={abcNotation} 
+              currentTime={gameState.currentTime}
+              notes={notes}
+              gameStats={{
+                score: gameState.score,
+                hitNotes: gameState.hitNotes,
+                missedNotes: gameState.missedNotes,
+                wrongNotes: gameState.wrongNotes,
+              }}
+              onGenerateNewRhythm={generateNewRhythm}
+              onStartGame={handleStartGame}
+              onPauseGame={pauseGame}
+              onTogglePracticeMode={(enabled) => updateGameState({ 
+                isPracticeMode: enabled,
+                isFirstRound: enabled // 切換到練習模式時重置為第一輪
+              })}
+              isPlaying={gameState.isPlaying}
+              isGameActive={isGameActive}
+              isPracticeMode={gameState.isPracticeMode}
+              // 新增控制桿相關 props
+              gameSettings={gameSettings}
+              updateGameSettings={updateGameSettings}
+            />
+          )}
+        </Box>
 
 
-      {/* 結果覆蓋層 - 優化位置避免遮擋譜面 */}
-      {uiState.showResults && (
-        <Box sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: '15vh', // 避免遮擋底部的譜面區域
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1300, // 高於其他元素
-          p: 2,
-        }}>
-          <GlassCard 
-            glassLevel={5} // 提高不透明度
-            animated={true} 
-            animationDelay={0}
-            sx={{
-              maxWidth: 400,
-              width: '100%',
-              maxHeight: '70vh', // 調整最大高度
-              overflow: 'auto',
-              // 額外的不透明度增強
-              background: 'rgba(255, 255, 255, 0.7) !important',
-              backdropFilter: 'blur(15px) !important',
-            }}
-          >
-            <Box sx={{ p: 4 }}>
-              <Stack spacing={3} alignItems="center">
-                {/* 等級顯示 - 大大的動感等級 */}
-                {(() => {
-                  const { grade, color, bgGradient } = getScoreGrade(gameState.score);
-                  return (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 120,
-                        height: 120,
-                        borderRadius: '50%',
-                        background: bgGradient,
-                        boxShadow: `0 8px 32px ${color}40`,
-                        position: 'relative',
-                        animation: 'gradeAnimation 0.8s ease-out',
-                        '@keyframes gradeAnimation': {
-                          '0%': {
-                            transform: 'scale(0.5) rotate(-180deg)',
-                            opacity: 0,
-                          },
-                          '50%': {
-                            transform: 'scale(1.2) rotate(-90deg)',
-                            opacity: 0.8,
-                          },
-                          '100%': {
-                            transform: 'scale(1) rotate(0deg)',
-                            opacity: 1,
-                          },
-                        },
-                        '&::before': {
-                          content: '""',
-                          position: 'absolute',
-                          top: -4,
-                          left: -4,
-                          right: -4,
-                          bottom: -4,
+        {/* 結果覆蓋層 - 優化位置避免遮擋譜面 */}
+        {uiState.showResults && (
+          <Box sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '15vh', // 避免遮擋底部的譜面區域
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1300, // 高於其他元素
+            p: 2,
+          }}>
+            <GlassCard 
+              glassLevel={5} // 提高不透明度
+              animated={true} 
+              animationDelay={0}
+              sx={{
+                maxWidth: 400,
+                width: '100%',
+                maxHeight: '70vh', // 調整最大高度
+                overflow: 'auto',
+                // 額外的不透明度增強
+                background: 'rgba(255, 255, 255, 0.7) !important',
+                backdropFilter: 'blur(15px) !important',
+              }}
+            >
+              <Box sx={{ p: 4 }}>
+                <Stack spacing={3} alignItems="center">
+                  {/* 等級顯示 - 大大的動感等級 */}
+                  {(() => {
+                    const { grade, color, bgGradient } = getScoreGrade(gameState.score);
+                    return (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 120,
+                          height: 120,
                           borderRadius: '50%',
                           background: bgGradient,
-                          opacity: 0.3,
-                          animation: 'pulse 2s infinite',
-                        },
-                        '@keyframes pulse': {
-                          '0%, 100%': {
-                            transform: 'scale(1)',
+                          boxShadow: `0 8px 32px ${color}40`,
+                          position: 'relative',
+                          animation: 'gradeAnimation 0.8s ease-out',
+                          '@keyframes gradeAnimation': {
+                            '0%': {
+                              transform: 'scale(0.5) rotate(-180deg)',
+                              opacity: 0,
+                            },
+                            '50%': {
+                              transform: 'scale(1.2) rotate(-90deg)',
+                              opacity: 0.8,
+                            },
+                            '100%': {
+                              transform: 'scale(1) rotate(0deg)',
+                              opacity: 1,
+                            },
+                          },
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: -4,
+                            left: -4,
+                            right: -4,
+                            bottom: -4,
+                            borderRadius: '50%',
+                            background: bgGradient,
                             opacity: 0.3,
+                            animation: 'pulse 2s infinite',
                           },
-                          '50%': {
-                            transform: 'scale(1.1)',
-                            opacity: 0.1,
+                          '@keyframes pulse': {
+                            '0%, 100%': {
+                              transform: 'scale(1)',
+                              opacity: 0.3,
+                            },
+                            '50%': {
+                              transform: 'scale(1.1)',
+                              opacity: 0.1,
+                            },
                           },
-                        },
-                      }}
-                    >
-                      <Typography
-                        variant="h1"
-                        sx={{
-                          ...fontStyle,
-                          fontSize: '4rem',
-                          fontWeight: 'bold',
-                          color: 'white',
-                          textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-                          letterSpacing: '0.1em',
                         }}
                       >
-                        {grade}
+                        <Typography
+                          variant="h1"
+                          sx={{
+                            ...fontStyle,
+                            fontSize: '4rem',
+                            fontWeight: 'bold',
+                            color: 'white',
+                            textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+                            letterSpacing: '0.1em',
+                          }}
+                        >
+                          {grade}
+                        </Typography>
+                      </Box>
+                    );
+                  })()}
+                  
+                  {/* 統計數據 */}
+                  <Stack direction="row" spacing={2} flexWrap="wrap" justifyContent="center">
+                    <Box textAlign="center">
+                      <Typography variant="h6" color="success.main" sx={fontStyle}>
+                        {gameState.hitNotes}
                       </Typography>
+                      <Typography variant="body2" sx={fontStyle}>{t('results.hit')}</Typography>
                     </Box>
-                  );
-                })()}
-                
-                {/* 統計數據 */}
-                <Stack direction="row" spacing={2} flexWrap="wrap" justifyContent="center">
-                  <Box textAlign="center">
-                    <Typography variant="h6" color="success.main" sx={fontStyle}>
-                      {gameState.hitNotes}
-                    </Typography>
-                    <Typography variant="body2" sx={fontStyle}>{t('results.hit')}</Typography>
-                  </Box>
-                  <Box textAlign="center">
-                    <Typography variant="h6" color="error.main" sx={fontStyle}>
-                      {gameState.missedNotes}
-                    </Typography>
-                    <Typography variant="body2" sx={fontStyle}>{t('results.missed')}</Typography>
-                  </Box>
-                  <Box textAlign="center">
-                    <Typography variant="h6" color="warning.main" sx={fontStyle}>
-                      {gameState.wrongNotes}
-                    </Typography>
-                    <Typography variant="body2" sx={fontStyle}>{t('results.wrong')}</Typography>
-                  </Box>
+                    <Box textAlign="center">
+                      <Typography variant="h6" color="error.main" sx={fontStyle}>
+                        {gameState.missedNotes}
+                      </Typography>
+                      <Typography variant="body2" sx={fontStyle}>{t('results.missed')}</Typography>
+                    </Box>
+                    <Box textAlign="center">
+                      <Typography variant="h6" color="warning.main" sx={fontStyle}>
+                        {gameState.wrongNotes}
+                      </Typography>
+                      <Typography variant="body2" sx={fontStyle}>{t('results.wrong')}</Typography>
+                    </Box>
+                  </Stack>
+                  
+                  {/* 得分顯示 - 替換原本的評價文字 */}
+                  <Typography variant="h5" align="center" sx={{ ...fontStyle, fontWeight: 'bold', color: 'primary.main' }}>
+                    {t('stats.score')}: {gameState.score}
+                  </Typography>
+                  
+                  {/* 按鈕區域 */}
+                  <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                    <Button 
+                      variant="outlined"
+                      onClick={() => {
+                        updateUIState({ showResults: false });
+                      }} 
+                      sx={fontStyle}
+                    >
+                      {t('results.close')}
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      onClick={() => {
+                        updateUIState({ showResults: false });
+                        generateNewRhythm();
+                      }}
+                      sx={fontStyle}
+                    >
+                      {t('results.playAgain')}
+                    </Button>
+                  </Stack>
                 </Stack>
-                
-                {/* 得分顯示 - 替換原本的評價文字 */}
-                <Typography variant="h5" align="center" sx={{ ...fontStyle, fontWeight: 'bold', color: 'primary.main' }}>
-                  {t('stats.score')}: {gameState.score}
-                </Typography>
-                
-                {/* 按鈕區域 */}
-                <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                  <Button 
-                    variant="outlined"
-                    onClick={() => {
-                      updateUIState({ showResults: false });
-                    }} 
-                    sx={fontStyle}
-                  >
-                    {t('results.close')}
-                  </Button>
-                  <Button 
-                    variant="contained" 
-                    onClick={() => {
-                      updateUIState({ showResults: false });
-                      generateNewRhythm();
-                    }}
-                    sx={fontStyle}
-                  >
-                    {t('results.playAgain')}
-                  </Button>
-                </Stack>
-              </Stack>
-            </Box>
-          </GlassCard>
-        </Box>
-      )}
+              </Box>
+            </GlassCard>
+          </Box>
+        )}
 
-      {/* 手機版浮動按鈕 */}
-      <MobileFloatingButton
-        visible={isMobileDevice || isTouchDevice}
-        onTap={handleAsyncTouchInput}
-        isGameActive={isGameActive}
-        isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
-      />
-    </Box>
+        {/* 手機版浮動按鈕 */}
+        <MobileFloatingButton
+          visible={isMobileDevice || isTouchDevice}
+          onTap={handleAsyncTouchInput}
+          isGameActive={isGameActive}
+          isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
+        />
+      </Box>
+    </>
   );
 };
 

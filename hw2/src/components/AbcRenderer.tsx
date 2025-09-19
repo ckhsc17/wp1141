@@ -315,9 +315,12 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
       sx={{
         position: 'relative',
         width: '100%',
-        minHeight: 250,
+        minHeight: 'auto', // 讓高度完全自適應
+        maxHeight: '90vh', // 限制最大高度，避免超出視窗
         borderRadius: 2,
-        overflow: 'auto',
+        overflow: 'auto', // 改回 auto，允許滾動
+        display: 'flex',
+        flexDirection: 'column',
         
         // 玻璃態效果
         background: 'rgba(255, 255, 255, 0.25)',
@@ -386,20 +389,22 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         },
       }}
     >
-      {/* 統計信息和控制按鈕 - 自適應布局 */}
+      {/* 功能列 - 改為正常流式布局，不使用絕對定位 */}
       <Box
         sx={{
-          position: 'absolute',
-          top: 8,
-          left: 8,
-          right: 8,
-          zIndex: 10,
+          position: 'relative', // 改為相對定位
+          p: { xs: 1, sm: 2 }, // 添加適當的內邊距
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' }, // 手機版垂直排列，桌面版水平排列
           justifyContent: 'space-between',
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: { xs: 1, sm: 0 }, // 手機版元素間距
-          minHeight: { xs: 'auto', sm: 40 }, // 確保桌面版有足夠高度
+          gap: { xs: 1, sm: 2 }, // 手機版元素間距
+          // 使用與 renderer 相同的背景色
+          // background: 'transparent',
+          // borderRadius: 1,
+          // backdropFilter: 'blur(10px)',
+          // WebkitBackdropFilter: 'blur(10px)',
+          // border: '1px solid rgba(255, 255, 255, 0.3)',
         }}
       >
         {/* 統計信息 - 自適應 */}
@@ -479,7 +484,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             <Chip
               icon={<Cancel sx={{ 
                 fontSize: { xs: '20px !important', sm: '32px !important' }, 
-                color: '#FF9800 !important', 
+                color: '#F44336 !important', // 改為紅色
                 opacity: 0.8 
               }} />}
               label={gameStats.missedNotes}
@@ -498,8 +503,8 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
                 },
                 '& .MuiChip-icon': { 
                   ml: 1, 
-                  color: '#FF9800 !important',
-                  '& svg': { color: '#FF9800 !important', opacity: 0.8 }
+                  color: '#F44336 !important', // 改為紅色
+                  '& svg': { color: '#F44336 !important', opacity: 0.8 }
                 },
                 border: 'none',
                 boxShadow: 'none',
@@ -510,7 +515,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             <Chip
               icon={<Error sx={{ 
                 fontSize: { xs: '20px !important', sm: '32px !important' }, 
-                color: '#F44336 !important', 
+                color: '#FF9800 !important', // 保持橘色
                 opacity: 0.8 
               }} />}
               label={gameStats.wrongNotes}
@@ -529,8 +534,8 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
                 },
                 '& .MuiChip-icon': { 
                   ml: 1, 
-                  color: '#F44336 !important',
-                  '& svg': { color: '#F44336 !important', opacity: 0.8 }
+                  color: '#FF9800 !important', // 保持橘色
+                  '& svg': { color: '#FF9800 !important', opacity: 0.8 }
                 },
                 border: 'none',
                 boxShadow: 'none',
@@ -842,38 +847,32 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         </Stack>
       </Box>
 
-      {/* ABC 記譜容器 - 自適應高度 */}
+      {/* ABC 記譜容器 - 完全自適應高度 */}
       <Box
         ref={containerRef}
         sx={{
-          p: { xs: 2, sm: 3 },
-          pt: { xs: 14, sm: 10 }, // 為功能列留出更多空間，手機版需要更多
-          minHeight: { xs: 180, sm: 200 }, // 響應式最小高度
+          p: { xs: 2, sm: 3 }, // 移除多餘的 padding-top
+          minHeight: 'auto', // 移除固定的最小高度
           position: 'relative',
-          overflow: 'visible', // 允許內容溢出，避免被截斷
-          // 允許容器根據內容向上伸展
-          height: 'auto',
-          maxHeight: 'none', // 桌面版不限制高度
-          '@media (max-width: 768px)': {
-            maxHeight: '50vh', // 手機版適度限制高度
-            overflowY: 'auto', // 允許垂直滾動
-            scrollBehavior: 'smooth', // 平滑滾動
-            WebkitOverflowScrolling: 'touch', // iOS 滾動優化
-          },
-          // 確保五線譜有足夠的顯示空間
+          overflow: 'auto', // 允許滾動，避免內容超出
+          height: 'auto', // 讓高度完全根據內容決定
+          flex: 1, // 讓譜面容器佔用剩餘空間
+          maxHeight: 'calc(90vh - 120px)', // 限制最大高度，預留工具列空間
+          
+          // 確保五線譜內容適應容器
           '& svg': {
             maxWidth: '100%',
+            maxHeight: '100%', // 限制最大高度
             height: 'auto',
-            // 防止五線譜過小
-            minHeight: '120px',
+            width: '100%',
+            // 優化 SVG 顯示
+            objectFit: 'contain',
           },
-          // 優化五線譜在小屏幕上的顯示
+          
+          // 優化五線譜在不同屏幕上的顯示
           '& .abcjs-staff': {
-            minHeight: '40px',
+            strokeWidth: '1px', // 減少線條粗細以節省空間
           },
-          '& .abcjs-top-space': {
-            minHeight: '20px',
-          }
         }}
       />
     </Box>
