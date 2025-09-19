@@ -20,7 +20,6 @@ interface RhythmElement {
   name: string;
   hasRests?: boolean;
   hasTriplets?: boolean;
-  hasQuintuplets?: boolean;
 }
 
 // 基本節奏元素（確保每個元素都是完整的拍數組合）
@@ -58,11 +57,8 @@ const RHYTHM_ELEMENTS: Record<Difficulty, RhythmElement[]> = {
     // 附點 + 十六分休止符 + 十六分音符
     { durations: [1.5, 0.25, 0.25, 0.5, 0.5, 1], name: 'dotted_rest_sixteenth', hasRests: true },
     
-    // 三連音 (ABC 支援：(3CDE 表示三連音) - 精確時間計算
-    { durations: [4/3, 4/3, 4/3], name: 'triplets_dotted', hasRests: true, hasTriplets: true },
-    
-    // 五連音 (ABC 支援：(5CDEFG) - 精確時間計算
-    { durations: [0.8, 0.8, 0.8, 0.8, 0.8], name: 'quintuplets_dotted', hasRests: true, hasQuintuplets: true },
+    // 四分音符三連音組合 (在2拍時間內演奏3個音符) + 補滿4拍
+    { durations: [2/3, 2/3, 2/3, 2], name: 'triplets_quarter', hasRests: true, hasTriplets: true },
     
     // 複雜附點節奏 + 十六分音符
     { durations: [0.75, 0.25, 1, 0.25, 0.25, 0.25, 0.25, 1], name: 'complex_dotted_sixteenth', hasRests: true },
@@ -70,8 +66,8 @@ const RHYTHM_ELEMENTS: Record<Difficulty, RhythmElement[]> = {
     // 附點二分音符 + 十六分音符組合
     { durations: [3, 0.25, 0.25, 0.25, 0.25], name: 'dotted_half_sixteenth', hasRests: true },
     
-    // 連音與附點混合
-    { durations: [4/3, 4/3, 4/3], name: 'triplets_dotted_eighth', hasRests: true, hasTriplets: true },
+    // 八分音符三連音與附點混合 (在1拍時間內演奏3個音符) + 補滿4拍
+    { durations: [1/3, 1/3, 1/3, 3], name: 'triplets_eighth', hasRests: true, hasTriplets: true },
   ]
 };
 
@@ -89,9 +85,9 @@ const NOTE_TO_ABC: { [key: string]: string } = {
 // 時長到 ABC 記譜法的映射
 const DURATION_TO_ABC: { [key: number]: string } = {
   0.25: '/4',        // 十六分音符
-  0.8: '/5',         // 五連音 (4/5拍)
+  0.333333: '/3',    // 八分音符三連音 (1/3拍)
   0.5: '/2',         // 八分音符
-  1.333333: '/3',    // 三連音 (4/3拍)
+  0.666667: '2/3',   // 四分音符三連音 (2/3拍)
   0.75: '3/4',       // 附點八分音符
   1: '',             // 四分音符 (默認)
   1.5: '3/2',        // 附點四分音符
@@ -118,7 +114,6 @@ export function generateRandomRhythm(
     durations: number[];
     hasRests: boolean;
     hasTriplets: boolean;
-    hasQuintuplets: boolean;
   }> = [];
   
   for (let measure = 0; measure < numMeasures; measure++) {
@@ -142,7 +137,6 @@ export function generateRandomRhythm(
       durations: measureDurations,
       hasRests: element.hasRests || false,
       hasTriplets: element.hasTriplets || false,
-      hasQuintuplets: element.hasQuintuplets || false,
     });
   }
   
@@ -166,8 +160,8 @@ export function generateRandomRhythm(
       const duration = measure.durations[i];
       
       // 處理連音
-      if (measure.hasTriplets && Math.abs(duration - 1.333333) < 0.01) {
-        // 三連音組合 - 每個三連音的實際時長是 4/3 拍
+      if (measure.hasTriplets && (Math.abs(duration - 0.666667) < 0.01 || Math.abs(duration - 0.333333) < 0.01)) {
+        // 三連音組合
         const tripletNotes = [
           availableNotes[Math.floor(Math.random() * availableNotes.length)],
           availableNotes[Math.floor(Math.random() * availableNotes.length)],
@@ -175,21 +169,19 @@ export function generateRandomRhythm(
         ];
         measureNotes.push(`(3${tripletNotes[0]}${tripletNotes[1]}${tripletNotes[2]}`);
         allNotes.push(...tripletNotes);
-        // 三連音：每個音符實際時長是 (4/3)/3 = 4/9 拍
-        const tripletNoteDuration = 4/9;
+        
+        // 根據實際時長決定每個三連音的持續時間
+        let tripletNoteDuration: number;
+        if (Math.abs(duration - 0.666667) < 0.01) {
+          // 四分音符三連音：每個音符實際時長是 (2/3)/3 = 2/9 拍
+          tripletNoteDuration = 2/3;
+        } else {
+          // 八分音符三連音：每個音符實際時長是 (1/3)/3 = 1/9 拍
+          tripletNoteDuration = 1/3;
+        }
+        
         allDurations.push(tripletNoteDuration, tripletNoteDuration, tripletNoteDuration);
         i += 2; // 跳過接下來的兩個三連音（因為已經處理了三個）
-      } else if (measure.hasQuintuplets && Math.abs(duration - 0.8) < 0.01) {
-        // 五連音組合 - 每個五連音的實際時長是 4/5 拍
-        const quintupletNotes = Array.from({length: 5}, () => 
-          availableNotes[Math.floor(Math.random() * availableNotes.length)]
-        );
-        measureNotes.push(`(5${quintupletNotes.join('')}`);
-        allNotes.push(...quintupletNotes);
-        // 五連音：每個音符實際時長是 (4/5)/5 = 4/25 拍
-        const quintupletNoteDuration = 4/25;
-        allDurations.push(quintupletNoteDuration, quintupletNoteDuration, quintupletNoteDuration, quintupletNoteDuration, quintupletNoteDuration);
-        i += 4; // 跳過接下來的四個五連音（因為已經處理了五個）
       } else {
         // 普通音符或休止符
         let note: string;
