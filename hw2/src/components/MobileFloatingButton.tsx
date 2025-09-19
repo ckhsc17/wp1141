@@ -127,23 +127,37 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
   const isDisabled = !isGameActive || isPracticeDemo;
   const buttonOpacity = isDisabled ? 0.5 : 1;
   
-  if (!visible || !isMobile) {
+  // 簡化顯示邏輯：使用父組件傳入的 visible 或內部的 isMobile 檢測
+  const shouldShow = visible && (isMobile || window.innerWidth <= 768);
+  
+  // 調試日誌
+  console.log('🔍 MobileFloatingButton Debug:', {
+    visible,
+    isMobile,
+    windowWidth: window.innerWidth,
+    shouldShow,
+    isGameActive,
+    isPracticeDemo
+  });
+  
+  if (!shouldShow) {
     return null;
   }
 
   return (
     <Box
       sx={{
+        position: 'fixed',
+        bottom: '10%',
+        right: '10%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: 1,
-        padding: { xs: 2, sm: 3 }, // 添加內邊距
-        marginTop: 'auto', // 推到底部
-        marginLeft: 'auto', // 推到右側
+        zIndex: 1000, 
       }}
     >
-      {/* 提示文字 */}
+      {/* 提示文字
       <Typography
         variant="caption"
         sx={{
@@ -160,7 +174,7 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
         }}
       >
         {isPracticeDemo ? t('mobile.demo') : t('mobile.tapBeat')}
-      </Typography>
+      </Typography> */}
 
       {/* 浮動按鈕 */}
       <Fab

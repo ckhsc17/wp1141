@@ -158,7 +158,7 @@ const RhythmGame: React.FC = () => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: '120vh',
+            height: '100vh',
           }}
         >
           {abcNotation && (
@@ -344,25 +344,14 @@ const RhythmGame: React.FC = () => {
           </Box>
         )}
 
-        {/* 手機版浮動按鈕容器 */}
-        <Box
-          sx={{
-            position: 'fixed',
-            bottom: 0,
-            right: 0,
-            zIndex: 1000,
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'flex-end',
-          }}
-        >
-          <MobileFloatingButton
-            visible={isMobileDevice || isTouchDevice}
-            onTap={handleMobileTouchInput}
-            isGameActive={isGameActive}
-            isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
-          />
-        </Box>
+        {/* 移動端浮動按鈕 */}
+        <MobileFloatingButton
+          visible={isMobileDevice || isTouchDevice}
+          onTap={handleMobileTouchInput}
+          isGameActive={isGameActive}
+          isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
+        />
+        
       </Box>
     </>
   );
