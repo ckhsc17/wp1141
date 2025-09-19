@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Button,
@@ -37,27 +37,33 @@ const RhythmGame: React.FC = () => {
   const { isMobileDevice, isTouchDevice } = useDeviceDetection();
 
   // 解構 ViewModel 的狀態和方法
-  const {
-    gameState,
-    gameSettings,
-    audioSettings,
-    uiState,
-    notes,
+  const { 
+    gameState, 
+    uiState, 
+    gameSettings, 
+    audioSettings, 
+    notes, 
     abcNotation,
     isGameActive,
-    generateNewRhythm,
-    startGame,
-    pauseGame,
-    updateGameSettings,
-    updateGameState,
-    updateUIState,
+    startGame, 
+    pauseGame, 
     handleTouchInput,
+    updateGameState,
+    updateGameSettings,
+    updateUIState
   } = viewModel;
+
+  // 調試：監控 showResults 狀態變化
+  useEffect(() => {
+    console.log('📊 uiState.showResults changed:', uiState.showResults);
+  }, [uiState.showResults]);
 
   // 立即處理生成新節奏（使用最新的 React 狀態）
   const handleGenerateNewRhythm = () => {
     console.log('🎵 生成新節奏被點擊'); // 調試日誌
+    console.log('🎵 當前 abcNotation 長度:', abcNotation?.length || 0); // 調試日誌
     viewModel.generateNewRhythmImmediate(); // 使用新的立即執行方法
+    console.log('🎵 generateNewRhythmImmediate 調用完成'); // 調試日誌
   };
 
   // 立即處理練習模式切換
