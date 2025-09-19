@@ -204,12 +204,17 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     // 設置開始時間，讓預備拍有時間播放
     this.startTimeRef.current = Date.now() + (countInDuration * 1000);
     
-    this.setGameState(prev => ({ 
-      ...prev, 
-      isPlaying: true, 
-      gameStarted: true,
-      currentTime: -countInDuration // 從負數開始，0時對應第一個音符
-    }));
+    this.setGameState(prev => {
+      const newState = { 
+        ...prev, 
+        isPlaying: true, 
+        gameStarted: true,
+        currentTime: -countInDuration // 從負數開始，0時對應第一個音符
+      };
+      // 同步更新 ViewModel 內部狀態
+      this._gameState = newState;
+      return newState;
+    });
 
     this.setUIState(prev => ({ ...prev, metronomeActive: true }));
 
@@ -225,6 +230,8 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   };
 
   pauseGame = (): void => {
+    console.log('🛑 pauseGame called, current isPlaying:', this._gameState.isPlaying);
+    
     // 清理所有定時器
     if (this.gameRef.current) {
       clearInterval(this.gameRef.current);
@@ -235,9 +242,19 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       this.practiceTimeoutRef.current = null;
     }
     
+    // 清理 demo 音符播放的 timeouts
+    this.demoTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    this.demoTimeouts = [];
+    
     // 停止節拍器和遊戲
     this.setUIState(prev => ({ ...prev, metronomeActive: false }));
-    this.setGameState(prev => ({ ...prev, isPlaying: false }));
+    this.setGameState(prev => {
+      const newState = { ...prev, isPlaying: false };
+      // 同步更新 ViewModel 內部狀態
+      this._gameState = newState;
+      console.log('🛑 pauseGame state updated, new isPlaying:', newState.isPlaying);
+      return newState;
+    });
   };
 
   handleKeyPress = (event: KeyboardEvent): void => {
@@ -369,13 +386,17 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
 
       console.log('🎵 Practice mode demo ended, ready for player practice');
       
-      return {
+      const newState = {
         ...prev,
         isPlaying: false,      // 停止播放狀態，讓按鈕變回「開始」
         gameStarted: false,    // 重置遊戲開始狀態
         isFirstRound: false,   // 結束第一輪（示範），準備第二輪（玩家練習）
         currentTime: 0,        // 重置時間，讓進度條歸零
       };
+      
+      // 同步更新 ViewModel 內部狀態
+      this._gameState = newState;
+      return newState;
     });
   }
 

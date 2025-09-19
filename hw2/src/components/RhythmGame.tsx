@@ -173,6 +173,7 @@ const RhythmGame: React.FC = () => {
               isPlaying={gameState.isPlaying}
               isGameActive={isGameActive}
               isPracticeMode={gameState.isPracticeMode}
+              isFirstRound={gameState.isFirstRound}
               // 新增控制桿相關 props
               gameSettings={gameSettings}
               updateGameSettings={updateGameSettings}

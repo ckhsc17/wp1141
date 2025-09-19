@@ -41,6 +41,7 @@ interface AbcRendererProps {
   isPlaying?: boolean;
   isGameActive?: boolean;
   isPracticeMode?: boolean;
+  isFirstRound?: boolean;
   gameSettings?: GameSettings;
   updateGameSettings?: (settings: Partial<GameSettings>) => void;
 }
@@ -57,6 +58,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
   isPlaying = false,
   isGameActive = false,
   isPracticeMode = true,
+  isFirstRound = false,
   gameSettings,
   updateGameSettings
 }) => {
