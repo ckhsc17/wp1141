@@ -19,8 +19,6 @@ interface RhythmElement {
   durations: number[];
   name: string;
   hasRests?: boolean;
-  hasTriplets?: boolean;
-  hasQuintuplets?: boolean;
 }
 
 // 基本節奏元素（確保每個元素都是完整的拍數組合）
@@ -44,7 +42,7 @@ const RHYTHM_ELEMENTS: Record<Difficulty, RhythmElement[]> = {
     { durations: [1, 1, 1, 1], name: 'with_rests', hasRests: true }, // 包含休止符的四分音符
   ],
   
-  // 困難難度：必含附點音符、十六分音符、連音、十六分休止符
+  // 困難難度：包含附點音符、十六分音符、休止符
   Hard: [
     // 附點八分音符 + 十六分音符組合
     { durations: [0.75, 0.25, 0.75, 0.25, 1, 1], name: 'dotted_eighth_sixteenth', hasRests: true },
@@ -58,20 +56,11 @@ const RHYTHM_ELEMENTS: Record<Difficulty, RhythmElement[]> = {
     // 附點 + 十六分休止符 + 十六分音符
     { durations: [1.5, 0.25, 0.25, 0.5, 0.5, 1], name: 'dotted_rest_sixteenth', hasRests: true },
     
-    // 三連音 (ABC 支援：(3CDE 表示三連音) - 精確時間計算
-    { durations: [4/3, 4/3, 4/3], name: 'triplets_dotted', hasRests: true, hasTriplets: true },
-    
-    // 五連音 (ABC 支援：(5CDEFG) - 精確時間計算
-    { durations: [0.8, 0.8, 0.8, 0.8, 0.8], name: 'quintuplets_dotted', hasRests: true, hasQuintuplets: true },
-    
     // 複雜附點節奏 + 十六分音符
     { durations: [0.75, 0.25, 1, 0.25, 0.25, 0.25, 0.25, 1], name: 'complex_dotted_sixteenth', hasRests: true },
     
     // 附點二分音符 + 十六分音符組合
     { durations: [3, 0.25, 0.25, 0.25, 0.25], name: 'dotted_half_sixteenth', hasRests: true },
-    
-    // 連音與附點混合
-    { durations: [4/3, 4/3, 4/3], name: 'triplets_dotted_eighth', hasRests: true, hasTriplets: true },
   ]
 };
 
@@ -89,9 +78,7 @@ const NOTE_TO_ABC: { [key: string]: string } = {
 // 時長到 ABC 記譜法的映射
 const DURATION_TO_ABC: { [key: number]: string } = {
   0.25: '/4',        // 十六分音符
-  0.8: '/5',         // 五連音 (4/5拍)
   0.5: '/2',         // 八分音符
-  1.333333: '/3',    // 三連音 (4/3拍)
   0.75: '3/4',       // 附點八分音符
   1: '',             // 四分音符 (默認)
   1.5: '3/2',        // 附點四分音符
@@ -117,8 +104,6 @@ export function generateRandomRhythm(
   const allMeasures: Array<{
     durations: number[];
     hasRests: boolean;
-    hasTriplets: boolean;
-    hasQuintuplets: boolean;
   }> = [];
   
   for (let measure = 0; measure < numMeasures; measure++) {
@@ -141,8 +126,6 @@ export function generateRandomRhythm(
     allMeasures.push({
       durations: measureDurations,
       hasRests: element.hasRests || false,
-      hasTriplets: element.hasTriplets || false,
-      hasQuintuplets: element.hasQuintuplets || false,
     });
   }
   
@@ -165,57 +148,30 @@ export function generateRandomRhythm(
     while (i < measure.durations.length) {
       const duration = measure.durations[i];
       
-      // 處理連音
-      if (measure.hasTriplets && Math.abs(duration - 1.333333) < 0.01) {
-        // 三連音組合 - 每個三連音的實際時長是 4/3 拍
-        const tripletNotes = [
-          availableNotes[Math.floor(Math.random() * availableNotes.length)],
-          availableNotes[Math.floor(Math.random() * availableNotes.length)],
-          availableNotes[Math.floor(Math.random() * availableNotes.length)]
-        ];
-        measureNotes.push(`(3${tripletNotes[0]}${tripletNotes[1]}${tripletNotes[2]}`);
-        allNotes.push(...tripletNotes);
-        // 三連音：每個音符實際時長是 (4/3)/3 = 4/9 拍
-        const tripletNoteDuration = 4/9;
-        allDurations.push(tripletNoteDuration, tripletNoteDuration, tripletNoteDuration);
-        i += 2; // 跳過接下來的兩個三連音（因為已經處理了三個）
-      } else if (measure.hasQuintuplets && Math.abs(duration - 0.8) < 0.01) {
-        // 五連音組合 - 每個五連音的實際時長是 4/5 拍
-        const quintupletNotes = Array.from({length: 5}, () => 
-          availableNotes[Math.floor(Math.random() * availableNotes.length)]
-        );
-        measureNotes.push(`(5${quintupletNotes.join('')}`);
-        allNotes.push(...quintupletNotes);
-        // 五連音：每個音符實際時長是 (4/5)/5 = 4/25 拍
-        const quintupletNoteDuration = 4/25;
-        allDurations.push(quintupletNoteDuration, quintupletNoteDuration, quintupletNoteDuration, quintupletNoteDuration, quintupletNoteDuration);
-        i += 4; // 跳過接下來的四個五連音（因為已經處理了五個）
+      // 普通音符或休止符
+      let note: string;
+      let isRest = false;
+      
+      // 困難模式：25%概率生成休止符（特別是十六分休止符）
+      if (measure.hasRests && Math.random() < 0.25) {
+        note = 'z';
+        isRest = true;
       } else {
-        // 普通音符或休止符
-        let note: string;
-        let isRest = false;
-        
-        // 困難模式：25%概率生成休止符（特別是十六分休止符）
-        if (measure.hasRests && Math.random() < 0.25) {
-          note = 'z';
-          isRest = true;
-        } else {
-          note = availableNotes[Math.floor(Math.random() * availableNotes.length)];
-        }
-        
-        const durationSuffix = DURATION_TO_ABC[duration] || '';
-        
-        if (isRest) {
-          measureNotes.push('z' + durationSuffix);
-        } else {
-          measureNotes.push(NOTE_TO_ABC[note] + durationSuffix);
-        }
-        
-        // 將所有音符（包括休止符）加入列表，用於時間計算
-        allNotes.push(note);
-        allDurations.push(duration);
-        i++;
+        note = availableNotes[Math.floor(Math.random() * availableNotes.length)];
       }
+      
+      const durationSuffix = DURATION_TO_ABC[duration] || '';
+      
+      if (isRest) {
+        measureNotes.push('z' + durationSuffix);
+      } else {
+        measureNotes.push(NOTE_TO_ABC[note] + durationSuffix);
+      }
+      
+      // 將所有音符（包括休止符）加入列表，用於時間計算
+      allNotes.push(note);
+      allDurations.push(duration);
+      i++;
     }
     
     abcNotes.push(...measureNotes, '|');
