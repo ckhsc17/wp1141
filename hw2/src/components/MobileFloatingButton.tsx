@@ -45,6 +45,9 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
 
   // 檢查是否為手機模式
   useEffect(() => {
+    // 確保只在瀏覽器端執行
+    if (typeof window === 'undefined') return;
+
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768); // 設定手機模式的閾值
     };
@@ -78,8 +81,8 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
     }, 150);
   }, []);
 
-  // 處理觸控事件
-  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+  // 處理統一的輸入事件
+  const handleInput = useCallback((event: React.TouchEvent | React.MouseEvent) => {
     event.preventDefault(); // 防止滾動等默認行為
     
     if (!isGameActive || isPracticeDemo) {
@@ -92,21 +95,7 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
     // 添加視覺反饋
     addVisualFeedback();
     
-    console.log('🎯 Touch input processed successfully');
-  }, [isGameActive, isPracticeDemo, onTap, addVisualFeedback]);
-
-  // 處理點擊事件（桌面版備用）
-  const handleClick = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    
-    if (!isGameActive || isPracticeDemo) {
-      return;
-    }
-
-    onTap();
-    addVisualFeedback();
-    
-    console.log('🎯 Click input processed successfully');
+    console.log('🎯 Mobile input processed successfully');
   }, [isGameActive, isPracticeDemo, onTap, addVisualFeedback]);
 
   // 清理 effect
@@ -120,7 +109,7 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
 
   // 計算按鈕狀態
   const isDisabled = !isGameActive || isPracticeDemo;
-  const buttonOpacity = isDisabled ? 0.5 : 1;
+  const buttonOpacity = isDisabled ? 0.5 : 0.7;
   
   // 簡化顯示邏輯：使用父組件傳入的 visible 或內部的 isMobile 檢測
   const shouldShow = visible && isMobile;
@@ -133,7 +122,7 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
     <Box
       sx={{
         position: 'fixed',
-        bottom: '10%',
+        bottom: '20%',
         right: '10%',
         display: 'flex',
         flexDirection: 'column',
@@ -166,8 +155,8 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
         ref={buttonRef}
         size="large"
         disabled={isDisabled}
-        onTouchStart={handleTouchStart}
-        onClick={handleClick}
+        onTouchStart={handleInput}
+        onClick={handleInput}
         sx={{
           backgroundColor: '#4caf50', // 淺綠色
           color: 'white',
@@ -224,7 +213,7 @@ const MobileFloatingButton: React.FC<MobileFloatingButtonProps> = ({
             '@keyframes pulse': {
               '0%': {
                 transform: 'translate(-50%, -50%) scale(1)',
-                opacity: 1,
+                opacity: 0.7,
               },
               '100%': {
                 transform: 'translate(-50%, -50%) scale(1.4)',

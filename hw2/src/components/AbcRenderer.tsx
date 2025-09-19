@@ -349,8 +349,8 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         
         // 玻璃態效果
         background: 'rgba(255, 255, 255, 0.25)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)', // Safari 支援
+        // backdropFilter: 'blur(10px)',
+        // WebkitBackdropFilter: 'blur(10px)', // Safari 支援
         border: '1px solid rgba(255, 255, 255, 0.3)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
         
@@ -367,13 +367,6 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         // 確保點擊事件正常工作
         pointerEvents: 'auto',
         userSelect: 'none', // 防止文字選取干擾點擊
-        
-        // 響應式調整
-        // '@media (max-width: 768px)': {
-        //   backdropFilter: 'blur(5px)',
-        //   WebkitBackdropFilter: 'blur(5px)',
-        //   background: 'rgba(255, 255, 255, 0.35)',
-        // },
         
         // 動畫關鍵幀
         '@keyframes scoreGlassFadeIn': {
@@ -413,7 +406,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
         
         // 不支援毛玻璃效果的後備方案
         '@supports not (backdrop-filter: blur(10px))': {
-          background: 'rgba(255, 255, 255, 0.4)',
+          background: 'rgba(255, 255, 255, 0.25)',
           border: '1px solid rgba(0, 0, 0, 0.1)',
         },
       }}

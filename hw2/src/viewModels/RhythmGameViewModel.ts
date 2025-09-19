@@ -278,6 +278,10 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     });
   };
 
+  // 防止重複輸入的時間戳
+  private lastInputTime: number = 0;
+  private readonly INPUT_DEBOUNCE_TIME = 100; // 100ms 防重複時間
+
   handleKeyPress = (event: KeyboardEvent): void => {
     if (event.code === 'Space' && this._gameState.isPlaying) {
       event.preventDefault();
@@ -292,6 +296,14 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
   };
 
   private handleGameInput(): void {
+    // 防重複檢查
+    const currentTime = Date.now();
+    if (currentTime - this.lastInputTime < this.INPUT_DEBOUNCE_TIME) {
+      console.log('🚫 Input ignored due to debounce');
+      return;
+    }
+    this.lastInputTime = currentTime;
+
     // 如果是練習模式的第一輪（示範），不處理輸入
     if (this._gameState.isPracticeMode && this._gameState.isFirstRound) {
       return;
@@ -514,7 +526,9 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
         const closestRestNote = this.findClosestNote(restNotesInRange, currentTime);
         this.audioUtils.current.createKeyPressSound(false);
         
-        // 增加錯誤敲擊計數
+        console.log('❌ Wrong input: Hit rest note');
+        
+        // 增加錯誤敲擊計數（只計算一次）
         this.setGameState(prev => ({
           ...prev,
           wrongNotes: prev.wrongNotes + 1
@@ -534,6 +548,8 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
         const closestNote = this.findClosestNote(validMusicNotes, currentTime);
         this.audioUtils.current.createKeyPressSound(true);
         
+        console.log('✅ Correct input: Hit note');
+        
         // 更新音符狀態
         return currentNotes.map(note => 
           note.id === closestNote.id ? { ...note, hit: true, missed: false } : note
@@ -542,22 +558,16 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
         // 錯誤敲擊 - 沒有音符在容錯範圍內
         this.audioUtils.current.createKeyPressSound(false);
         
-        // 增加錯誤敲擊計數
+        console.log('❌ Wrong input: No note in range');
+        
+        // 增加錯誤敲擊計數（只計算一次）
         this.setGameState(prev => ({
           ...prev,
           wrongNotes: prev.wrongNotes + 1
         }));
         
-        // 找到最接近當前時間的非休止符音符來顯示錯誤標記
-        const availableMusicNotes = availableNotes.filter(note => !note.isRest);
-        if (availableMusicNotes.length > 0) {
-          const closestNote = this.findClosestNote(availableMusicNotes, currentTime);
-          return currentNotes.map(note => 
-            note.id === closestNote.id ? { ...note, wrong: true } : note
-          );
-        }
-        
-        return currentNotes; // 沒有可用音符時返回原狀態
+        // 不標記任何音符為錯誤，因為這是純粹的空擊
+        return currentNotes;
       }
     });
   }
