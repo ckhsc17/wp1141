@@ -373,16 +373,16 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           '0%': {
             opacity: 0,
             transform: 'translateY(30px) scale(0.95)',
-            backdropFilter: 'blur(0px)',
+            //backdropFilter: 'blur(0px)',
           },
           '50%': {
             opacity: 0.7,
-            backdropFilter: 'blur(5px)',
+            //backdropFilter: 'blur(5px)',
           },
           '100%': {
             opacity: 1,
             transform: 'translateY(0) scale(1)',
-            backdropFilter: 'blur(10px)',
+            //backdropFilter: 'blur(10px)',
           },
         },
         
@@ -768,7 +768,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
                 PaperProps: {
                   sx: {
                     bgcolor: 'rgba(0, 0, 0, 0.8)',
-                    backdropFilter: 'blur(10px)',
+                    //backdropFilter: 'blur(10px)',
                     '& .MuiMenuItem-root': {
                       color: 'white',
                       fontSize: 10,
@@ -805,7 +805,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             background: isPracticeMode 
               ? 'rgba(156, 39, 176, 0.8)' 
               : 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(5px)',
+            //backdropFilter: 'blur(5px)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             color: isPracticeMode ? 'white' : '#9c27b0',
             width: 40,
@@ -846,7 +846,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
           disabled={isGameActive}
           sx={{
             background: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(5px)',
+            //backdropFilter: 'blur(5px)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             color: '#1976d2',
             width: 40,
@@ -880,7 +880,7 @@ const AbcRenderer: React.FC<AbcRendererProps> = ({
             background: isPlaying 
               ? 'rgba(255, 152, 0, 0.8)' 
               : 'rgba(76, 175, 80, 0.8)',
-            backdropFilter: 'blur(5px)',
+            //backdropFilter: 'blur(5px)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             color: 'white',
             width: 40,
