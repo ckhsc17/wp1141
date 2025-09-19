@@ -69,25 +69,14 @@ const RhythmGame: React.FC = () => {
     });
   };
 
-  // 異步處理開始遊戲
-  const handleStartGame = async () => {
-    try {
-      await startGame();
-    } catch (error) {
-      console.error('❌ Failed to start game:', error);
-    }
+  // 同步處理開始遊戲
+  const handleStartGame = () => {
+    startGame();
   };
 
-  // 異步處理觸控輸入（為 MobileFloatingButton 創建異步包裝）
-  const handleAsyncTouchInput = async (): Promise<void> => {
-    try {
-      // 調用同步的 handleTouchInput，但包裝為異步
-      handleTouchInput();
-      return Promise.resolve();
-    } catch (error) {
-      console.error('❌ Touch input failed:', error);
-      return Promise.reject(error);
-    }
+  // 同步處理觸控輸入 - 直接使用 ViewModel 的方法
+  const handleMobileTouchInput = () => {
+    handleTouchInput();
   };
 
 
@@ -362,7 +351,7 @@ const RhythmGame: React.FC = () => {
         >
           <MobileFloatingButton
             visible={isMobileDevice || isTouchDevice}
-            onTap={handleAsyncTouchInput}
+            onTap={handleMobileTouchInput}
             isGameActive={isGameActive}
             isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
           />
