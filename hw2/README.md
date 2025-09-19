@@ -1,36 +1,168 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TempoGame - 互動式節拍練習遊戲
 
-## Getting Started
+一個基於 Next.js 和 React 構建的現代化互動式節拍練習遊戲，旨在幫助用戶提升音樂節拍感和時間感。
 
-First, run the development server:
+## 遊戲介紹
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+TempoGame 是一個專業的節拍練習工具，通過視覺化的樂譜和即時反饋系統，讓用戶在互動中學習和掌握音樂節拍。無論你是音樂初學者還是想要提升節拍感的進階學習者，這個遊戲都能為你提供適合且有趣的練習體驗。
+
+### 核心功能
+
+- **視覺化樂譜**：使用 ABC 記譜法渲染的互動式樂譜
+- **即時反饋**：精確的節拍檢測和視覺化反饋系統
+- **智能評分**：基於準確度的動態評分系統
+- **雙模式遊戲**：練習模式與測驗模式
+- **自適應難度**：三種難度等級適應不同水平
+- **跨平台支持**：完美適配桌面和移動設備
+
+## 開發指南
+
+### 本地開發
+1. 確保 Node.js 版本 >= 18
+2. 安裝依賴：`npm install`
+3. 啟動開發服務器：`npm run dev`
+4. 訪問 `http://localhost:3000`
+
+## 遊戲規則
+
+### 基本玩法
+1. **觀察樂譜**：系統會顯示一段包含不同節拍的樂譜
+2. **聆聽節拍器**：4 拍預備拍後開始遊戲
+3. **按時點擊**：在正確的時間點按下空白鍵（桌面）或點擊浮動按鈕（手機）
+4. **避免誤擊**：不要在休止符或沒有音符的地方點擊
+5. **獲得評分**：根據準確度獲得 S/A/B/C 等級評價
+
+### 評分系統
+- **正確命中**：在容錯範圍內準確點擊音符 ✅
+- **錯過音符**：沒有在指定時間點擊音符 ❌
+- **錯誤敲擊**：在休止符或空白處點擊 ⚠️
+- **最終評分**：命中率 = 正確命中數 / (總音符數 + 錯誤敲擊數) × 100%
+
+### 等級評定
+- **S 級**：90% 以上準確率 🏆
+- **A 級**：70-89% 準確率 🥇
+- **B 級**：50-69% 準確率 🥈
+- **C 級**：50% 以下準確率 🥉
+
+## 功能特色
+
+### 雙模式切換
+#### 練習模式 (Practice Mode)
+- **系統示範**：首先由系統播放一遍完整的節拍示範（耳朵按鈕）
+- **用戶練習**：示範結束後用戶可以跟著練習
+- **無時間限制**：可以隨時暫停和重新開始
+- **學習導向**：適合初學者熟悉節拍模式
+
+#### 測驗模式 (Quiz Mode)
+- **直接開始**：沒有系統示範，直接進入遊戲
+- **挑戰導向**：考驗用戶的節拍感和反應能力
+- **計分評級**：完成後顯示詳細的成績和等級
+
+### 自適應設計
+#### 桌面版
+- **鍵盤控制**：使用空白鍵進行節拍輸入
+- **大螢幕優化**：更大的樂譜顯示和控制面板
+- **完整功能**：所有功能都可通過鍵盤和滑鼠操作
+
+#### 移動版
+- **觸控按鈕**：專門設計的浮動節拍按鈕
+- **響應式布局**：針對小螢幕優化的介面設計
+- **觸控優化**：手勢友好的控制方式
+- **自動檢測**：智能檢測設備類型並切換對應模式
+
+### 難度等級系統
+#### Easy（簡單）
+- **基礎節拍**：主要包含四分音符和八分音符
+- **穩定節奏**：節拍模式相對固定和可預測
+- **BPM 範圍**：60-120，適合初學者
+
+#### Medium（中等）
+- **複合節拍**：包含四分音符、八分音符和三連音
+- **變化節奏**：更多樣化的節拍組合
+- **BPM 範圍**：80-150，適合有一定基礎的用戶
+
+#### Hard（困難）
+- **複雜節拍**：包含各種節拍組合和休止符
+- **挑戰性**：高頻率的節拍變化和複雜模式
+- **BPM 範圍**：100-180，適合高水平用戶
+
+### 可調節參數
+- **BPM 設置**：60-180 BPM 自由調節
+- **小節數量**：1-8 小節可選
+- **容錯時間**：可調節的點擊容錯範圍
+- **音頻設置**：節拍器音量和音效控制
+
+## 技術架構
+
+### 前端技術棧
+```
+├── Next.js 15.5.3          # React 全棧框架
+├── React 19.1.0            # 用戶界面庫
+├── TypeScript 5            # 類型安全的 JavaScript
+├── Material-UI 7.3.2       # UI 組件庫
+├── Emotion                 # CSS-in-JS 樣式方案
+└── ABC.js 6.5.2            # 音樂記譜法渲染
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 架構模式
+```
+📁 src/
+├── 📁 app/                 # Next.js App Router
+│   ├── layout.tsx          # 全局布局
+│   ├── page.tsx            # 首頁
+│   └── globals.css         # 全局樣式
+├── 📁 components/          # React 組件
+│   ├── AbcRenderer.tsx     # 樂譜渲染組件
+│   ├── RhythmGame.tsx      # 主遊戲組件
+│   ├── CustomMetronome.tsx # 節拍器組件
+│   └── MobileFloatingButton.tsx # 移動端按鈕
+├── 📁 viewModels/          # MVVM 架構的 ViewModel
+│   └── RhythmGameViewModel.ts # 遊戲邏輯視圖模型
+├── 📁 utils/               # 工具函數
+│   ├── rhythmGenerator.ts  # 節拍生成器
+│   ├── audioUtils.ts       # 音頻工具
+│   └── deviceDetection.ts  # 設備檢測
+├── 📁 types/               # TypeScript 類型定義
+│   └── index.ts            # 核心類型定義
+└── 📁 hooks/               # 自定義 React Hooks
+    └── useTranslation.ts   # 國際化 Hook
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 設計模式
+- **MVVM 架構**：Model-View-ViewModel 分離關注點
+- **組件化設計**：可重用和可測試的 React 組件
+- **狀態管理**：使用 React Hooks 進行狀態管理
+- **事件驅動**：基於事件的遊戲邏輯處理
+- **響應式設計**：適配不同螢幕尺寸的自適應布局
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 核心模組
 
-## Learn More
+#### 1. RhythmGameViewModel
+```typescript
+// 遊戲邏輯的核心，負責：
+- 節拍生成和管理
+- 遊戲狀態控制
+- 用戶輸入處理
+- 評分計算
+- 音效播放
+```
 
-To learn more about Next.js, take a look at the following resources:
+#### 2. AbcRenderer
+```typescript
+// 樂譜渲染組件，負責：
+- ABC 記譜法解析
+- 樂譜可視化
+- 即時高亮顯示
+- 控制面板集成
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+#### 3. RhythmGenerator
+```typescript
+// 節拍生成器，負責：
+- 隨機節拍模式生成
+- 難度級別控制
+- ABC 記譜法轉換
+- 音符時間計算
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
