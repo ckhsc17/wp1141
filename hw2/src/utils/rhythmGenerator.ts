@@ -43,7 +43,7 @@ const RHYTHM_ELEMENTS: Record<Difficulty, RhythmElement[]> = {
     { durations: [1, 1, 1, 1], name: 'with_rests', hasRests: true }, // 包含休止符的四分音符
   ],
   
-  // 困難難度：必含附點音符、十六分音符、連音、十六分休止符
+  // 困難難度：必含附點音符、十六分音符、四分音符三連音、十六分休止符
   Hard: [
     // 附點八分音符 + 十六分音符組合
     { durations: [0.75, 0.25, 0.75, 0.25, 1, 1], name: 'dotted_eighth_sixteenth', hasRests: true },
@@ -65,9 +65,6 @@ const RHYTHM_ELEMENTS: Record<Difficulty, RhythmElement[]> = {
     
     // 附點二分音符 + 十六分音符組合
     { durations: [3, 0.25, 0.25, 0.25, 0.25], name: 'dotted_half_sixteenth', hasRests: true },
-    
-    // 八分音符三連音與附點混合 (在1拍時間內演奏3個音符) + 補滿4拍
-    { durations: [1/3, 1/3, 1/3, 3], name: 'triplets_eighth', hasRests: true, hasTriplets: true },
   ]
 };
 
@@ -85,7 +82,6 @@ const NOTE_TO_ABC: { [key: string]: string } = {
 // 時長到 ABC 記譜法的映射
 const DURATION_TO_ABC: { [key: number]: string } = {
   0.25: '/4',        // 十六分音符
-  0.333333: '/3',    // 八分音符三連音 (1/3拍)
   0.5: '/2',         // 八分音符
   0.666667: '2/3',   // 四分音符三連音 (2/3拍)
   0.75: '3/4',       // 附點八分音符
@@ -160,8 +156,8 @@ export function generateRandomRhythm(
       const duration = measure.durations[i];
       
       // 處理連音
-      if (measure.hasTriplets && (Math.abs(duration - 0.666667) < 0.01 || Math.abs(duration - 0.333333) < 0.01)) {
-        // 三連音組合
+      if (measure.hasTriplets && Math.abs(duration - 0.666667) < 0.01) {
+        // 只處理四分音符三連音
         const tripletNotes = [
           availableNotes[Math.floor(Math.random() * availableNotes.length)],
           availableNotes[Math.floor(Math.random() * availableNotes.length)],
@@ -170,16 +166,8 @@ export function generateRandomRhythm(
         measureNotes.push(`(3${tripletNotes[0]}${tripletNotes[1]}${tripletNotes[2]}`);
         allNotes.push(...tripletNotes);
         
-        // 根據實際時長決定每個三連音的持續時間
-        let tripletNoteDuration: number;
-        if (Math.abs(duration - 0.666667) < 0.01) {
-          // 四分音符三連音：每個音符實際時長是 (2/3)/3 = 2/9 拍
-          tripletNoteDuration = 2/3;
-        } else {
-          // 八分音符三連音：每個音符實際時長是 (1/3)/3 = 1/9 拍
-          tripletNoteDuration = 1/3;
-        }
-        
+        // 四分音符三連音：每個音符實際時長是 2/3 拍
+        const tripletNoteDuration = 2/3;
         allDurations.push(tripletNoteDuration, tripletNoteDuration, tripletNoteDuration);
         i += 2; // 跳過接下來的兩個三連音（因為已經處理了三個）
       } else {
