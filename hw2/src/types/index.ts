@@ -67,6 +67,8 @@ export interface UIState {
   metronomeActive: boolean;
   isLoading: boolean;
   error: string | null;
+  showCountdown: boolean;
+  showOnboarding: boolean;
 }
 
 // ==================== Game Events ====================
@@ -102,6 +104,7 @@ export interface IRhythmGameViewModel {
   updateGameState(state: Partial<GameState>): void;
   updateAudioSettings(settings: Partial<AudioSettings>): void;
   updateUIState(state: Partial<UIState>): void;
+  closeOnboarding(): void;
   
   // Computed Properties
   isGameActive: boolean;
@@ -162,4 +165,6 @@ export const DEFAULT_UI_STATE: UIState = {
   metronomeActive: false,
   isLoading: false,
   error: null,
+  showCountdown: false,
+  showOnboarding: true, // 默認顯示引導
 };

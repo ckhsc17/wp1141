@@ -10,6 +10,8 @@ import {
 import AbcRenderer from '@/components/AbcRenderer';
 import CustomMetronome from '@/components/CustomMetronome';
 import MobileFloatingButton from '@/components/MobileFloatingButton';
+import CountdownOverlay from '@/components/CountdownOverlay';
+import OnboardingOverlay from '@/components/OnboardingOverlay';
 import GlassCard from '@/components/GlassCard';
 import { useRhythmGameViewModel } from '@/viewModels/RhythmGameViewModel';
 import { useDeviceDetection } from '@/utils/deviceDetection';
@@ -48,6 +50,7 @@ const RhythmGame: React.FC = () => {
     startGame, 
     pauseGame, 
     handleTouchInput,
+    closeOnboarding,
     updateGameState,
     updateGameSettings,
     updateUIState
@@ -350,6 +353,21 @@ const RhythmGame: React.FC = () => {
           onTap={handleMobileTouchInput}
           isGameActive={isGameActive}
           isPracticeDemo={gameState.isPracticeMode && gameState.isFirstRound}
+        />
+
+        {/* 倒數計時覆蓋層 */}
+        {uiState.showCountdown && (
+          <CountdownOverlay 
+            show={uiState.showCountdown} 
+            currentTime={gameState.currentTime}
+            bpm={gameSettings.bpm}
+          />
+        )}
+
+        {/* 引導教學覆蓋層 */}
+        <OnboardingOverlay 
+          show={uiState.showOnboarding} 
+          onComplete={closeOnboarding} 
         />
         
       </Box>

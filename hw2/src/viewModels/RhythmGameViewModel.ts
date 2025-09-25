@@ -98,6 +98,16 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     return this._gameState.isPlaying && this._gameState.gameStarted;
   }
 
+  // 關閉引導教學
+  closeOnboarding = (): void => {
+    this.setUIState(prev => {
+      const newState = { ...prev, showOnboarding: false };
+      // 同步更新 ViewModel 內部狀態
+      this._uiState = newState;
+      return newState;
+    });
+  };
+
   // ==================== Public Methods ====================
 
   updateInternalState(
@@ -218,6 +228,12 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
     // 恢復音頻上下文
     await this.audioUtils.current.resumeAudioContext();
 
+    // 直接開始遊戲，包含倒數計時和節拍器
+    this.actuallyStartGame();
+  };
+
+  // 實際開始遊戲的邏輯
+  private actuallyStartGame = (): void => {
     // 計算預備拍時間 - 所有模式都有4拍預備拍
     const beatDuration = 60 / this._gameSettings.bpm;
     const countInDuration = 4 * beatDuration; // 4拍預備拍時間
@@ -237,7 +253,13 @@ export class RhythmGameViewModel implements IRhythmGameViewModel {
       return newState;
     });
 
-    this.setUIState(prev => ({ ...prev, metronomeActive: true }));
+    // 同時啟動節拍器和倒數計時覆蓋層
+    this.setUIState(prev => ({ ...prev, metronomeActive: true, showCountdown: true }));
+
+    // 在4拍後關閉倒數計時覆蓋層
+    setTimeout(() => {
+      this.setUIState(prev => ({ ...prev, showCountdown: false }));
+    }, countInDuration * 1000);
 
     // 如果是練習模式的第一輪，播放示範
     if (this._gameState.isPracticeMode && this._gameState.isFirstRound) {

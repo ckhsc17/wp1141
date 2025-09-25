@@ -63,7 +63,7 @@ class AudioUtils {
     oscillator.stop(this.audioContext.currentTime + duration);
   }
 
-  // 創建音符播放聲音 (用於練習模式)
+  // 創建音符播放聲音 (用於練習模式) - 提升音高和音量
   public createNoteSound(noteFrequency: number, duration: number = 0.5): void {
     if (!this.audioContext) return;
 
@@ -73,11 +73,12 @@ class AudioUtils {
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);
 
-    oscillator.frequency.setValueAtTime(noteFrequency, this.audioContext.currentTime);
+    // 提升音高（原頻率的1.5倍）和音量（從0.3提升到0.6）
+    oscillator.frequency.setValueAtTime(noteFrequency * 1.5, this.audioContext.currentTime);
     oscillator.type = 'sine';
 
     gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.05);
+    gainNode.gain.linearRampToValueAtTime(0.7, this.audioContext.currentTime + 0.05); // 提升音量
     gainNode.gain.linearRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
 
     oscillator.start(this.audioContext.currentTime);
