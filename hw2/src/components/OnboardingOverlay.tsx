@@ -65,7 +65,7 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({
     {
       icon: <Speed sx={{ fontSize: 40, color: '#4caf50' }} />,
       title: '聆聽節拍器',
-      description: '遊戲開始前會有4拍預備拍。跟著節拍器的節奏，準備在音符出現時按下按鈕。',
+      description: '遊戲開始前會有4拍預備拍。跟著節拍器的節奏，準備在音符出現時按下按鈕。使用手機遊玩的話記得開啟鈴聲喔！',
       position: { top: '40%', left: '50%' }
     },
     {
