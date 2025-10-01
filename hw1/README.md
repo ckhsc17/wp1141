@@ -1,4 +1,5 @@
 # Personal Portfolio Website
+https://bowenchen.vercel.app
 
 A modern, responsive personal portfolio website built with Next.js, TypeScript, Tailwind CSS, and Framer Motion, following MVVM architecture principles. Intended to be neat and informative, letting people get to know important parts of me with a quick glance but can also find out more if they are interested. 
 
