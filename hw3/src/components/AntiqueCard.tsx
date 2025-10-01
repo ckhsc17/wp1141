@@ -18,7 +18,7 @@ const AntiqueCard: React.FC<AntiqueCardProps> = ({ antique }) => {
   return (
     <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
       {/* 3D Model Container */}
-      <div className="h-64 bg-gray-100 relative overflow-hidden">
+      <div className="h-38 bg-gray-100 relative overflow-hidden">
         {antique.iframe ? (
           <div 
             className="w-full h-full"
@@ -30,16 +30,6 @@ const AntiqueCard: React.FC<AntiqueCardProps> = ({ antique }) => {
           </div>
         )}
         
-        {/* Floating Add to Cart Button */}
-        <button
-          onClick={handleAddToCart}
-          className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          title="Add to Collection"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-        </button>
       </div>
 
       {/* Content */}

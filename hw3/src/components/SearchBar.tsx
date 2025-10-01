@@ -51,9 +51,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
         {/* Sort Controls */}
         <div className="flex gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sort by
-            </label>
             <select
               value={sortBy}
               onChange={(e) => onSortByChange(e.target.value as 'name' | 'price' | 'era')}
@@ -66,9 +63,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Order
-            </label>
             <select
               value={sortOrder}
               onChange={(e) => onSortOrderChange(e.target.value as 'asc' | 'desc')}
