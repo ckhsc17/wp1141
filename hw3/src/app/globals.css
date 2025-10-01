@@ -27,8 +27,40 @@ body {
 }
 
 /* Sketchfab iframe responsiveness */
-.sketchfab-embed-wrapper iframe {
+.sketchfab-embed-wrapper {
   width: 100% !important;
   height: 100% !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.sketchfab-embed-wrapper iframe {
+  width: 100% !important;
+  flex: 1 !important;
   border: none !important;
+  min-height: 200px !important;
+}
+
+.sketchfab-embed-wrapper p {
+  font-size: 10px !important;
+  margin: 2px 0 0 0 !important;
+  padding: 2px 4px !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 4px !important;
+  flex-shrink: 0 !important;
+  line-height: 1.2 !important;
+}
+
+/* Ensure proper iframe display */
+div[class*="sketchfab"] {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Fix for any Sketchfab specific styling issues */
+div:has(iframe[src*="sketchfab"]) {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
 }
