@@ -6,6 +6,7 @@ import { useCollection } from '@/contexts/CollectionContext';
 import { useNavigation } from '@/hooks/useNavigation';
 import { layoutStyles, buttonStyles } from '@/styles/components';
 import ThreeGallery from './ThreeGallery';
+import PointerLockGallery from './PointerLockGallery';
 import Collection from './Collection';
 
 const Header: React.FC = () => {
@@ -83,7 +84,12 @@ const Header: React.FC = () => {
       </header>
 
       {/* 3D Gallery Modal */}
-      <ThreeGallery 
+      {/* <ThreeGallery 
+        isOpen={isGalleryOpen} 
+        onClose={closeGallery} 
+      /> */}
+
+      <PointerLockGallery
         isOpen={isGalleryOpen} 
         onClose={closeGallery} 
       />
