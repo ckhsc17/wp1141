@@ -116,8 +116,15 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
       if (scene) {
         scene.traverse((child) => {
           if (child.userData.originalY !== undefined) {
-            const { originalY, floatOffset, floatSpeed, floatAmplitude } = child.userData;
+            const { originalY, floatOffset, floatSpeed, floatAmplitude, rotationSpeed, rotationAxis } = child.userData;
+            
+            // Update floating animation
             child.position.y = originalY + Math.sin(elapsedTime * floatSpeed + floatOffset) * floatAmplitude;
+            
+            // Update rotation animation
+            if (rotationSpeed && rotationAxis) {
+              child.rotateOnAxis(rotationAxis, rotationSpeed * deltaTime);
+            }
           }
         });
       }
@@ -416,7 +423,9 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
               originalY: originalY,
               floatOffset: Math.random() * Math.PI * 2, // Random phase for each model
               floatSpeed: 0.5 + Math.random() * 0.5, // Random speed between 0.5-1.0
-              floatAmplitude: 0.05 + Math.random() * 0.03 // Random amplitude between 0.05-0.08
+              floatAmplitude: 0.05 + Math.random() * 0.03, // Random amplitude between 0.05-0.08
+              rotationSpeed: 0.5 + Math.random() * 0.4, // Random rotation speed between 0.3-0.7
+              rotationAxis: new THREE.Vector3(0, 1, 0) // Rotate around Y axis (vertical)
             };
             
             scene.add(normalizedWrapper);
