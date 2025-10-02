@@ -297,6 +297,43 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  // Normalize and place antique model in a wrapper group
+  const normalizeAndPlace = (antiqueModel: THREE.Object3D, displayPos: THREE.Vector3, displayCaseHeight: number) => {
+    const box = new THREE.Box3().setFromObject(antiqueModel);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+
+    // 建立一個包裝 Group
+    const wrapper = new THREE.Group();
+
+    // 先把模型平移，讓中心對齊 (0,0,0)
+    antiqueModel.position.sub(center);
+
+    // 放進 wrapper
+    wrapper.add(antiqueModel);
+
+    // 縮放 wrapper (不動模型內部 pivot)
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const targetSize = 1;
+    const scale = targetSize / maxDim;
+    wrapper.scale.setScalar(scale);
+
+    wrapper.updateMatrixWorld(true);
+
+    // 重新計算
+    const newBox = new THREE.Box3().setFromObject(wrapper);
+    const newSize = newBox.getSize(new THREE.Vector3());
+
+    // 設定 wrapper 的最終位置（居中在展示櫃上）
+    wrapper.position.set(
+      displayPos.x,
+      displayCaseHeight + newSize.y / 2,
+      displayPos.z
+    );
+
+    return wrapper;
+  };
+
   // Load 3D models
   const loadModels = async () => {
     if (!sceneRef.current || !CDN_URL) return;
@@ -368,40 +405,21 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
             console.log('Antique GLTF loaded:', antiqueGltf);
             const antiqueModel = antiqueGltf.scene;
             
-            // Calculate bounding box to normalize size
-            const box = new THREE.Box3().setFromObject(antiqueModel);
-            const size = box.getSize(new THREE.Vector3());
-            const maxDimension = Math.max(size.x, size.y, size.z);
+            // Use the normalize and place function
+            const displayPos = new THREE.Vector3(displayCasePositions[i].x, 0, displayCasePositions[i].z);
+            const displayCaseHeight = 1.4;
+            const normalizedWrapper = normalizeAndPlace(antiqueModel, displayPos, displayCaseHeight);
             
-            // Scale to fit within display case (target size: ~0.8 units)
-            const targetSize = 1;
-            const scale = targetSize / maxDimension;
-            antiqueModel.scale.setScalar(scale);
-            
-            // Recalculate bounding box after scaling
-            antiqueModel.updateMatrixWorld(true);
-            const scaledBox = new THREE.Box3().setFromObject(antiqueModel);
-            const scaledSize = scaledBox.getSize(new THREE.Vector3());
-            const center = scaledBox.getCenter(new THREE.Vector3());
-            
-            // Position the model: place bottom of the model on the display case surface
-            const displayCaseHeight = 1.4; // Height of display case surface
-            antiqueModel.position.set(
-              displayCasePositions[i].x,
-              displayCaseHeight + scaledSize.y / 2 - center.y, // Bottom on surface
-              displayCasePositions[i].z
-            );
-            
-            // Add floating animation
-            const originalY = antiqueModel.position.y;
-            antiqueModel.userData = {
+            // Add floating animation to the wrapper
+            const originalY = normalizedWrapper.position.y;
+            normalizedWrapper.userData = {
               originalY: originalY,
               floatOffset: Math.random() * Math.PI * 2, // Random phase for each model
               floatSpeed: 0.5 + Math.random() * 0.5, // Random speed between 0.5-1.0
               floatAmplitude: 0.05 + Math.random() * 0.03 // Random amplitude between 0.05-0.08
             };
             
-            scene.add(antiqueModel);
+            scene.add(normalizedWrapper);
           } catch (error) {
             console.warn(`Failed to load antique model: ${purchasedItems[i]}.glb`, error);
           }
