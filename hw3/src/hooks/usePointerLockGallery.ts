@@ -220,8 +220,13 @@ export const usePointerLockGallery = () => {
     const hasGalleryModel = scene.children.some(child => child.userData.isGalleryBackground);
     const hasDisplayCases = scene.children.some(child => child.userData.isDisplayCase);
     
-    if (hasGalleryModel && hasDisplayCases) {
-      console.log('Models already loaded, skipping...');
+    // Check if all current purchased items are loaded
+    const purchasedItems = getPurchasedItems();
+    const loadedAntiques = scene.children.filter(child => child.userData.isAntique);
+    const allAntiquesLoaded = purchasedItems.length === loadedAntiques.length;
+    
+    if (hasGalleryModel && hasDisplayCases && allAntiquesLoaded) {
+      console.log('All models already loaded, skipping...');
       return;
     }
 
@@ -263,8 +268,6 @@ export const usePointerLockGallery = () => {
           { x: 4, z: 4 },
         ];
 
-        const purchasedItems = getPurchasedItems();
-
         for (let i = 0; i < 8; i++) {
           // Load display case
           const displayCaseGltf = await new Promise<any>((resolve, reject) => {
@@ -284,46 +287,75 @@ export const usePointerLockGallery = () => {
           );
           displayCase.userData.isDisplayCase = true; // Mark for identification
           scene.add(displayCase);
-
-          // Load antique if available
-          if (i < purchasedItems.length) {
-            try {
-              console.log('Loading antique model:', purchasedItems[i]);
-              const antiqueGltf = await new Promise<any>((resolve, reject) => {
-                loader.load(
-                  `${CDN_URL}/${purchasedItems[i]}.glb`,
-                  resolve,
-                  undefined,
-                  reject
-                );
-              });
-              
-              const antiqueModel = antiqueGltf.scene;
-              
-              // Use the normalize and place function
-              const displayPos = new THREE.Vector3(displayCasePositions[i].x, 0, displayCasePositions[i].z);
-              const displayCaseHeight = 1.4;
-              const normalizedWrapper = normalizeAndPlace(antiqueModel, displayPos, displayCaseHeight);
-              
-              // Add floating animation to the wrapper
-              const originalY = normalizedWrapper.position.y;
-              normalizedWrapper.userData = {
-                originalY: originalY,
-                floatOffset: Math.random() * Math.PI * 2,
-                floatSpeed: 0.5 + Math.random() * 0.5,
-                floatAmplitude: 0.05 + Math.random() * 0.03,
-                rotationSpeed: 0.3 + Math.random() * 0.4,
-                rotationAxis: new THREE.Vector3(0, 1, 0),
-                isAntique: true // Mark for identification
-              };
-              
-              scene.add(normalizedWrapper);
-            } catch (error) {
-              console.warn(`Failed to load antique model: ${purchasedItems[i]}.glb`, error);
-            }
-          }
         }
-        console.log('Display cases and antiques loaded');
+        console.log('Display cases loaded');
+      }
+
+      // Load antiques (always check for new purchases)
+      console.log('Checking for antiques to load...');
+      const displayCasePositions = [
+        { x: -4, z: -4 },
+        { x: 0, z: -4 },
+        { x: 4, z: -4 },
+        { x: -4, z: 0 },
+        { x: 4, z: 0 },
+        { x: -4, z: 4 },
+        { x: 0, z: 4 },
+        { x: 4, z: 4 },
+      ];
+
+      // Get currently loaded antique names
+      const loadedAntiqueNames = new Set(
+        scene.children
+          .filter(child => child.userData.isAntique)
+          .map(child => child.userData.antiqueName)
+      );
+
+      for (let i = 0; i < purchasedItems.length && i < 8; i++) {
+        const antiqueName = purchasedItems[i];
+        
+        // Skip if this antique is already loaded
+        if (loadedAntiqueNames.has(antiqueName)) {
+          console.log(`Antique ${antiqueName} already loaded, skipping...`);
+          continue;
+        }
+
+        try {
+          console.log('Loading new antique model:', antiqueName);
+          const antiqueGltf = await new Promise<any>((resolve, reject) => {
+            loader.load(
+              `${CDN_URL}/${antiqueName}.glb`,
+              resolve,
+              undefined,
+              reject
+            );
+          });
+          
+          const antiqueModel = antiqueGltf.scene;
+          
+          // Use the normalize and place function
+          const displayPos = new THREE.Vector3(displayCasePositions[i].x, 0, displayCasePositions[i].z);
+          const displayCaseHeight = 1.4;
+          const normalizedWrapper = normalizeAndPlace(antiqueModel, displayPos, displayCaseHeight);
+          
+          // Add floating animation to the wrapper
+          const originalY = normalizedWrapper.position.y;
+          normalizedWrapper.userData = {
+            originalY: originalY,
+            floatOffset: Math.random() * Math.PI * 2,
+            floatSpeed: 0.5 + Math.random() * 0.5,
+            floatAmplitude: 0.05 + Math.random() * 0.03,
+            rotationSpeed: 0.3 + Math.random() * 0.4,
+            rotationAxis: new THREE.Vector3(0, 1, 0),
+            isAntique: true, // Mark for identification
+            antiqueName: antiqueName // Store the antique name for tracking
+          };
+          
+          scene.add(normalizedWrapper);
+          console.log(`New antique ${antiqueName} loaded successfully`);
+        } catch (error) {
+          console.warn(`Failed to load antique model: ${antiqueName}.glb`, error);
+        }
       }
 
     } catch (error) {
