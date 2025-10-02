@@ -84,6 +84,9 @@ export const useCartOperations = () => {
       allPurchases.push(newPurchase);
       localStorage.setItem('antiquePurchases', JSON.stringify(allPurchases));
 
+      // 觸發自定義事件通知其他組件
+      window.dispatchEvent(new CustomEvent('antiquePurchasesUpdated'));
+
       // Remove purchased items from cart
       selectedItems.forEach(id => {
         dispatch({ type: 'REMOVE_ITEM', payload: id });

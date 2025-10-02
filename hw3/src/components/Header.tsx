@@ -2,13 +2,16 @@
 
 import React from 'react';
 import { useCartOperations } from '@/hooks/useCartOperations';
+import { useCollection } from '@/contexts/CollectionContext';
 import { useNavigation } from '@/hooks/useNavigation';
 import { layoutStyles, buttonStyles } from '@/styles/components';
 import ThreeGallery from './ThreeGallery';
+import Collection from './Collection';
 
 const Header: React.FC = () => {
-  const { totalItems, toggleCart } = useCartOperations(); // ✅ 購物車邏輯抽離
-  const { isGalleryOpen, openGallery, closeGallery } = useNavigation(); // ✅ 導航邏輯抽離
+  const { totalItems, toggleCart } = useCartOperations();
+  const { openCollection } = useCollection();
+  const { isGalleryOpen, openGallery, closeGallery } = useNavigation();
 
   return (
     <>
@@ -38,11 +41,11 @@ const Header: React.FC = () => {
                 </svg>
               </button>
 
-              {/* Cart Button */}
+              {/* Shopping List Button */}
               <button
                 onClick={toggleCart}
                 className={buttonStyles.cart}
-                title="View Cart"
+                title="View Shopping List"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -58,6 +61,22 @@ const Header: React.FC = () => {
                   </span>
                 )}
               </button>
+
+              {/* Collection Button */}
+              <button
+                onClick={openCollection}
+                className={buttonStyles.collection}
+                title="View My Collection"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -68,6 +87,9 @@ const Header: React.FC = () => {
         isOpen={isGalleryOpen} 
         onClose={closeGallery} 
       />
+      
+      {/* Collection Modal */}
+      <Collection />
     </>
   );
 };

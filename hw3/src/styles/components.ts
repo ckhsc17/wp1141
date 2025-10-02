@@ -6,7 +6,8 @@ export const buttonStyles = {
   icon: 'p-3 rounded-full shadow-lg transition-opacity duration-300',
   floating: 'absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300',
   gallery: 'bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full transition-colors duration-200',
-  cart: 'relative bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full transition-colors duration-200'
+  cart: 'relative bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full transition-colors duration-200',
+  collection: 'bg-green-600 hover:bg-green-700 text-white p-3 rounded-full transition-colors duration-200'
 };
 
 export const cardStyles = {

@@ -60,6 +60,10 @@ const AntiqueViewer: React.FC<AntiqueViewerProps> = ({ antique }) => {
             <span className={textStyles.detail}>Size:</span>
             <span className={textStyles.value}>{antique.size}</span>
           </div>
+          <div className="flex justify-between">
+            <span className={textStyles.detail}>Collected at:</span>
+            <span className={textStyles.value}>{antique.collected_at}</span>
+          </div>
         </div>
 
         <div className="mt-4 pt-4 border-t border-gray-200">
