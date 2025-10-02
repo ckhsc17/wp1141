@@ -82,6 +82,7 @@ const PointerLockGallery: React.FC<PointerLockGalleryProps> = ({ isOpen, onClose
           <li>• WASD 鍵移動</li>
           <li>• ESC 鍵解除滑鼠鎖定</li>
           <li>• 靠近展示櫃查看古董詳情</li>
+          <li>• ⚠️ 無法穿越展示櫃和牆壁</li>
         </ul>
       </div>
 

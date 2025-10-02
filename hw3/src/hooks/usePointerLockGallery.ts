@@ -59,6 +59,45 @@ export const usePointerLockGallery = () => {
     }
   }, []);
 
+  // Check collision with display cases and walls
+  const checkCollision = useCallback((newPosition: THREE.Vector3) => {
+    const playerRadius = 0.5; // Player collision radius
+    
+    // Check wall boundaries (gallery walls)
+    const wallBounds = 8; // Gallery wall boundaries
+    if (Math.abs(newPosition.x) > wallBounds - playerRadius || 
+        Math.abs(newPosition.z) > wallBounds - playerRadius) {
+      return true; // Collision with walls
+    }
+    
+    // Check collision with display cases
+    const displayCasePositions = [
+      { x: -4, z: -4 },
+      { x: 0, z: -4 },
+      { x: 4, z: -4 },
+      { x: -4, z: 0 },
+      { x: 4, z: 0 },
+      { x: -4, z: 4 },
+      { x: 0, z: 4 },
+      { x: 4, z: 4 },
+    ];
+    
+    const displayCaseSize = 1.5; // Display case collision size (slightly larger than visual)
+    
+    for (const displayCase of displayCasePositions) {
+      const distanceX = Math.abs(newPosition.x - displayCase.x);
+      const distanceZ = Math.abs(newPosition.z - displayCase.z);
+      
+      // Check if player would collide with this display case
+      if (distanceX < (displayCaseSize / 2 + playerRadius) && 
+          distanceZ < (displayCaseSize / 2 + playerRadius)) {
+        return true; // Collision with display case
+      }
+    }
+    
+    return false; // No collision
+  }, []);
+
   // Check if camera is near any display case with antiques
   const checkNearbyDisplayCase = useCallback((cameraPosition: THREE.Vector3) => {
     const displayCasePositions = [
@@ -159,10 +198,12 @@ export const usePointerLockGallery = () => {
 
     // Keyboard event listeners
     const onKeyDown = (event: KeyboardEvent) => {
+      console.log('Key down:', event.code);
       keysPressed.current.add(event.code);
     };
 
     const onKeyUp = (event: KeyboardEvent) => {
+      console.log('Key up:', event.code);
       keysPressed.current.delete(event.code);
     };
 
@@ -333,22 +374,29 @@ export const usePointerLockGallery = () => {
       // Handle FPS movement
       if (controlsRef.current && camera) {
         const moveSpeed = 5;
-        const velocity = velocityRef.current;
         const direction = directionRef.current;
         
         // Reset direction
         direction.set(0, 0, 0);
         
+        // Check if pointer is currently locked (use document API instead of state)
+        const isCurrentlyLocked = document.pointerLockElement !== null;
+        
         // Get movement direction based on keys pressed (only when locked)
-        if (isLocked) {
+        if (isCurrentlyLocked) {
           if (keysPressed.current.has('KeyW')) direction.z = -1;
           if (keysPressed.current.has('KeyS')) direction.z = 1;
           if (keysPressed.current.has('KeyA')) direction.x = -1;
           if (keysPressed.current.has('KeyD')) direction.x = 1;
+          
+          // Debug: log movement
+          if (direction.length() > 0) {
+            console.log('Movement direction:', direction, 'Keys pressed:', Array.from(keysPressed.current));
+          }
         }
         
         // Apply movement relative to camera direction
-        if (direction.length() > 0 && isLocked) {
+        if (direction.length() > 0 && isCurrentlyLocked) {
           direction.normalize();
           
           // Get camera direction
@@ -366,12 +414,35 @@ export const usePointerLockGallery = () => {
           
           movement.multiplyScalar(moveSpeed * deltaTime);
           
-          // Check bounds and apply movement
+          // Check collision for the new position
           const newPosition = camera.position.clone().add(movement);
-          const bounds = 6;
           
-          if (Math.abs(newPosition.x) <= bounds && Math.abs(newPosition.z) <= bounds) {
-            camera.position.add(movement);
+          if (!checkCollision(newPosition)) {
+            // No collision, apply movement
+            camera.position.copy(newPosition);
+            camera.position.y = 1.7; // Keep at eye level
+            console.log('Movement applied, new position:', camera.position);
+          } else {
+            // Collision detected, try sliding along walls
+            console.log('Collision detected, attempting slide movement');
+            
+            // Try moving only in X direction
+            const slideX = camera.position.clone();
+            slideX.x += movement.x;
+            if (!checkCollision(slideX)) {
+              camera.position.x = slideX.x;
+              console.log('Sliding along Z-axis');
+            } else {
+              // Try moving only in Z direction
+              const slideZ = camera.position.clone();
+              slideZ.z += movement.z;
+              if (!checkCollision(slideZ)) {
+                camera.position.z = slideZ.z;
+                console.log('Sliding along X-axis');
+              } else {
+                console.log('Movement completely blocked');
+              }
+            }
             camera.position.y = 1.7; // Keep at eye level
           }
         }
@@ -419,7 +490,7 @@ export const usePointerLockGallery = () => {
         controlsRef.current.dispose();
       }
     };
-  }, [initializeControls, checkNearbyDisplayCase, isLocked]);
+  }, [initializeControls, checkNearbyDisplayCase, checkCollision, isLocked]);
 
   // Lock pointer
   const lockPointer = useCallback(() => {
