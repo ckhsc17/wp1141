@@ -34,7 +34,7 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
   const controlsRef = useRef<FirstPersonControls | OrbitControls | PointerLockControls | null>(null);
   const clockRef = useRef<THREE.Clock>(new THREE.Clock());
   const [isLoading, setIsLoading] = useState(false);
-  const [currentControl, setCurrentControl] = useState<ControlType>('FirstPerson');
+  const [currentControl, setCurrentControl] = useState<ControlType>('Orbit');
 
   const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL;
 
@@ -78,8 +78,8 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
       0.1,
       1000
     );
-    // Position camera inside the gallery room
-    camera.position.set(0, 2, 2);
+    // Position camera at human eye level on the ground
+    camera.position.set(0, 1.7, 0);
     cameraRef.current = camera;
 
     // Renderer
@@ -110,6 +110,17 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
     const animate = () => {
       requestAnimationFrame(animate);
       const deltaTime = clockRef.current.getDelta();
+      const elapsedTime = clockRef.current.getElapsedTime();
+      
+      // Update floating animation for antiques
+      if (scene) {
+        scene.traverse((child) => {
+          if (child.userData.originalY !== undefined) {
+            const { originalY, floatOffset, floatSpeed, floatAmplitude } = child.userData;
+            child.position.y = originalY + Math.sin(elapsedTime * floatSpeed + floatOffset) * floatAmplitude;
+          }
+        });
+      }
       
       if (controlsRef.current) {
         if (controlsRef.current instanceof FirstPersonControls) {
@@ -153,11 +164,17 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
     switch (currentControl) {
       case 'FirstPerson':
         const fpControls = new FirstPersonControls(camera, renderer.domElement);
-        fpControls.movementSpeed = 5;
-        fpControls.lookSpeed = 0.1;
+        fpControls.movementSpeed = 3; // 降低移動速度讓控制更精確
+        fpControls.lookSpeed = 0.05; // 降低視角轉動速度
         fpControls.constrainVertical = true;
-        fpControls.verticalMin = 1.0;
-        fpControls.verticalMax = 2.0;
+        fpControls.verticalMin = Math.PI * 0.8; // 限制不能看太高
+        fpControls.verticalMax = Math.PI * 1.2; // 限制不能看太低
+        fpControls.autoForward = false;
+        
+        // 設置地面高度的相機位置
+        camera.position.set(0, 1.7, 0); // 1.7 是人眼高度
+        camera.lookAt(0, 5, 3); // 向前看
+        
         controlsRef.current = fpControls;
         break;
 
@@ -268,9 +285,14 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
     setCurrentControl(newType);
     
     if (cameraRef.current && rendererRef.current) {
-      // Reset camera position when switching controls
-      cameraRef.current.position.set(0, 2, 2);
-      cameraRef.current.lookAt(0, 1, 0);
+      // Reset camera position based on control type
+      if (newType === 'FirstPerson') {
+        cameraRef.current.position.set(0, 1.7, 0); // Ground level for first person
+        cameraRef.current.lookAt(0, 1.7, 0);
+      } else {
+        cameraRef.current.position.set(0, 5, 10); // Higher view for other controls
+        cameraRef.current.lookAt(0, 1, 0);
+      }
       initializeControls(cameraRef.current, rendererRef.current);
     }
   };
@@ -334,6 +356,7 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
         // Load antique if available
         if (i < purchasedItems.length) {
           try {
+            console.log('Loading antique model:', purchasedItems[i]);
             const antiqueGltf = await new Promise<any>((resolve, reject) => {
               loader.load(
                 `${CDN_URL}/${purchasedItems[i]}.glb`,
@@ -342,14 +365,42 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
                 reject
               );
             });
-
+            console.log('Antique GLTF loaded:', antiqueGltf);
             const antiqueModel = antiqueGltf.scene;
+            
+            // Calculate bounding box to normalize size
+            const box = new THREE.Box3().setFromObject(antiqueModel);
+            const size = box.getSize(new THREE.Vector3());
+            const maxDimension = Math.max(size.x, size.y, size.z);
+            
+            // Scale to fit within display case (target size: ~0.8 units)
+            const targetSize = 1;
+            const scale = targetSize / maxDimension;
+            antiqueModel.scale.setScalar(scale);
+            
+            // Recalculate bounding box after scaling
+            antiqueModel.updateMatrixWorld(true);
+            const scaledBox = new THREE.Box3().setFromObject(antiqueModel);
+            const scaledSize = scaledBox.getSize(new THREE.Vector3());
+            const center = scaledBox.getCenter(new THREE.Vector3());
+            
+            // Position the model: place bottom of the model on the display case surface
+            const displayCaseHeight = 1.4; // Height of display case surface
             antiqueModel.position.set(
               displayCasePositions[i].x,
-              1.5, // Place on top of display case
+              displayCaseHeight + scaledSize.y / 2 - center.y, // Bottom on surface
               displayCasePositions[i].z
             );
-            antiqueModel.scale.setScalar(0.5); // Scale down if needed
+            
+            // Add floating animation
+            const originalY = antiqueModel.position.y;
+            antiqueModel.userData = {
+              originalY: originalY,
+              floatOffset: Math.random() * Math.PI * 2, // Random phase for each model
+              floatSpeed: 0.5 + Math.random() * 0.5, // Random speed between 0.5-1.0
+              floatAmplitude: 0.05 + Math.random() * 0.03 // Random amplitude between 0.05-0.08
+            };
+            
             scene.add(antiqueModel);
           } catch (error) {
             console.warn(`Failed to load antique model: ${purchasedItems[i]}.glb`, error);
@@ -457,8 +508,8 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
           {currentControl === 'FirstPerson' && (
             <>
               <li>• Move mouse to look around</li>
-              <li>• Click and drag to move</li>
-              <li>• Your purchased items are displayed on cases</li>
+              <li>• Arrow keys or WASD to move</li>
+              <li>• Walk on ground level to view antiques</li>
             </>
           )}
           {currentControl === 'Orbit' && (
