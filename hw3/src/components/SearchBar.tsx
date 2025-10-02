@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { cardStyles, inputStyles, textStyles } from '@/styles/components';
 
 interface SearchBarProps {
   searchTerm: string;
@@ -20,7 +21,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   onSortOrderChange,
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+    <div className={`${cardStyles.baseSimple} ${cardStyles.content} mb-8`}>
       <div className="flex flex-col md:flex-row gap-4">
         {/* Search Input */}
         <div className="flex-1">
@@ -43,7 +44,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               placeholder="Search antiques by name, description, origin, era, or material..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputStyles.search}
             />
           </div>
         </div>
@@ -54,7 +55,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             <select
               value={sortBy}
               onChange={(e) => onSortByChange(e.target.value as 'name' | 'price' | 'era')}
-              className="border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputStyles.base}
             >
               <option value="name">Name</option>
               <option value="price">Price</option>
@@ -66,7 +67,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             <select
               value={sortOrder}
               onChange={(e) => onSortOrderChange(e.target.value as 'asc' | 'desc')}
-              className="border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputStyles.base}
             >
               <option value="asc">Ascending</option>
               <option value="desc">Descending</option>

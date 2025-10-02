@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useCart } from '@/contexts/CartContext';
+import React from 'react';
+import { useCartOperations } from '@/hooks/useCartOperations';
+import { useNavigation } from '@/hooks/useNavigation';
+import { layoutStyles, buttonStyles } from '@/styles/components';
 import ThreeGallery from './ThreeGallery';
 
 const Header: React.FC = () => {
-  const { state, dispatch } = useCart();
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  
-  const totalItems = state.items.reduce((total, item) => total + item.quantity, 0);
+  const { totalItems, toggleCart } = useCartOperations(); // ✅ 購物車邏輯抽離
+  const { isGalleryOpen, openGallery, closeGallery } = useNavigation(); // ✅ 導航邏輯抽離
 
   return (
     <>
       <header className="bg-white shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className={layoutStyles.container}>
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-gray-900">
@@ -24,8 +24,8 @@ const Header: React.FC = () => {
             <div className="flex items-center space-x-4">
               {/* 3D Gallery Button */}
               <button
-                onClick={() => setIsGalleryOpen(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full transition-colors duration-200"
+                onClick={openGallery}
+                className={buttonStyles.gallery}
                 title="View 3D Gallery"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,8 +40,8 @@ const Header: React.FC = () => {
 
               {/* Cart Button */}
               <button
-                onClick={() => dispatch({ type: 'TOGGLE_CART' })}
-                className="relative bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full transition-colors duration-200"
+                onClick={toggleCart}
+                className={buttonStyles.cart}
                 title="View Cart"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +66,7 @@ const Header: React.FC = () => {
       {/* 3D Gallery Modal */}
       <ThreeGallery 
         isOpen={isGalleryOpen} 
-        onClose={() => setIsGalleryOpen(false)} 
+        onClose={closeGallery} 
       />
     </>
   );

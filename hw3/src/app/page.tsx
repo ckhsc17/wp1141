@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAntiques } from '@/hooks/useAntiques';
 import { useSearch } from '@/hooks/useSearch';
+import { layoutStyles, textStyles } from '@/styles/components';
 import SearchBar from '@/components/SearchBar';
 import AntiqueGrid from '@/components/AntiqueGrid';
 
@@ -36,7 +37,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className={layoutStyles.containerPadded}>
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Discover Timeless Treasures
@@ -57,7 +58,7 @@ export default function Home() {
         />
 
         <div className="mb-6">
-          <p className="text-gray-600">
+          <p className={textStyles.value}>
             {loading ? 'Loading...' : `${filteredAndSortedAntiques.length} antique${filteredAndSortedAntiques.length !== 1 ? 's' : ''} found`}
           </p>
         </div>
