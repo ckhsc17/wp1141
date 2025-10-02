@@ -61,38 +61,10 @@ export const usePointerLockGallery = () => {
 
   // Check collision with display cases and walls
   const checkCollision = useCallback((newPosition: THREE.Vector3) => {
-    const playerRadius = 0.5; // Player collision radius
-    
-    // Check wall boundaries (gallery walls)
-    const wallBounds = 8; // Gallery wall boundaries
-    if (Math.abs(newPosition.x) > wallBounds - playerRadius || 
-        Math.abs(newPosition.z) > wallBounds - playerRadius) {
-      return true; // Collision with walls
-    }
-    
-    // Check collision with display cases
-    const displayCasePositions = [
-      { x: -4, z: -4 },
-      { x: 0, z: -4 },
-      { x: 4, z: -4 },
-      { x: -4, z: 0 },
-      { x: 4, z: 0 },
-      { x: -4, z: 4 },
-      { x: 0, z: 4 },
-      { x: 4, z: 4 },
-    ];
-    
-    const displayCaseSize = 1.5; // Display case collision size (slightly larger than visual)
-    
-    for (const displayCase of displayCasePositions) {
-      const distanceX = Math.abs(newPosition.x - displayCase.x);
-      const distanceZ = Math.abs(newPosition.z - displayCase.z);
-      
-      // Check if player would collide with this display case
-      if (distanceX < (displayCaseSize / 2 + playerRadius) && 
-          distanceZ < (displayCaseSize / 2 + playerRadius)) {
-        return true; // Collision with display case
-      }
+    // Simple boundary check: keep player within -4 to +4 range
+    const bounds = 4;
+    if (Math.abs(newPosition.x) > bounds || Math.abs(newPosition.z) > bounds) {
+      return true; // Collision with boundaries
     }
     
     return false; // No collision
