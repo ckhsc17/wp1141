@@ -3,7 +3,7 @@ import { PersonalInfo, Skill, Experience, Project, Milestone, SocialLink, Travel
 // Mock data based on the provided image
 export const personalInfo: PersonalInfo = {
   name: "Bowen Chen",
-  title: "Backend Engineer",
+  title: "Fullstack Engineer",
   description: "description.txt",
   location: "Taipei, Taiwan",
   profileImage: "/images/profile.jpg"
@@ -53,9 +53,9 @@ export const experiences: Experience[] = [
   {
     id: "3",
     company: "National Taiwan University",
-    position: "Backend Engineer, New Course Selection System",
+    position: "Fullstack Engineer, New Course Selection System",
     period: "June 2025 — PRESENT",
-    description: "Backend engineer using TypeScript, applying layered architecture. Deal with Prisma data migration to systematically manage schema changes.",
+    description: "Fullstack Engineer using TypeScript, applying layered architecture. Deal with Prisma data migration to systematically manage schema changes.",
     technologies: ["TypeScript", "Jenkins", "Prisma", "Database Migration", "Layered Architecture"],
     type: "work",
     logo: "/images/companies/ntu.png"

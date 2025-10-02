@@ -11,11 +11,11 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
-    default: 'Bowen Chen - Backend Engineer',
+    default: 'Bowen Chen - Fullstack Engineer',
     template: '%s | Bowen Chen'
   },
-  description: 'Personal portfolio of Bowen Chen, Backend Engineer at LINE Taiwan specializing in Go, TypeScript, and modern web technologies. Experienced in clean architecture, Kubernetes, and full-stack development.',
-  keywords: ['Bowen Chen', 'Backend Engineer', 'LINE Taiwan', 'Go', 'TypeScript', 'Next.js', 'Kubernetes', 'Full Stack Developer', 'Portfolio'],
+  description: 'Personal portfolio of Bowen Chen, Fullstack Engineer at LINE Taiwan specializing in Go, TypeScript, and modern web technologies. Experienced in clean architecture, Kubernetes, and full-stack development.',
+  keywords: ['Bowen Chen', 'Fullstack Engineer', 'LINE Taiwan', 'Go', 'TypeScript', 'Next.js', 'Kubernetes', 'Full Stack Developer', 'Portfolio'],
   authors: [{ name: 'Bowen Chen' }],
   creator: 'Bowen Chen',
   publisher: 'Bowen Chen',
@@ -24,22 +24,22 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://wp1141.vercel.app', // 請更新為你的實際域名
-    title: 'Bowen Chen - Backend Engineer',
-    description: 'Personal portfolio of Bowen Chen, Backend Engineer specializing in modern web technologies.',
+    title: 'Bowen Chen - Fullstack Engineer',
+    description: 'Personal portfolio of Bowen Chen, Fullstack Engineer specializing in modern web technologies.',
     siteName: 'Bowen Chen Portfolio',
     images: [
       {
         url: '/images/profile.jpg',
         width: 1200,
         height: 630,
-        alt: 'Bowen Chen - Backend Engineer',
+        alt: 'Bowen Chen - Fullstack Engineer',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Bowen Chen - Backend Engineer',
-    description: 'Personal portfolio of Bowen Chen, Backend Engineer specializing in modern web technologies.',
+    title: 'Bowen Chen - Fullstack Engineer',
+    description: 'Personal portfolio of Bowen Chen, Fullstack Engineer specializing in modern web technologies.',
     images: ['/images/profile.jpg'],
   },
   robots: {
