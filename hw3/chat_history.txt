@@ -1,0 +1,72 @@
+Prompt History
+1. 業務邏輯與 UI 分離
+問題: 業務邏輯和 UI 渲染混在同一個 component 中，是否應該抽離到 hooks？ 解決方案:
+
+創建自定義 hooks (useThreeGallery) 來處理業務邏輯。
+將 UI 渲染拆分成小型專用組件 (GalleryControls, GalleryInstructions, LoadingOverlay)。
+重構主組件 (ThreeGallery) 以專注於組合和渲染。
+2. 檢查其他組件的分離狀況
+問題: 是否所有其他 component 都有做到業務邏輯與 UI 分離？ 解決方案:
+
+檢查 AntiqueViewer, Cart, AntiqueGrid, Header 等組件。
+建議將業務邏輯抽離到 hooks，例如 useAntiqueActions, useCartOperations。
+提供完整的重構方案，讓組件只負責 UI 渲染和事件綁定。
+3. 古董模型高度與大小統一
+問題: 古董模型高度不一致，有些會陷進展示櫃，有些會浮太高。 解決方案:
+
+計算模型的包圍盒 (Box3) 和中心 (getCenter)。
+將模型居中到原點 (0,0,0)，再移動到展示位置。
+統一縮放比例，參考 Antique Revolver 的大小。
+4. 古董模型浮動與旋轉動畫
+問題: 如何讓古董模型在展示櫃中上下浮動並原地旋轉？ 解決方案:
+
+在動畫循環中添加浮動邏輯 (Math.sin) 和旋轉邏輯 (rotateOnAxis)。
+使用 userData 儲存原始位置和旋轉速度，確保每個模型的動畫獨立。
+5. FPS 模式移動與邊界限制
+問題: FPS 模式中移動效果不佳，如何限制移動範圍？ 解決方案:
+
+使用 PointerLockControls 實現 FPS 控制。
+添加邊界檢測，限制玩家在展示櫃和牆壁內移動。
+使用 AABB 碰撞檢測防止穿越展示櫃。
+6. Orbit 模式移動優化
+問題: 如何在 Orbit 模式中加入移動功能，並限制在展示櫃內？ 解決方案:
+
+使用 OrbitControls 的 target 作為移動基準。
+添加 WASD 移動邏輯，限制玩家在地板上移動。
+檢測靠近展示櫃時顯示古董資訊彈窗。
+7. 改用 React Three Fiber (R3F)
+問題: 如何使用 R3F 搭配 @react-three/drei 實現更好的控制體驗？ 解決方案:
+
+使用 R3F 重構 ThreeGallery。
+使用 PointerLockControls 和 OrbitControls 提供更流暢的控制。
+簡化動畫和狀態管理。
+8. 移除多餘的控制模式
+問題: 如何移除多餘的控制模式，只保留 Orbit？ 解決方案:
+
+移除 ControlType 定義和相關按鈕。
+簡化 initializeControls 和動畫循環，只保留 OrbitControls。
+9. FPS 模式直接進入 VR Gallery
+問題: 如何直接進入 VR Gallery，並顯示簡單的 ESC 提示？ 解決方案:
+
+移除「FPS 模式」的彈窗，直接進入場景。
+顯示半透明的「Press ESC to leave」提示，2秒後自動消失。
+按 ESC 鍵退出並回到首頁。
+10. 模型 Cache 機制
+問題: 如何使用之前載入過的模型 cache，避免重複載入？ 解決方案:
+
+保留場景、渲染器和相機，避免清理。
+只載入未載入的模型，跳過已 cached 的模型。
+添加完整清理函數，僅在組件卸載時使用。
+11. Pointer Lock API 錯誤修復
+問題: 第二次進入 VR Gallery 時出現 Pointer Lock API 錯誤。 解決方案:
+
+確保 DOM 元素正確掛載。
+在重新進入時重置控制並重新初始化。
+添加錯誤處理，避免在已移除的 DOM 元素上執行操作。
+12. README.md 更新
+問題: 如何撰寫吸引人的 README.md？ 解決方案:
+
+提供吸引人的簡介，突顯項目價值。
+詳細介紹功能、技術架構和使用指南。
+使用表情符號和層次結構增強可讀性。
+這份 Prompt History 詳細記錄了您的需求和解決方案，適合用於項目文檔或分享給其他開發者參考！

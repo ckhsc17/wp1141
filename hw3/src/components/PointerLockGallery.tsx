@@ -192,12 +192,6 @@ const PointerLockGallery: React.FC<PointerLockGalleryProps> = ({ isOpen, onClose
                   展示櫃 ({nearbyAntique.position.x}, {nearbyAntique.position.z})
                 </span>
               </div>
-              
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-xs text-blue-800">
-                  🎮 使用 WASD 移動，滑鼠控制視角
-                </p>
-              </div>
             </div>
           </div>
         </div>
