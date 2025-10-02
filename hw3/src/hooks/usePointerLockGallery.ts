@@ -34,6 +34,15 @@ export const usePointerLockGallery = () => {
   const velocityRef = useRef<THREE.Vector3>(new THREE.Vector3());
   const directionRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
+  // Reset hook state
+  const resetState = useCallback(() => {
+    setIsLoading(false);
+    setIsLocked(false);
+    setNearbyAntique(null);
+    keysPressed.current.clear();
+    console.log('Hook state reset');
+  }, []);
+
   const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL;
 
   // Get purchased items from localStorage
@@ -149,7 +158,17 @@ export const usePointerLockGallery = () => {
   const initializeControls = useCallback((camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer) => {
     // Dispose existing controls
     if (controlsRef.current) {
-      controlsRef.current.dispose();
+      try {
+        controlsRef.current.dispose();
+      } catch (error) {
+        console.warn('Error disposing existing controls:', error);
+      }
+    }
+
+    // Ensure DOM element is available and connected
+    if (!renderer.domElement || !renderer.domElement.isConnected) {
+      console.warn('Renderer DOM element not available for controls');
+      return;
     }
 
     const controls = new PointerLockControls(camera, renderer.domElement);
@@ -191,98 +210,120 @@ export const usePointerLockGallery = () => {
     controlsRef.current = controls;
   }, []);
 
-  // Load 3D models
+  // Load 3D models (with caching)
   const loadModels = useCallback(async () => {
     if (!sceneRef.current || !CDN_URL) return;
 
+    const scene = sceneRef.current;
+    
+    // Check if models are already loaded
+    const hasGalleryModel = scene.children.some(child => child.userData.isGalleryBackground);
+    const hasDisplayCases = scene.children.some(child => child.userData.isDisplayCase);
+    
+    if (hasGalleryModel && hasDisplayCases) {
+      console.log('Models already loaded, skipping...');
+      return;
+    }
+
     setIsLoading(true);
     const loader = new GLTFLoader();
-    const scene = sceneRef.current;
 
     try {
-      // Load gallery background
-      const galleryGltf = await new Promise<any>((resolve, reject) => {
-        loader.load(
-          `${CDN_URL}/vr_gallery.glb`,
-          resolve,
-          undefined,
-          reject
-        );
-      });
-      
-      const galleryModel = galleryGltf.scene;
-      galleryModel.position.set(0, 0, 0);
-      scene.add(galleryModel);
-
-      // Load display cases
-      const displayCasePositions = [
-        { x: -4, z: -4 },
-        { x: 0, z: -4 },
-        { x: 4, z: -4 },
-        { x: -4, z: 0 },
-        { x: 4, z: 0 },
-        { x: -4, z: 4 },
-        { x: 0, z: 4 },
-        { x: 4, z: 4 },
-      ];
-
-      const purchasedItems = getPurchasedItems();
-
-      for (let i = 0; i < 8; i++) {
-        // Load display case
-        const displayCaseGltf = await new Promise<any>((resolve, reject) => {
+      // Load gallery background only if not exists
+      if (!hasGalleryModel) {
+        console.log('Loading gallery background...');
+        const galleryGltf = await new Promise<any>((resolve, reject) => {
           loader.load(
-            `${CDN_URL}/display_case.glb`,
+            `${CDN_URL}/vr_gallery.glb`,
             resolve,
             undefined,
             reject
           );
         });
+        
+        const galleryModel = galleryGltf.scene;
+        galleryModel.position.set(0, 0, 0);
+        galleryModel.userData.isGalleryBackground = true; // Mark for identification
+        scene.add(galleryModel);
+        console.log('Gallery background loaded');
+      }
 
-        const displayCase = displayCaseGltf.scene.clone();
-        displayCase.position.set(
-          displayCasePositions[i].x,
-          0.7,
-          displayCasePositions[i].z
-        );
-        scene.add(displayCase);
+      // Load display cases and antiques only if not exists
+      if (!hasDisplayCases) {
+        console.log('Loading display cases and antiques...');
+        
+        const displayCasePositions = [
+          { x: -4, z: -4 },
+          { x: 0, z: -4 },
+          { x: 4, z: -4 },
+          { x: -4, z: 0 },
+          { x: 4, z: 0 },
+          { x: -4, z: 4 },
+          { x: 0, z: 4 },
+          { x: 4, z: 4 },
+        ];
 
-        // Load antique if available
-        if (i < purchasedItems.length) {
-          try {
-            console.log('Loading antique model:', purchasedItems[i]);
-            const antiqueGltf = await new Promise<any>((resolve, reject) => {
-              loader.load(
-                `${CDN_URL}/${purchasedItems[i]}.glb`,
-                resolve,
-                undefined,
-                reject
-              );
-            });
-            
-            const antiqueModel = antiqueGltf.scene;
-            
-            // Use the normalize and place function
-            const displayPos = new THREE.Vector3(displayCasePositions[i].x, 0, displayCasePositions[i].z);
-            const displayCaseHeight = 1.4;
-            const normalizedWrapper = normalizeAndPlace(antiqueModel, displayPos, displayCaseHeight);
-            
-            // Add floating animation to the wrapper
-            const originalY = normalizedWrapper.position.y;
-            normalizedWrapper.userData = {
-              originalY: originalY,
-              floatOffset: Math.random() * Math.PI * 2,
-              floatSpeed: 0.5 + Math.random() * 0.5,
-              floatAmplitude: 0.05 + Math.random() * 0.03,
-              rotationSpeed: 0.3 + Math.random() * 0.4,
-              rotationAxis: new THREE.Vector3(0, 1, 0)
-            };
-            
-            scene.add(normalizedWrapper);
-          } catch (error) {
-            console.warn(`Failed to load antique model: ${purchasedItems[i]}.glb`, error);
+        const purchasedItems = getPurchasedItems();
+
+        for (let i = 0; i < 8; i++) {
+          // Load display case
+          const displayCaseGltf = await new Promise<any>((resolve, reject) => {
+            loader.load(
+              `${CDN_URL}/display_case.glb`,
+              resolve,
+              undefined,
+              reject
+            );
+          });
+
+          const displayCase = displayCaseGltf.scene.clone();
+          displayCase.position.set(
+            displayCasePositions[i].x,
+            0.7,
+            displayCasePositions[i].z
+          );
+          displayCase.userData.isDisplayCase = true; // Mark for identification
+          scene.add(displayCase);
+
+          // Load antique if available
+          if (i < purchasedItems.length) {
+            try {
+              console.log('Loading antique model:', purchasedItems[i]);
+              const antiqueGltf = await new Promise<any>((resolve, reject) => {
+                loader.load(
+                  `${CDN_URL}/${purchasedItems[i]}.glb`,
+                  resolve,
+                  undefined,
+                  reject
+                );
+              });
+              
+              const antiqueModel = antiqueGltf.scene;
+              
+              // Use the normalize and place function
+              const displayPos = new THREE.Vector3(displayCasePositions[i].x, 0, displayCasePositions[i].z);
+              const displayCaseHeight = 1.4;
+              const normalizedWrapper = normalizeAndPlace(antiqueModel, displayPos, displayCaseHeight);
+              
+              // Add floating animation to the wrapper
+              const originalY = normalizedWrapper.position.y;
+              normalizedWrapper.userData = {
+                originalY: originalY,
+                floatOffset: Math.random() * Math.PI * 2,
+                floatSpeed: 0.5 + Math.random() * 0.5,
+                floatAmplitude: 0.05 + Math.random() * 0.03,
+                rotationSpeed: 0.3 + Math.random() * 0.4,
+                rotationAxis: new THREE.Vector3(0, 1, 0),
+                isAntique: true // Mark for identification
+              };
+              
+              scene.add(normalizedWrapper);
+            } catch (error) {
+              console.warn(`Failed to load antique model: ${purchasedItems[i]}.glb`, error);
+            }
           }
         }
+        console.log('Display cases and antiques loaded');
       }
 
     } catch (error) {
@@ -298,41 +339,72 @@ export const usePointerLockGallery = () => {
 
     console.log('Initializing Three.js scene...');
 
-    // Scene
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
-    sceneRef.current = scene;
+    // Reuse existing scene if available
+    let scene = sceneRef.current;
+    let camera = cameraRef.current;
+    let renderer = rendererRef.current;
 
-    // Camera
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    camera.position.set(0, 1.7, 0);
-    cameraRef.current = camera;
+    // Only create new scene if not exists
+    if (!scene) {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf0f0f0);
+      sceneRef.current = scene;
+      console.log('Created new scene');
+    } else {
+      console.log('Reusing existing scene');
+    }
 
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    rendererRef.current = renderer;
+    // Only create new camera if not exists
+    if (!camera) {
+      camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(0, 1.7, 0);
+      cameraRef.current = camera;
+      console.log('Created new camera');
+    } else {
+      // Reset camera position for new session
+      camera.position.set(0, 1.7, 0);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      console.log('Reset existing camera');
+    }
 
-    mountRef.current.appendChild(renderer.domElement);
+    // Only create new renderer if not exists
+    if (!renderer) {
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      rendererRef.current = renderer;
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
+      // Add lighting only for new scene
+      if (scene.children.length === 0) {
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(10, 10, 5);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    scene.add(directionalLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+        console.log('Added lighting to scene');
+      }
+      console.log('Created new renderer');
+    }
+
+    // Mount renderer to DOM if not already mounted
+    if (mountRef.current && !mountRef.current.contains(renderer.domElement)) {
+      mountRef.current.appendChild(renderer.domElement);
+      console.log('Mounted renderer to DOM');
+    } else if (mountRef.current && mountRef.current.contains(renderer.domElement)) {
+      console.log('Renderer already mounted to DOM');
+    }
 
     // Initialize controls
     initializeControls(camera, renderer);
@@ -455,34 +527,93 @@ export const usePointerLockGallery = () => {
 
     window.addEventListener('resize', handleResize);
 
-    // Cleanup function
+    // Cleanup function (minimal cleanup to preserve cache)
     return () => {
       window.removeEventListener('resize', handleResize);
+      
+      // Only clean up controls, keep scene and renderer cached
       if (controlsRef.current) {
-        controlsRef.current.dispose();
+        try {
+          controlsRef.current.dispose();
+        } catch (error) {
+          console.warn('Error disposing controls:', error);
+        }
+        controlsRef.current = null;
       }
+      
+      console.log('Minimal cleanup completed, scene preserved');
     };
   }, [initializeControls, checkNearbyDisplayCase, checkCollision, isLocked]);
 
   // Lock pointer
   const lockPointer = useCallback(() => {
-    // Wait a bit to ensure everything is initialized
-    setTimeout(() => {
-      if (controlsRef.current && !isLoading) {
-        console.log('Attempting to lock pointer...');
-        controlsRef.current.lock();
-      } else {
-        console.warn('Controls not ready or still loading');
-      }
-    }, 100);
+    if (controlsRef.current && !isLoading) {
+      console.log('Attempting to lock pointer...');
+      controlsRef.current.lock();
+    } else {
+      console.warn('Controls not ready or still loading');
+    }
   }, [isLoading]);
+
+  // Auto-lock pointer when ready
+  const autoLockPointer = useCallback(() => {
+    if (controlsRef.current && !isLoading && !isLocked && rendererRef.current?.domElement) {
+      console.log('Auto-locking pointer...');
+      try {
+        // Ensure the DOM element is still connected
+        if (rendererRef.current.domElement.isConnected && mountRef.current?.contains(rendererRef.current.domElement)) {
+          controlsRef.current.lock();
+        } else {
+          console.warn('DOM element not connected, cannot lock pointer');
+        }
+      } catch (error) {
+        console.error('Failed to lock pointer:', error);
+      }
+    }
+  }, [isLoading, isLocked]);
 
   // Unlock pointer
   const unlockPointer = useCallback(() => {
-    if (controlsRef.current) {
-      console.log('Unlocking pointer...');
-      controlsRef.current.unlock();
+    try {
+      if (document.pointerLockElement) {
+        console.log('Unlocking pointer...');
+        document.exitPointerLock();
+      }
+    } catch (error) {
+      console.error('Failed to unlock pointer:', error);
     }
+  }, []);
+
+  // Complete cleanup (for component unmount)
+  const completeCleanup = useCallback(() => {
+    console.log('Complete cleanup...');
+    
+    // Clean up controls
+    if (controlsRef.current) {
+      try {
+        controlsRef.current.dispose();
+      } catch (error) {
+        console.warn('Error disposing controls:', error);
+      }
+      controlsRef.current = null;
+    }
+    
+    // Clean up renderer and remove from DOM
+    if (rendererRef.current && mountRef.current) {
+      try {
+        if (mountRef.current.contains(rendererRef.current.domElement)) {
+          mountRef.current.removeChild(rendererRef.current.domElement);
+        }
+        rendererRef.current.dispose();
+      } catch (error) {
+        console.warn('Error disposing renderer:', error);
+      }
+      rendererRef.current = null;
+    }
+    
+    // Clear refs
+    sceneRef.current = null;
+    cameraRef.current = null;
   }, []);
 
   return {
@@ -494,7 +625,10 @@ export const usePointerLockGallery = () => {
     initThreeJS,
     loadModels,
     lockPointer,
+    autoLockPointer,
     unlockPointer,
+    resetState,
+    completeCleanup,
     controlsRef
   };
 };
