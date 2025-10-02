@@ -100,7 +100,7 @@ const Cart: React.FC = () => {
       <div className="bg-white w-full max-w-md h-full overflow-y-auto shadow-xl">
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900">My Collection</h2>
+            <h2 className="text-xl font-bold text-gray-900">My Shopping List</h2>
             <button
               onClick={() => dispatch({ type: 'CLOSE_CART' })}
               className="text-gray-400 hover:text-gray-600"
@@ -119,7 +119,7 @@ const Cart: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
             </div>
-            <p className="text-gray-500">Your collection is empty</p>
+            <p className="text-gray-500">Your shopping list is empty</p>
           </div>
         ) : (
           <>

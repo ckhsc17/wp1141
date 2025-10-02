@@ -3,11 +3,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
 interface ThreeGalleryProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+type ControlType = 'FirstPerson' | 'Orbit' | 'PointerLock';
 
 interface PurchaseRecord {
   id: number;
@@ -26,7 +31,10 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const controlsRef = useRef<FirstPersonControls | OrbitControls | PointerLockControls | null>(null);
+  const clockRef = useRef<THREE.Clock>(new THREE.Clock());
   const [isLoading, setIsLoading] = useState(false);
+  const [currentControl, setCurrentControl] = useState<ControlType>('FirstPerson');
 
   const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL;
 
@@ -63,15 +71,15 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
     scene.background = new THREE.Color(0xf0f0f0);
     sceneRef.current = scene;
 
-    // Camera
+    // Camera - position inside the gallery
     const camera = new THREE.PerspectiveCamera(
-      40,
+      75,
       window.innerWidth / window.innerHeight,
       0.1,
       1000
     );
-    camera.position.set(0, 5, 10);
-    camera.zoom = 1.5;
+    // Position camera inside the gallery room
+    camera.position.set(0, 2, 2);
     cameraRef.current = camera;
 
     // Renderer
@@ -95,50 +103,22 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
     directionalLight.shadow.mapSize.height = 2048;
     scene.add(directionalLight);
 
-    // Controls (basic mouse controls)
-    let mouseX = 0;
-    let mouseY = 0;
-    let isMouseDown = false;
-
-    const onMouseMove = (event: MouseEvent) => {
-      if (!isMouseDown) return;
-      
-      const deltaX = event.clientX - mouseX;
-      const deltaY = event.clientY - mouseY;
-      
-      camera.position.x += deltaX * 0.01;
-      camera.position.y -= deltaY * 0.01;
-      
-      camera.lookAt(0, 0, 0);
-      
-      mouseX = event.clientX;
-      mouseY = event.clientY;
-    };
-
-    const onMouseDown = (event: MouseEvent) => {
-      isMouseDown = true;
-      mouseX = event.clientX;
-      mouseY = event.clientY;
-    };
-
-    const onMouseUp = () => {
-      isMouseDown = false;
-    };
-
-    const onWheel = (event: WheelEvent) => {
-      const scale = event.deltaY > 0 ? 1.1 : 0.9;
-      camera.position.multiplyScalar(scale);
-      camera.lookAt(0, 0, 0);
-    };
-
-    renderer.domElement.addEventListener('mousemove', onMouseMove);
-    renderer.domElement.addEventListener('mousedown', onMouseDown);
-    renderer.domElement.addEventListener('mouseup', onMouseUp);
-    renderer.domElement.addEventListener('wheel', onWheel);
+    // Initialize controls
+    initializeControls(camera, renderer);
 
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
+      const deltaTime = clockRef.current.getDelta();
+      
+      if (controlsRef.current) {
+        if (controlsRef.current instanceof FirstPersonControls) {
+          controlsRef.current.update(deltaTime);
+        } else if (controlsRef.current instanceof OrbitControls) {
+          controlsRef.current.update();
+        }
+      }
+      
       renderer.render(scene, camera);
     };
     animate();
@@ -157,11 +137,142 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
     // Cleanup function
     return () => {
       window.removeEventListener('resize', handleResize);
-      renderer.domElement.removeEventListener('mousemove', onMouseMove);
-      renderer.domElement.removeEventListener('mousedown', onMouseDown);
-      renderer.domElement.removeEventListener('mouseup', onMouseUp);
-      renderer.domElement.removeEventListener('wheel', onWheel);
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
+      }
     };
+  };
+
+  // Initialize controls based on current control type
+  const initializeControls = (camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer) => {
+    // Dispose existing controls
+    if (controlsRef.current) {
+      controlsRef.current.dispose();
+    }
+
+    switch (currentControl) {
+      case 'FirstPerson':
+        const fpControls = new FirstPersonControls(camera, renderer.domElement);
+        fpControls.movementSpeed = 5;
+        fpControls.lookSpeed = 0.1;
+        fpControls.constrainVertical = true;
+        fpControls.verticalMin = 1.0;
+        fpControls.verticalMax = 2.0;
+        controlsRef.current = fpControls;
+        break;
+
+      case 'Orbit':
+        const orbitControls = new OrbitControls(camera, renderer.domElement);
+        orbitControls.enableDamping = true;
+        orbitControls.dampingFactor = 0.05;
+        orbitControls.target.set(0, 1, 0);
+        orbitControls.minDistance = 1;
+        orbitControls.maxDistance = 20;
+        orbitControls.maxPolarAngle = Math.PI * 0.8;
+        controlsRef.current = orbitControls;
+        break;
+
+      case 'PointerLock':
+        const plControls = new PointerLockControls(camera, renderer.domElement);
+        
+        // Add click to lock pointer
+        const instructions = document.createElement('div');
+        instructions.style.position = 'absolute';
+        instructions.style.top = '50%';
+        instructions.style.left = '50%';
+        instructions.style.transform = 'translate(-50%, -50%)';
+        instructions.style.color = 'white';
+        instructions.style.fontFamily = 'Arial';
+        instructions.style.fontSize = '16px';
+        instructions.style.textAlign = 'center';
+        instructions.style.pointerEvents = 'none';
+        instructions.innerHTML = 'Click to look around<br/>WASD to move';
+        
+        if (mountRef.current) {
+          mountRef.current.appendChild(instructions);
+        }
+
+        renderer.domElement.addEventListener('click', () => {
+          plControls.lock();
+        });
+
+        plControls.addEventListener('lock', () => {
+          if (instructions.parentNode) {
+            instructions.parentNode.removeChild(instructions);
+          }
+        });
+
+        plControls.addEventListener('unlock', () => {
+          if (mountRef.current && !mountRef.current.contains(instructions)) {
+            mountRef.current.appendChild(instructions);
+          }
+        });
+
+        // Add WASD movement for PointerLock
+        const moveForward = new THREE.Vector3();
+        const moveRight = new THREE.Vector3();
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+
+        const onKeyDown = (event: KeyboardEvent) => {
+          switch (event.code) {
+            case 'KeyW':
+              moveForward.z = -1;
+              break;
+            case 'KeyS':
+              moveForward.z = 1;
+              break;
+            case 'KeyA':
+              moveRight.x = -1;
+              break;
+            case 'KeyD':
+              moveRight.x = 1;
+              break;
+          }
+        };
+
+        const onKeyUp = (event: KeyboardEvent) => {
+          switch (event.code) {
+            case 'KeyW':
+            case 'KeyS':
+              moveForward.z = 0;
+              break;
+            case 'KeyA':
+            case 'KeyD':
+              moveRight.x = 0;
+              break;
+          }
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
+
+        // Store cleanup functions
+        (plControls as any).cleanup = () => {
+          document.removeEventListener('keydown', onKeyDown);
+          document.removeEventListener('keyup', onKeyUp);
+          if (instructions.parentNode) {
+            instructions.parentNode.removeChild(instructions);
+          }
+        };
+
+        controlsRef.current = plControls;
+        break;
+    }
+  };
+
+  // Switch control type
+  const switchControlType = (newType: ControlType) => {
+    if (currentControl === newType) return;
+    
+    setCurrentControl(newType);
+    
+    if (cameraRef.current && rendererRef.current) {
+      // Reset camera position when switching controls
+      cameraRef.current.position.set(0, 2, 2);
+      cameraRef.current.lookAt(0, 1, 0);
+      initializeControls(cameraRef.current, rendererRef.current);
+    }
   };
 
   // Load 3D models
@@ -260,7 +371,10 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
 
       return () => {
         cleanup?.();
-        if (rendererRef.current && mountRef.current) {
+        if (controlsRef.current && (controlsRef.current as any).cleanup) {
+          (controlsRef.current as any).cleanup();
+        }
+        if (rendererRef.current && mountRef.current && mountRef.current.contains(rendererRef.current.domElement)) {
           mountRef.current.removeChild(rendererRef.current.domElement);
           rendererRef.current.dispose();
         }
@@ -268,19 +382,63 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
+  // Re-initialize controls when control type changes
+  useEffect(() => {
+    if (isOpen && cameraRef.current && rendererRef.current) {
+      initializeControls(cameraRef.current, rendererRef.current);
+    }
+  }, [currentControl, isOpen]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black z-50">
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 text-black p-3 rounded-full shadow-lg"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+      {/* Control buttons */}
+      <div className="absolute top-4 right-4 z-10 flex flex-col space-y-2">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="bg-white hover:bg-gray-100 text-black p-3 rounded-full shadow-lg"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Control type buttons */}
+        <button
+          onClick={() => switchControlType('FirstPerson')}
+          className={`px-3 py-2 rounded-lg shadow-lg text-sm font-medium ${
+            currentControl === 'FirstPerson'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white hover:bg-gray-100 text-black'
+          }`}
+        >
+          First Person
+        </button>
+        
+        <button
+          onClick={() => switchControlType('Orbit')}
+          className={`px-3 py-2 rounded-lg shadow-lg text-sm font-medium ${
+            currentControl === 'Orbit'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white hover:bg-gray-100 text-black'
+          }`}
+        >
+          Orbit
+        </button>
+        
+        <button
+          onClick={() => switchControlType('PointerLock')}
+          className={`px-3 py-2 rounded-lg shadow-lg text-sm font-medium ${
+            currentControl === 'PointerLock'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white hover:bg-gray-100 text-black'
+          }`}
+        >
+          Pointer Lock
+        </button>
+      </div>
 
       {/* Loading indicator */}
       {isLoading && (
@@ -292,15 +450,33 @@ const ThreeGallery: React.FC<ThreeGalleryProps> = ({ isOpen, onClose }) => {
         </div>
       )}
 
-      {/* Instructions
+      {/* Instructions */}
       <div className="absolute top-4 left-4 z-10 bg-white bg-opacity-90 rounded-lg p-4 max-w-xs">
         <h3 className="font-bold mb-2">Controls:</h3>
         <ul className="text-sm space-y-1">
-          <li>• Drag to rotate camera</li>
-          <li>• Scroll to zoom in/out</li>
-          <li>• Your purchased items are displayed on cases</li>
+          {currentControl === 'FirstPerson' && (
+            <>
+              <li>• Move mouse to look around</li>
+              <li>• Click and drag to move</li>
+              <li>• Your purchased items are displayed on cases</li>
+            </>
+          )}
+          {currentControl === 'Orbit' && (
+            <>
+              <li>• Drag to rotate camera</li>
+              <li>• Scroll to zoom in/out</li>
+              <li>• Right-drag to pan</li>
+            </>
+          )}
+          {currentControl === 'PointerLock' && (
+            <>
+              <li>• Click to lock mouse cursor</li>
+              <li>• WASD to move</li>
+              <li>• Mouse to look around</li>
+            </>
+          )}
         </ul>
-      </div> */}
+      </div>
 
       {/* Three.js mount point */}
       <div ref={mountRef} className="w-full h-full" />
