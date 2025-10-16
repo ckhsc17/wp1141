@@ -21,6 +21,8 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 
 const TreasureForm: React.FC<TreasureFormProps> = ({
   mode,
+  opened,
+  onClose,
   initialData,
   onSubmit,
   onCancel,
@@ -134,8 +136,8 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
 
   return (
     <Modal
-      opened={true}
-      onClose={onCancel}
+      opened={opened}
+      onClose={onClose}
       title={mode === 'create' ? '創建新寶藏' : '編輯寶藏'}
       size="lg"
       centered

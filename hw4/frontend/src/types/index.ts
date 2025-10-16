@@ -219,6 +219,8 @@ export interface TreasureCardProps {
 
 export interface TreasureFormProps {
   mode: 'create' | 'edit';
+  opened: boolean;
+  onClose: () => void;
   initialData?: Partial<CreateTreasureRequest>;
   onSubmit: (data: CreateTreasureRequest) => void;
   onCancel: () => void;

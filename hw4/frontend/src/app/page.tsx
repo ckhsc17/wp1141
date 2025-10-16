@@ -20,17 +20,48 @@ import {
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import GoogleMapComponent from '@/components/GoogleMapComponent';
-import { MapLocation, TreasureMarker } from '@/types';
+import TreasureForm from '@/components/TreasureForm';
+import { MapLocation, TreasureMarker, TreasureType } from '@/types';
 
 export default function HomePage() {
   const [treasureFormOpened, { open: openTreasureForm, close: closeTreasureForm }] = useDisclosure(false);
   const [sidebarOpened, { open: openSidebar, close: closeSidebar }] = useDisclosure(false);
   
   // 預設地圖中心（台北101）
-  const [mapCenter] = useState<MapLocation>({
+  const [mapCenter, setMapCenter] = useState<MapLocation>({
     lat: 25.0330,
     lng: 121.5654
   });
+
+  // 處理獲取當前位置
+  const handleGetCurrentLocation = () => {
+    console.log('嘗試獲取當前位置...');
+    
+    if (!navigator.geolocation) {
+      alert('此瀏覽器不支援地理位置功能');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        console.log('獲取到位置:', newLocation);
+        setMapCenter(newLocation);
+      },
+      (error) => {
+        console.error('獲取位置失敗:', error);
+        alert('無法獲取您的位置，請檢查位置權限設定');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
 
   // 示例寶藏標記
   const treasureMarkersForMap = [
@@ -61,6 +92,13 @@ export default function HomePage() {
     console.log('標記點擊:', marker);
   };
 
+  // 處理寶藏表單提交
+  const handleTreasureSubmit = (data: any) => {
+    console.log('新增寶藏:', data);
+    // TODO: 實作新增寶藏邏輯
+    closeTreasureForm();
+  };
+
   return (
     <AppShell
       header={{ height: 70 }}
@@ -81,6 +119,7 @@ export default function HomePage() {
                 leftSection={<IconLocation size={16} />}
                 variant="outline"
                 size="sm"
+                onClick={handleGetCurrentLocation}
               >
                 我的位置
               </Button>
@@ -130,6 +169,15 @@ export default function HomePage() {
           <Text>寶藏功能開發中...</Text>
         </Stack>
       </Drawer>
+
+      {/* 寶藏表單 Modal */}
+      <TreasureForm
+        mode="create"
+        opened={treasureFormOpened}
+        onClose={closeTreasureForm}
+        onSubmit={handleTreasureSubmit}
+        onCancel={closeTreasureForm}
+      />
     </AppShell>
   );
 }
