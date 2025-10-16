@@ -19,10 +19,47 @@ import {
   IconMap
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
+import GoogleMapComponent from '@/components/GoogleMapComponent';
+import { MapLocation, TreasureMarker } from '@/types';
 
 export default function HomePage() {
   const [treasureFormOpened, { open: openTreasureForm, close: closeTreasureForm }] = useDisclosure(false);
   const [sidebarOpened, { open: openSidebar, close: closeSidebar }] = useDisclosure(false);
+  
+  // 預設地圖中心（台北101）
+  const [mapCenter] = useState<MapLocation>({
+    lat: 25.0330,
+    lng: 121.5654
+  });
+
+  // 示例寶藏標記
+  const treasureMarkersForMap = [
+    {
+      key: 'treasure1',
+      location: { lat: 25.0330, lng: 121.5654 },
+      title: '台北101寶藏'
+    },
+    {
+      key: 'treasure2', 
+      location: { lat: 25.0478, lng: 121.5318 },
+      title: '中正紀念堂寶藏'
+    },
+    {
+      key: 'treasure3',
+      location: { lat: 25.0417, lng: 121.5115 },
+      title: '龍山寺寶藏'
+    }
+  ];
+
+  const [treasureMarkers] = useState<TreasureMarker[]>([]);
+
+  const handleMapClick = (location: MapLocation) => {
+    console.log('地圖點擊:', location);
+  };
+
+  const handleMarkerClick = (marker: TreasureMarker) => {
+    console.log('標記點擊:', marker);
+  };
 
   return (
     <AppShell
@@ -70,18 +107,15 @@ export default function HomePage() {
 
       <AppShell.Main>
         <Container size="xl" h="calc(100vh - 70px)">
-          <div style={{ 
-            height: '100%', 
-            backgroundColor: '#f8f9fa', 
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Text size="lg" c="dimmed">
-              地圖載入中...
-            </Text>
-          </div>
+          <GoogleMapComponent
+            center={mapCenter}
+            zoom={15}
+            markers={treasureMarkersForMap}
+            onMapClick={handleMapClick}
+            onMarkerClick={(position) => console.log('標記點擊:', position)}
+            height="calc(100vh - 100px)"
+            width="100%"
+          />
         </Container>
       </AppShell.Main>
 

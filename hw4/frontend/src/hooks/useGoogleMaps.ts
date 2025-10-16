@@ -41,17 +41,38 @@ export const useGoogleMaps = ({
   // 初始化 Google Maps
   useEffect(() => {
     const initMap = async () => {
-      if (!mapRef.current) return;
+      console.log('init Map called');
+      console.log('mapRef.current:', mapRef.current);
+      
+      if (!mapRef.current) {
+        console.log('mapRef.current is null, skipping initialization');
+        return;
+      }
+      
+      console.log('mapRef is set, proceeding with initialization');
 
       try {
+        console.log('開始載入 Google Maps API...');
+        console.log('API Key:', process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? '已設置' : '未設置');
+
         const loader = new Loader({
           apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
           version: 'weekly',
-          libraries: ['places', 'geometry']
+          libraries: ['places', 'geometry'],
+          region: 'TW', // 設置台灣地區
+          language: 'zh-TW' // 設置繁體中文
         });
 
         // 等待 Google Maps API 載入
+        console.log('載入 Google Maps API...');
         await loader.load();
+        console.log('Google Maps API 載入完成');
+
+        // 確保 DOM 元素仍然存在
+        if (!mapRef.current) {
+          console.log('mapRef.current became null during loading');
+          return;
+        }
 
         const map = new google.maps.Map(mapRef.current, {
           center,
@@ -63,8 +84,12 @@ export const useGoogleMaps = ({
           scaleControl: true,
           streetViewControl: false,
           rotateControl: false,
-          fullscreenControl: true
+          fullscreenControl: true,
+          gestureHandling: 'cooperative', // 根據官方建議
+          backgroundColor: '#f5f5f5' // 載入時的背景色
         });
+
+        console.log('地圖初始化完成');
 
         // 地圖點擊事件
         if (onMapClick) {
@@ -97,13 +122,19 @@ export const useGoogleMaps = ({
 
         setMapInstance(map);
         setIsLoaded(true);
+        console.log('地圖設置完成');
       } catch (err) {
-        setError('載入 Google Maps 失敗');
         console.error('Google Maps loading error:', err);
+        setError(`載入 Google Maps 失敗: ${err instanceof Error ? err.message : '未知錯誤'}`);
       }
     };
 
-    initMap();
+    // 使用 setTimeout 確保 DOM 已經渲染
+    const timeoutId = setTimeout(initMap, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [center, zoom, onMapClick, onBoundsChanged]);
 
   // 創建標記圖標
