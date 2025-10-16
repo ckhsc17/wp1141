@@ -52,6 +52,7 @@ model Treasure {
   commentsCount    Int         @default(0)
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?   // 軟刪除時間戳記
 
   // Relations
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -64,6 +65,7 @@ model Treasure {
   @@index([type, createdAt])
   @@index([userId, createdAt])
   @@index([tags])
+  @@index([deletedAt]) // 為軟刪除查詢優化
   @@map("treasures")
 }
 
@@ -92,12 +94,14 @@ model Comment {
   content    String   @db.VarChar(500)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  deletedAt  DateTime? // 軟刪除時間戳記
 
   // Relations
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   treasure Treasure @relation(fields: [treasureId], references: [id], onDelete: Cascade)
 
   @@index([treasureId, createdAt])
+  @@index([deletedAt]) // 為軟刪除查詢優化
   @@map("comments")
 }
 

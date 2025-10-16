@@ -15,6 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
+    "db:clean": "ts-node prisma/clean.ts",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f"
@@ -46,6 +47,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.1.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.19",
