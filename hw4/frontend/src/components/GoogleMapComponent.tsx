@@ -22,11 +22,51 @@ interface GoogleMapComponentProps {
   center: google.maps.LatLngLiteral;
   zoom?: number;
   markers?: TreasureMarker[];
+  currentLocation?: google.maps.LatLngLiteral | null;
+  showCurrentLocation?: boolean;
   onMarkerClick?: (position: google.maps.LatLngLiteral) => void;
   onMapClick?: (position: google.maps.LatLngLiteral) => void;
   height?: string;
   width?: string;
 }
+
+// 當前位置標記組件
+const CurrentLocationMarker: React.FC<{ 
+  position: google.maps.LatLngLiteral;
+}> = ({ position }) => {
+  return (
+    <AdvancedMarker
+      position={position}
+      clickable={false}
+    >
+      <div
+        style={{
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          backgroundColor: '#4285F4',
+          border: '3px solid #ffffff',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+          position: 'relative'
+        }}
+      >
+        {/* 外圈動畫效果 */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '-8px',
+            left: '-8px',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(66, 133, 244, 0.3)',
+            animation: 'locationPulse 2s infinite'
+          }}
+        />
+      </div>
+    </AdvancedMarker>
+  );
+};
 
 // 寶藏標記組件
 const TreasureMarkers: React.FC<{ markers: TreasureMarker[], onMarkerClick?: (position: google.maps.LatLngLiteral) => void }> = ({ 
@@ -107,12 +147,20 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   center,
   zoom = 12,
   markers = [],
+  currentLocation = null,
+  showCurrentLocation = false,
   onMarkerClick,
   onMapClick,
   height = '400px',
   width = '100%'
 }) => {
-  console.log('GoogleMapComponent 渲染中...', { center, zoom, markersCount: markers.length });
+  console.log('GoogleMapComponent 渲染中...', { 
+    center, 
+    zoom, 
+    markersCount: markers.length,
+    currentLocation,
+    showCurrentLocation
+  });
 
   // 處理地圖點擊
   const handleMapClick = useCallback((ev: MapMouseEvent) => {
@@ -168,6 +216,9 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
             markers={markers} 
             onMarkerClick={onMarkerClick} 
           />
+          {showCurrentLocation && currentLocation && (
+            <CurrentLocationMarker position={currentLocation} />
+          )}
         </Map>
       </APIProvider>
     </Box>

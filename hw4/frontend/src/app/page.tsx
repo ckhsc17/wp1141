@@ -33,11 +33,16 @@ export default function HomePage() {
     lng: 121.5654
   });
 
+  // 當前位置狀態
+  const [currentLocation, setCurrentLocation] = useState<MapLocation | null>(null);
+  const [showCurrentLocation, setShowCurrentLocation] = useState(false);
+
   // 處理獲取當前位置
   const handleGetCurrentLocation = () => {
     console.log('嘗試獲取當前位置...');
     
     if (!navigator.geolocation) {
+      console.error('瀏覽器不支援地理位置功能');
       alert('此瀏覽器不支援地理位置功能');
       return;
     }
@@ -48,8 +53,10 @@ export default function HomePage() {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
-        console.log('獲取到位置:', newLocation);
-        setMapCenter(newLocation);
+        console.log('成功獲取當前位置:', newLocation);
+        setCurrentLocation(newLocation);
+        setShowCurrentLocation(true);
+        setMapCenter(newLocation); // 移動地圖中心到當前位置
       },
       (error) => {
         console.error('獲取位置失敗:', error);
@@ -150,6 +157,8 @@ export default function HomePage() {
             center={mapCenter}
             zoom={15}
             markers={treasureMarkersForMap}
+            currentLocation={currentLocation}
+            showCurrentLocation={showCurrentLocation}
             onMapClick={handleMapClick}
             onMarkerClick={(position) => console.log('標記點擊:', position)}
             height="calc(100vh - 100px)"
