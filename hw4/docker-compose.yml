@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 資料庫
+  postgres:
+    image: postgres:15-alpine
+    container_name: treasure-map-db
+    restart: always
+    environment:
+      POSTGRES_DB: treasure_map
+      POSTGRES_USER: treasure_user
+      POSTGRES_PASSWORD: treasure_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - treasure-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U treasure_user -d treasure_map"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (可選，用於快取和會話管理)
+  redis:
+    image: redis:7-alpine
+    container_name: treasure-map-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - treasure-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin (可選，資料庫管理工具)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: treasure-map-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@treasure-map.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - treasure-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  treasure-network:
+    driver: bridge
