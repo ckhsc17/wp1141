@@ -6,6 +6,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (googleToken: string) => Promise<void>;
+  loginWithPassword: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -28,7 +30,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('accessToken');
       if (token) {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -56,7 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (googleToken: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -78,6 +80,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithPassword = async (email: string, password: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setUser(result.data.user);
+        localStorage.setItem('accessToken', result.data.accessToken);
+        localStorage.setItem('refreshToken', result.data.refreshToken);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '登入失敗');
+      }
+    } catch (error) {
+      console.error('密碼登入錯誤:', error);
+      throw error;
+    }
+  };
+
+  const register = async (name: string, email: string, password: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setUser(result.data.user);
+        localStorage.setItem('accessToken', result.data.accessToken);
+        localStorage.setItem('refreshToken', result.data.refreshToken);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '註冊失敗');
+      }
+    } catch (error) {
+      console.error('註冊錯誤:', error);
+      throw error;
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('accessToken');
@@ -88,7 +140,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -110,6 +162,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isAuthenticated,
       isLoading,
       login,
+      loginWithPassword,
+      register,
       logout,
       refreshUser
     }}>
