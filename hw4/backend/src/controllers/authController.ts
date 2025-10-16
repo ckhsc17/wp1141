@@ -12,7 +12,11 @@ import { generateTokens, verifyRefreshToken } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 
 const prisma = new PrismaClient();
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  `${process.env.BASE_URL}/auth/google/callback`
+);
 
 /**
  * @swagger
@@ -349,7 +353,7 @@ export const googleAuth = async (
         'https://www.googleapis.com/auth/userinfo.profile',
         'https://www.googleapis.com/auth/userinfo.email'
       ],
-      redirect_uri: `${process.env.BASE_URL}/api/auth/google/callback`
+      redirect_uri: `${process.env.BASE_URL}/auth/google/callback`
     });
 
     res.redirect(authUrl);
@@ -390,7 +394,10 @@ export const googleCallback = async (
   try {
     const { code, error } = req.query;
 
+    console.log('Google callback received:', { code: !!code, error });
+
     if (error) {
+      console.error('Google OAuth error:', error);
       // Redirect to frontend with error
       const frontendUrl = `${process.env.FRONTEND_URL}/auth/error?error=${encodeURIComponent(error as string)}`;
       res.redirect(frontendUrl);
@@ -398,16 +405,24 @@ export const googleCallback = async (
     }
 
     if (!code) {
+      console.error('Missing authorization code');
       const frontendUrl = `${process.env.FRONTEND_URL}/auth/error?error=missing_code`;
       res.redirect(frontendUrl);
       return;
     }
 
+    console.log('Attempting to exchange code for tokens...');
+    console.log('Redirect URI:', `${process.env.BASE_URL}/auth/google/callback`);
+    console.log('Google Client ID:', process.env.GOOGLE_CLIENT_ID);
+    console.log('Has Client Secret:', !!process.env.GOOGLE_CLIENT_SECRET);
+
     // Exchange authorization code for tokens
     const { tokens } = await googleClient.getToken({
       code: code as string,
-      redirect_uri: `${process.env.BASE_URL}/api/auth/google/callback`
+      redirect_uri: `${process.env.BASE_URL}/auth/google/callback`
     });
+
+    console.log('Successfully obtained tokens:', { hasIdToken: !!tokens.id_token });
 
     if (!tokens.id_token) {
       const frontendUrl = `${process.env.FRONTEND_URL}/auth/error?error=no_id_token`;
@@ -471,7 +486,15 @@ export const googleCallback = async (
     res.redirect(frontendUrl);
 
   } catch (error) {
-    next(error);
+    console.error('Google callback error:', error);
+    
+    // If it's a Google OAuth error, redirect to frontend with error details
+    if (error instanceof Error) {
+      const frontendUrl = `${process.env.FRONTEND_URL}/auth/error?error=${encodeURIComponent(error.message)}`;
+      res.redirect(frontendUrl);
+    } else {
+      next(error);
+    }
   }
 };
 

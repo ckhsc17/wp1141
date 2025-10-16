@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { ERROR_MESSAGES } from '@/utils/constants';
 
 // API 基礎設定
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 // 創建 axios 實例
 const apiClient: AxiosInstance = axios.create({
