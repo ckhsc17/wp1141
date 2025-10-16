@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import app from './app';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/prisma';
 
 // Load environment variables
 dotenv.config();

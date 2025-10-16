@@ -3,7 +3,11 @@ import {
   login,
   refreshToken,
   getProfile,
-  logout
+  logout,
+  googleCallback,
+  googleAuth,
+  register,
+  loginWithPassword
 } from '../controllers/authController';
 import {
   validateLogin,
@@ -22,7 +26,13 @@ const router = Router();
 
 // Public routes
 router.post('/login', validateLogin, login);
+router.post('/register', register);
+router.post('/login-password', loginWithPassword);
 router.post('/refresh', validateRefreshToken, refreshToken);
+
+// Google OAuth routes
+router.get('/google', googleAuth);
+router.get('/google/callback', googleCallback);
 
 // Protected routes
 router.get('/profile', authenticate, getProfile);

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { OAuth2Client } from 'google-auth-library';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../generated/prisma';
 import { 
   AuthenticatedRequest, 
   LoginRequest, 
@@ -322,6 +322,218 @@ export const logout = async (
     };
 
     res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @swagger
+ * /api/auth/google:
+ *   get:
+ *     summary: Initiate Google OAuth authentication
+ *     tags: [Authentication]
+ *     responses:
+ *       302:
+ *         description: Redirect to Google OAuth consent screen
+ */
+export const googleAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authUrl = googleClient.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email'
+      ],
+      redirect_uri: `${process.env.BASE_URL}/api/auth/google/callback`
+    });
+
+    res.redirect(authUrl);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @swagger
+ * /api/auth/google/callback:
+ *   get:
+ *     summary: Handle Google OAuth callback
+ *     tags: [Authentication]
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Authorization code from Google
+ *       - in: query
+ *         name: error
+ *         schema:
+ *           type: string
+ *         description: Error from Google OAuth
+ *     responses:
+ *       302:
+ *         description: Redirect to frontend with tokens or error
+ *       400:
+ *         description: Invalid authorization code
+ */
+export const googleCallback = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { code, error } = req.query;
+
+    if (error) {
+      // Redirect to frontend with error
+      const frontendUrl = `${process.env.FRONTEND_URL}/auth/error?error=${encodeURIComponent(error as string)}`;
+      res.redirect(frontendUrl);
+      return;
+    }
+
+    if (!code) {
+      const frontendUrl = `${process.env.FRONTEND_URL}/auth/error?error=missing_code`;
+      res.redirect(frontendUrl);
+      return;
+    }
+
+    // Exchange authorization code for tokens
+    const { tokens } = await googleClient.getToken({
+      code: code as string,
+      redirect_uri: `${process.env.BASE_URL}/api/auth/google/callback`
+    });
+
+    if (!tokens.id_token) {
+      const frontendUrl = `${process.env.FRONTEND_URL}/auth/error?error=no_id_token`;
+      res.redirect(frontendUrl);
+      return;
+    }
+
+    // Verify the ID token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      const frontendUrl = `${process.env.FRONTEND_URL}/auth/error?error=invalid_token`;
+      res.redirect(frontendUrl);
+      return;
+    }
+
+    const googleUserInfo: GoogleUserInfo = {
+      id: payload.sub,
+      email: payload.email!,
+      name: payload.name!,
+      picture: payload.picture
+    };
+
+    // Find or create user
+    let user = await prisma.user.findUnique({
+      where: { googleId: googleUserInfo.id }
+    });
+
+    if (!user) {
+      // Create new user
+      user = await prisma.user.create({
+        data: {
+          email: googleUserInfo.email,
+          name: googleUserInfo.name,
+          avatar: googleUserInfo.picture,
+          googleId: googleUserInfo.id
+        }
+      });
+    } else {
+      // Update existing user info
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email: googleUserInfo.email,
+          name: googleUserInfo.name,
+          avatar: googleUserInfo.picture,
+          updatedAt: new Date()
+        }
+      });
+    }
+
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(user.id, user.email);
+
+    // Redirect to frontend with tokens
+    const frontendUrl = `${process.env.FRONTEND_URL}/auth/success?accessToken=${accessToken}&refreshToken=${refreshToken}`;
+    res.redirect(frontendUrl);
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Register new user with email and password
+ */
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { AuthService } = await import('../services/authService');
+    const authService = new AuthService();
+    
+    const result = await authService.register(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: result.error,
+        message: result.error
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      data: result.data,
+      message: 'Registration successful'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Login user with email and password
+ */
+export const loginWithPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { AuthService } = await import('../services/authService');
+    const authService = new AuthService();
+    
+    const result = await authService.login(req.body);
+
+    if (!result.success) {
+      return res.status(401).json({
+        success: false,
+        error: result.error,
+        message: result.error
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: result.data,
+      message: 'Login successful'
+    });
   } catch (error) {
     next(error);
   }

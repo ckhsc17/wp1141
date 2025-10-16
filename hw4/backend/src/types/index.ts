@@ -17,7 +17,8 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
-  googleId: string;
+  googleId?: string; // 改為 optional
+  password?: string; // 新增密碼欄位
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,7 +49,7 @@ export interface UserDTO {
   id: string;
   email: string;
   name: string;
-  avatar?: string;
+  avatar?: string | null;
 }
 
 export interface CreateUserDTO {
@@ -56,6 +57,24 @@ export interface CreateUserDTO {
   name: string;
   avatar?: string;
   googleId: string;
+}
+
+// ==================== Auth Request Types ====================
+
+export interface RegisterRequest {
+  email: string;
+  name: string;
+  password: string;
+  avatar?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface GoogleOAuthRequest {
+  googleToken: string;
 }
 
 export interface CreateTreasureDTO {

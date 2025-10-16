@@ -1,13 +1,18 @@
 import { OAuth2Client } from 'google-auth-library';
-import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+import { PrismaClient } from '../generated/prisma';
 import {
   GoogleUserInfo,
   UserDTO,
   LoginResponse,
-  ServiceResult
+  ServiceResult,
+  RegisterRequest,
+  LoginRequest
 } from '../types';
 import { generateTokens } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { PasswordService } from './passwordService';
+import { JWTService } from './jwtService';
 
 const prisma = new PrismaClient();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -115,9 +120,9 @@ export class AuthService {
   }
 
   /**
-   * Complete login process
+   * Complete Google OAuth login process
    */
-  async login(googleToken: string): Promise<ServiceResult<LoginResponse>> {
+  async loginWithGoogle(googleToken: string): Promise<ServiceResult<LoginResponse>> {
     try {
       // Verify Google token
       const googleResult = await this.verifyGoogleToken(googleToken);
@@ -191,6 +196,153 @@ export class AuthService {
       return {
         success: false,
         error: 'Failed to get user'
+      };
+    }
+  }
+
+  /**
+   * Register new user with email and password
+   */
+  async register(data: RegisterRequest): Promise<ServiceResult<LoginResponse>> {
+    try {
+      // 驗證密碼強度
+      const passwordValidation = PasswordService.validatePasswordStrength(data.password);
+      if (!passwordValidation.isValid) {
+        return {
+          success: false,
+          error: passwordValidation.errors.join(', ')
+        };
+      }
+
+      // 檢查 email 是否已存在
+      const existingUser = await prisma.user.findUnique({
+        where: { email: data.email }
+      });
+
+      if (existingUser) {
+        return {
+          success: false,
+          error: 'Email already registered'
+        };
+      }
+
+      // 雜湊密碼
+      const hashedPassword = await PasswordService.hashPassword(data.password);
+
+      // 創建用戶
+      const user = await prisma.user.create({
+        data: {
+          email: data.email,
+          name: data.name,
+          password: hashedPassword,
+          avatar: data.avatar
+        }
+      });
+
+      // 生成 tokens
+      const accessToken = JWTService.generateAccessToken({
+        userId: user.id,
+        email: user.email
+      });
+
+      const refreshToken = JWTService.generateRefreshToken({
+        userId: user.id,
+        email: user.email
+      });
+
+      // 轉換為 DTO
+      const userDTO: UserDTO = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar
+      };
+
+      return {
+        success: true,
+        data: {
+          user: userDTO,
+          accessToken,
+          refreshToken
+        }
+      };
+
+    } catch (error) {
+      console.error('Registration error:', error);
+      return {
+        success: false,
+        error: 'Failed to register user'
+      };
+    }
+  }
+
+  /**
+   * Login user with email and password
+   */
+  async login(data: LoginRequest): Promise<ServiceResult<LoginResponse>> {
+    try {
+      // 查找用戶
+      const user = await prisma.user.findUnique({
+        where: { email: data.email }
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          error: 'Invalid email or password'
+        };
+      }
+
+      // 檢查是否為 OAuth 用戶
+      if (!user.password) {
+        return {
+          success: false,
+          error: 'This account was registered with Google. Please use Google Sign-In.'
+        };
+      }
+
+      // 驗證密碼
+      const isValidPassword = await PasswordService.verifyPassword(data.password, user.password);
+      if (!isValidPassword) {
+        return {
+          success: false,
+          error: 'Invalid email or password'
+        };
+      }
+
+      // 生成 tokens
+      const accessToken = JWTService.generateAccessToken({
+        userId: user.id,
+        email: user.email
+      });
+
+      const refreshToken = JWTService.generateRefreshToken({
+        userId: user.id,
+        email: user.email
+      });
+
+      // 轉換為 DTO
+      const userDTO: UserDTO = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar
+      };
+
+      return {
+        success: true,
+        data: {
+          user: userDTO,
+          accessToken,
+          refreshToken
+        }
+      };
+
+    } catch (error) {
+      console.error('Login error:', error);
+      return {
+        success: false,
+        error: 'Failed to login'
       };
     }
   }

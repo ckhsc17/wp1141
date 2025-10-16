@@ -20,7 +20,8 @@ model User {
   email     String   @unique
   name      String
   avatar    String?
-  googleId  String   @unique
+  googleId  String?  @unique // 改為 optional，因為傳統註冊不需要
+  password  String?  // 新增密碼欄位，OAuth 用戶不需要
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
