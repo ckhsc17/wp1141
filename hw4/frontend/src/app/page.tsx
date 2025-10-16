@@ -10,22 +10,32 @@ import {
   ActionIcon,
   Drawer,
   Stack,
-  Text
+  Text,
+  Avatar,
+  Menu
 } from '@mantine/core';
 import {
   IconPlus,
   IconFilter,
   IconLocation,
-  IconMap
+  IconMap,
+  IconUser,
+  IconSettings,
+  IconLogout
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import GoogleMapComponent from '@/components/GoogleMapComponent';
 import TreasureForm from '@/components/TreasureForm';
+import ProfileModal from '@/components/ProfileModal';
+import LoginPage from '@/components/LoginPage';
+import { useAuth } from '@/contexts/AuthContext';
 import { MapLocation, TreasureMarker, TreasureType } from '@/types';
 
 export default function HomePage() {
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [treasureFormOpened, { open: openTreasureForm, close: closeTreasureForm }] = useDisclosure(false);
   const [sidebarOpened, { open: openSidebar, close: closeSidebar }] = useDisclosure(false);
+  const [profileModalOpened, { open: openProfileModal, close: closeProfileModal }] = useDisclosure(false);
   
   // 預設地圖中心（台北101）
   const [mapCenter, setMapCenter] = useState<MapLocation>({
@@ -106,6 +116,20 @@ export default function HomePage() {
     closeTreasureForm();
   };
 
+  // 如果正在載入認證狀態
+  if (isLoading) {
+    return (
+      <Container size="xs" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Text>載入中...</Text>
+      </Container>
+    );
+  }
+
+  // 如果未登入，顯示登入頁面
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
   return (
     <AppShell
       header={{ height: 70 }}
@@ -146,6 +170,48 @@ export default function HomePage() {
               >
                 <IconFilter size={18} />
               </ActionIcon>
+
+              {/* 用戶個人資料選單 */}
+              <Menu shadow="md" width={200}>
+                <Menu.Target>
+                  <ActionIcon
+                    variant="light"
+                    size="lg"
+                    radius="50%"
+                  >
+                    <Avatar
+                      src={user?.avatar}
+                      size="sm"
+                      radius="50%"
+                    >
+                      <IconUser size={16} />
+                    </Avatar>
+                  </ActionIcon>
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                  <Menu.Label>{user?.name}</Menu.Label>
+                  <Menu.Item
+                    leftSection={<IconUser size={14} />}
+                    onClick={openProfileModal}
+                  >
+                    個人資料
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconSettings size={14} />}
+                  >
+                    設定
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconLogout size={14} />}
+                    color="red"
+                    onClick={logout}
+                  >
+                    登出
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
             </Group>
           </Group>
         </Container>
@@ -178,6 +244,12 @@ export default function HomePage() {
           <Text>寶藏功能開發中...</Text>
         </Stack>
       </Drawer>
+
+      {/* 個人資料 Modal */}
+      <ProfileModal
+        opened={profileModalOpened}
+        onClose={closeProfileModal}
+      />
 
       {/* 寶藏表單 Modal */}
       <TreasureForm

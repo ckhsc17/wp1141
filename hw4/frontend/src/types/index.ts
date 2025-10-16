@@ -90,6 +90,12 @@ export interface LoginResponse {
   refreshToken: string;
 }
 
+export interface LoginResponse {
+  user: UserDTO;
+  accessToken: string;
+  refreshToken: string;
+}
+
 export interface CreateTreasureRequest {
   title: string;
   content: string;
