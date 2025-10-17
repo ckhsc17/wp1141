@@ -92,7 +92,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/treasures', treasureRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/comments', commentRoutes);
+app.use('/api', commentRoutes);
 app.use('/api/uploads', uploadRoutes);
 
 // ==================== Error Handling ====================

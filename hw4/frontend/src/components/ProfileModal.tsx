@@ -53,7 +53,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
     
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.id}/stats`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
