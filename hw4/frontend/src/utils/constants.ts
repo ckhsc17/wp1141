@@ -39,6 +39,8 @@ export const API_ENDPOINTS = {
   // 認證相關
   AUTH: {
     LOGIN: '/api/auth/login',
+    LOGIN_PASSWORD: '/api/auth/login-password',
+    REGISTER: '/api/auth/register',
     REFRESH: '/api/auth/refresh',
     LOGOUT: '/api/auth/logout',
     PROFILE: '/api/auth/profile'

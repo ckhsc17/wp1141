@@ -23,7 +23,7 @@ import {
 } from '@tabler/icons-react';
 import { TreasureCardProps } from '@/types';
 import { TREASURE_TYPE_CONFIG } from '@/utils/constants';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/contexts/AuthContext';
 
 const TreasureCard: React.FC<TreasureCardProps> = ({
   treasure,
@@ -33,7 +33,7 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
   onEdit,
   onDelete
 }) => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const typeConfig = TREASURE_TYPE_CONFIG[treasure.type];
   const isOwner = user?.id === treasure.user.id;
 

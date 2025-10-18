@@ -11,12 +11,7 @@ import {
 } from '@vis.gl/react-google-maps';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import type { Marker } from '@googlemaps/markerclusterer';
-
-interface TreasureMarker {
-  key: string;
-  location: google.maps.LatLngLiteral;
-  title?: string;
-}
+import { TreasureMarker } from '@/types';
 
 interface GoogleMapComponentProps {
   center: google.maps.LatLngLiteral;
@@ -96,25 +91,25 @@ const TreasureMarkers: React.FC<{ markers: TreasureMarker[], onMarkerClick?: (po
     if (!map) return;
     if (!ev.latLng) return;
     
-    console.log('寶藏標記被點擊:', marker.title || marker.key);
+    console.log('寶藏標記被點擊:', marker.title || marker.id);
     map.panTo(ev.latLng);
     
     if (onMarkerClick) {
-      onMarkerClick(marker.location);
+      onMarkerClick({ lat: marker.position.lat, lng: marker.position.lng });
     }
   }, [map, onMarkerClick]);
 
   // 設定標記參照
-  const setMarkerRef = useCallback((marker: Marker | null, key: string) => {
-    if (marker && markerInstances[key]) return;
-    if (!marker && !markerInstances[key]) return;
+  const setMarkerRef = useCallback((marker: Marker | null, id: string) => {
+    if (marker && markerInstances[id]) return;
+    if (!marker && !markerInstances[id]) return;
 
     setMarkerInstances(prev => {
       if (marker) {
-        return { ...prev, [key]: marker };
+        return { ...prev, [id]: marker };
       } else {
         const newMarkers = { ...prev };
-        delete newMarkers[key];
+        delete newMarkers[id];
         return newMarkers;
       }
     });
@@ -124,9 +119,9 @@ const TreasureMarkers: React.FC<{ markers: TreasureMarker[], onMarkerClick?: (po
     <>
       {markers.map((treasureMarker) => (
         <AdvancedMarker
-          key={treasureMarker.key}
-          position={treasureMarker.location}
-          ref={marker => setMarkerRef(marker, treasureMarker.key)}
+          key={treasureMarker.id}
+          position={{ lat: treasureMarker.position.lat, lng: treasureMarker.position.lng }}
+          ref={marker => setMarkerRef(marker, treasureMarker.id)}
           clickable={true}
           onClick={(ev) => handleMarkerClick(ev, treasureMarker)}
         >

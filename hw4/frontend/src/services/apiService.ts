@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { useAuthStore } from '@/stores/authStore';
+
 import { ERROR_MESSAGES } from '@/utils/constants';
 
 // API 基礎設定
@@ -17,7 +17,7 @@ const apiClient: AxiosInstance = axios.create({
 // 請求攔截器 - 自動添加認證 token
 apiClient.interceptors.request.use(
   (config) => {
-    const { accessToken } = useAuthStore.getState();
+    const accessToken = localStorage.getItem('accessToken');
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -34,12 +34,12 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error) => {
-    const { logout } = useAuthStore.getState();
-    
     if (error.response?.status === 401) {
-      // Token 過期或無效，自動登出
-      logout();
-      // 可以在這裡重導向到登入頁面
+      // Token 過期或無效，清除本地儲存
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      
+      // 重導向到登入頁面
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }

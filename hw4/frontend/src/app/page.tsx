@@ -26,16 +26,19 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import GoogleMapComponent from '@/components/GoogleMapComponent';
 import TreasureForm from '@/components/TreasureForm';
+import TreasureCard from '@/components/TreasureCard';
 import ProfileModal from '@/components/ProfileModal';
 import LoginPage from '@/components/LoginPage';
 import { useAuth } from '@/contexts/AuthContext';
-import { MapLocation, TreasureMarker, TreasureType } from '@/types';
+import { useTreasures } from '@/hooks/useTreasures';
+import { MapLocation, TreasureMarker, TreasureType, CreateTreasureRequest, TreasureDTO } from '@/types';
 
 export default function HomePage() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [treasureFormOpened, { open: openTreasureForm, close: closeTreasureForm }] = useDisclosure(false);
   const [sidebarOpened, { open: openSidebar, close: closeSidebar }] = useDisclosure(false);
   const [profileModalOpened, { open: openProfileModal, close: closeProfileModal }] = useDisclosure(false);
+  const [selectedTreasure, setSelectedTreasure] = useState<TreasureDTO | null>(null);
   
   // 預設地圖中心（台北101）
   const [mapCenter, setMapCenter] = useState<MapLocation>({
@@ -46,6 +49,18 @@ export default function HomePage() {
   // 當前位置狀態
   const [currentLocation, setCurrentLocation] = useState<MapLocation | null>(null);
   const [showCurrentLocation, setShowCurrentLocation] = useState(false);
+
+  // 使用 useTreasures hook 獲取真實資料
+  const {
+    treasures,
+    loading: treasuresLoading,
+    error: treasuresError,
+    createTreasure,
+    likeTreasure,
+    favoriteTreasure,
+    deleteTreasure,
+    refetch: refetchTreasures
+  } = useTreasures({});
 
   // 處理獲取當前位置
   const handleGetCurrentLocation = () => {
@@ -80,40 +95,77 @@ export default function HomePage() {
     );
   };
 
-  // 示例寶藏標記
-  const treasureMarkersForMap = [
-    {
-      key: 'treasure1',
-      location: { lat: 25.0330, lng: 121.5654 },
-      title: '台北101寶藏'
-    },
-    {
-      key: 'treasure2', 
-      location: { lat: 25.0478, lng: 121.5318 },
-      title: '中正紀念堂寶藏'
-    },
-    {
-      key: 'treasure3',
-      location: { lat: 25.0417, lng: 121.5115 },
-      title: '龍山寺寶藏'
-    }
-  ];
-
-  const [treasureMarkers] = useState<TreasureMarker[]>([]);
+  // 將寶藏資料轉換為地圖標記格式
+  const treasureMarkersForMap: TreasureMarker[] = treasures.map(treasure => ({
+    id: treasure.id,
+    position: { lat: treasure.latitude, lng: treasure.longitude },
+    type: treasure.type,
+    title: treasure.title,
+    treasure: treasure
+  }));
 
   const handleMapClick = (location: MapLocation) => {
     console.log('地圖點擊:', location);
   };
 
-  const handleMarkerClick = (marker: TreasureMarker) => {
-    console.log('標記點擊:', marker);
+  const handleMarkerClick = (position: google.maps.LatLngLiteral) => {
+    // 找到被點擊的寶藏
+    const clickedTreasure = treasures.find(treasure => 
+      Math.abs(treasure.latitude - position.lat) < 0.0001 && 
+      Math.abs(treasure.longitude - position.lng) < 0.0001
+    );
+    
+    if (clickedTreasure) {
+      console.log('標記點擊 - 寶藏:', clickedTreasure.title);
+      setSelectedTreasure(clickedTreasure);
+      openSidebar();
+    }
   };
 
   // 處理寶藏表單提交
-  const handleTreasureSubmit = (data: any) => {
-    console.log('新增寶藏:', data);
-    // TODO: 實作新增寶藏邏輯
-    closeTreasureForm();
+  const handleTreasureSubmit = async (data: CreateTreasureRequest) => {
+    try {
+      console.log('新增寶藏:', data);
+      await createTreasure(data);
+      await refetchTreasures();
+      closeTreasureForm();
+    } catch (error) {
+      console.error('創建寶藏失敗:', error);
+      alert('創建寶藏失敗，請稍後再試');
+    }
+  };
+
+  // 處理按讚
+  const handleLike = async (treasureId: string) => {
+    try {
+      await likeTreasure(treasureId);
+    } catch (error) {
+      console.error('按讚失敗:', error);
+    }
+  };
+
+  // 處理收藏
+  const handleFavorite = async (treasureId: string) => {
+    try {
+      await favoriteTreasure(treasureId);
+    } catch (error) {
+      console.error('收藏失敗:', error);
+    }
+  };
+
+  // 處理刪除
+  const handleDelete = async (treasureId: string) => {
+    if (confirm('確定要刪除這個寶藏嗎？')) {
+      try {
+        await deleteTreasure(treasureId);
+        await refetchTreasures();
+        setSelectedTreasure(null);
+        closeSidebar();
+      } catch (error) {
+        console.error('刪除失敗:', error);
+        alert('刪除失敗，請稍後再試');
+      }
+    }
   };
 
   // 如果正在載入認證狀態
@@ -226,7 +278,7 @@ export default function HomePage() {
             currentLocation={currentLocation}
             showCurrentLocation={showCurrentLocation}
             onMapClick={handleMapClick}
-            onMarkerClick={(position) => console.log('標記點擊:', position)}
+            onMarkerClick={handleMarkerClick}
             height="calc(100vh - 100px)"
             width="100%"
           />
@@ -236,12 +288,38 @@ export default function HomePage() {
       <Drawer
         opened={sidebarOpened}
         onClose={closeSidebar}
-        title="寶藏總覽"
+        title={selectedTreasure ? selectedTreasure.title : "寶藏總覽"}
         size="lg"
         position="right"
       >
         <Stack gap="md">
-          <Text>寶藏功能開發中...</Text>
+          {treasuresLoading && <Text>載入中...</Text>}
+          {treasuresError && <Text c="red">載入失敗: {treasuresError}</Text>}
+          
+          {selectedTreasure ? (
+            <TreasureCard
+              treasure={selectedTreasure}
+              onLike={handleLike}
+              onFavorite={handleFavorite}
+              onDelete={user?.id === selectedTreasure.user.id ? handleDelete : undefined}
+            />
+          ) : (
+            <>
+              <Text fw={600}>附近的寶藏 ({treasures.length})</Text>
+              {treasures.length === 0 && !treasuresLoading && (
+                <Text c="dimmed">目前沒有寶藏，快來創建第一個吧！</Text>
+              )}
+              {treasures.map(treasure => (
+                <TreasureCard
+                  key={treasure.id}
+                  treasure={treasure}
+                  onLike={handleLike}
+                  onFavorite={handleFavorite}
+                  onDelete={user?.id === treasure.user.id ? handleDelete : undefined}
+                />
+              ))}
+            </>
+          )}
         </Stack>
       </Drawer>
 

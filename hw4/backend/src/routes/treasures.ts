@@ -4,7 +4,9 @@ import {
   getTreasureById,
   createTreasure,
   updateTreasure,
-  deleteTreasure
+  deleteTreasure,
+  toggleLike,
+  toggleFavorite
 } from '../controllers/treasureController';
 import {
   validateCreateTreasure,
@@ -31,5 +33,9 @@ router.get('/:id', validateUUIDParam('id'), optionalAuthenticate, getTreasureByI
 router.post('/', authenticate, validateCreateTreasure, createTreasure);
 router.put('/:id', authenticate, validateUpdateTreasure, updateTreasure);
 router.delete('/:id', authenticate, validateUUIDParam('id'), deleteTreasure);
+
+// Like and favorite routes
+router.post('/:id/like', authenticate, validateUUIDParam('id'), toggleLike);
+router.post('/:id/favorite', authenticate, validateUUIDParam('id'), toggleFavorite);
 
 export default router;

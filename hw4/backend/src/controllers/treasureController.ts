@@ -8,6 +8,7 @@ import {
   TreasureDetailDTO,
   TreasureQuery,
   ApiResponse,
+  ApiError,
   PaginatedResponse,
   UserDTO
 } from '../types';
@@ -672,6 +673,238 @@ export const deleteTreasure = async (
       data: {
         message: 'Treasure deleted successfully'
       }
+    };
+
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @swagger
+ * /api/treasures/{id}/like:
+ *   post:
+ *     summary: Toggle like for treasure
+ *     tags: [Treasures]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Treasure ID
+ *     responses:
+ *       200:
+ *         description: Like toggled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         isLiked:
+ *                           type: boolean
+ *                         likesCount:
+ *                           type: integer
+ *       404:
+ *         description: Treasure not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
+export const toggleLike = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check if treasure exists
+    const treasure = await prisma.treasure.findUnique({
+      where: { id }
+    });
+
+    if (!treasure) {
+      const response: ApiError = {
+        success: false,
+        error: {
+          code: 'TREASURE_NOT_FOUND',
+          message: '寶藏不存在'
+        }
+      };
+      res.status(404).json(response);
+      return;
+    }
+
+    // Check if user already liked this treasure
+    const existingLike = await prisma.like.findUnique({
+      where: {
+        userId_treasureId: {
+          userId,
+          treasureId: id
+        }
+      }
+    });
+
+    let isLiked: boolean;
+    
+    if (existingLike) {
+      // Remove like
+      await prisma.like.delete({
+        where: {
+          userId_treasureId: {
+            userId,
+            treasureId: id
+          }
+        }
+      });
+      isLiked = false;
+    } else {
+      // Add like
+      await prisma.like.create({
+        data: {
+          userId,
+          treasureId: id
+        }
+      });
+      isLiked = true;
+    }
+
+    // Get updated likes count
+    const likesCount = await prisma.like.count({
+      where: { treasureId: id }
+    });
+
+    const response = {
+      success: true,
+      data: {
+        isLiked,
+        likesCount
+      },
+      message: isLiked ? '已按讚' : '取消按讚'
+    };
+
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @swagger
+ * /api/treasures/{id}/favorite:
+ *   post:
+ *     summary: Toggle favorite for treasure
+ *     tags: [Treasures]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Treasure ID
+ *     responses:
+ *       200:
+ *         description: Favorite toggled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         isFavorited:
+ *                           type: boolean
+ *       404:
+ *         description: Treasure not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
+export const toggleFavorite = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check if treasure exists
+    const treasure = await prisma.treasure.findUnique({
+      where: { id }
+    });
+
+    if (!treasure) {
+      const response: ApiError = {
+        success: false,
+        error: {
+          code: 'TREASURE_NOT_FOUND',
+          message: '寶藏不存在'
+        }
+      };
+      res.status(404).json(response);
+      return;
+    }
+
+    // Check if user already favorited this treasure
+    const existingFavorite = await prisma.favorite.findUnique({
+      where: {
+        userId_treasureId: {
+          userId,
+          treasureId: id
+        }
+      }
+    });
+
+    let isFavorited: boolean;
+    
+    if (existingFavorite) {
+      // Remove favorite
+      await prisma.favorite.delete({
+        where: {
+          userId_treasureId: {
+            userId,
+            treasureId: id
+          }
+        }
+      });
+      isFavorited = false;
+    } else {
+      // Add favorite
+      await prisma.favorite.create({
+        data: {
+          userId,
+          treasureId: id
+        }
+      });
+      isFavorited = true;
+    }
+
+    const response = {
+      success: true,
+      data: {
+        isFavorited
+      },
+      message: isFavorited ? '已收藏' : '取消收藏'
     };
 
     res.json(response);
