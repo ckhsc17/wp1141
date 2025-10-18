@@ -1,41 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
-  Avatar,
   Text,
   Group,
-  Stack,
-  Card,
-  Grid,
+  Avatar,
   Badge,
   Button,
+  Stack,
+  Grid,
+  Card,
+  Title,
   Divider,
-  Center,
+  ActionIcon,
+  Tooltip,
+  Alert,
   Loader,
-  Alert
+  Center
 } from '@mantine/core';
 import {
-  IconUser,
-  IconGift,
+  IconTrophy,
   IconHeart,
+  IconMessage,
   IconMapPin,
-  IconCalendar,
-  IconMail,
+  IconSettings,
+  IconEdit,
   IconLogout,
-  IconAlertCircle
+  IconAlertCircle,
+  IconUser,
+  IconMail,
+  IconGift
 } from '@tabler/icons-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { userService, UserStats } from '@/services/userService';
+import UserTreasuresModal from './UserTreasuresModal';
 
 interface ProfileModalProps {
   opened: boolean;
   onClose: () => void;
-}
-
-interface UserStats {
-  uploadedTreasures: number;
-  favoritedTreasures: number;
-  totalLikes: number;
-  totalComments: number;
 }
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
@@ -43,6 +44,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // UserTreasuresModal 狀態
+  const [treasuresModalOpened, setTreasuresModalOpened] = useState(false);
+  const [treasuresModalMode, setTreasuresModalMode] = useState<'treasures' | 'favorites'>('treasures');
 
   // 獲取用戶統計資料
   const fetchUserStats = async () => {
@@ -52,22 +57,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
     setError(null);
     
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/stats`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setStats(result.data);
-      } else {
-        throw new Error('無法載入統計資料');
-      }
+      const statsData = await userService.getUserStats();
+      setStats(statsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入失敗');
-      // 使用模擬資料
+      console.error('獲取統計資料失敗:', err);
+      
+      // 使用模擬資料作為備用
       setStats({
         uploadedTreasures: 12,
         favoritedTreasures: 25,
@@ -101,13 +97,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
   if (!user) return null;
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title="個人資料"
-      size="md"
-      centered
-    >
+    <>
+      <Modal
+        opened={opened}
+        onClose={onClose}
+        title="個人資料"
+        size="md"
+        centered
+      >
       <Stack gap="lg">
         {/* 用戶基本資訊 */}
         <Card withBorder p="lg">
@@ -162,7 +159,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
           ) : stats ? (
             <Grid>
               <Grid.Col span={6}>
-                <Card withBorder p="md" ta="center">
+                <Card 
+                  withBorder 
+                  p="md" 
+                  ta="center"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setTreasuresModalMode('treasures');
+                    setTreasuresModalOpened(true);
+                  }}
+                >
                   <IconGift size={32} color="#FD7E14" style={{ margin: '0 auto 8px' }} />
                   <Text size="xl" fw={700} c="orange">
                     {stats.uploadedTreasures}
@@ -174,7 +180,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
               </Grid.Col>
               
               <Grid.Col span={6}>
-                <Card withBorder p="md" ta="center">
+                <Card 
+                  withBorder 
+                  p="md" 
+                  ta="center"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setTreasuresModalMode('favorites');
+                    setTreasuresModalOpened(true);
+                  }}
+                >
                   <IconHeart size={32} color="#FF6B6B" style={{ margin: '0 auto 8px' }} />
                   <Text size="xl" fw={700} c="red">
                     {stats.favoritedTreasures}
@@ -233,7 +248,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
           </Button>
         </Group>
       </Stack>
-    </Modal>
+      </Modal>
+
+      {/* UserTreasuresModal */}
+      <UserTreasuresModal
+        opened={treasuresModalOpened}
+        onClose={() => setTreasuresModalOpened(false)}
+        mode={treasuresModalMode}
+      />
+    </>
   );
 };
 

@@ -41,7 +41,7 @@ export const API_ENDPOINTS = {
     LOGIN: '/api/auth/login',
     REFRESH: '/api/auth/refresh',
     LOGOUT: '/api/auth/logout',
-    ME: '/api/auth/me'
+    PROFILE: '/api/auth/profile'
   },
   // 寶藏相關
   TREASURES: {

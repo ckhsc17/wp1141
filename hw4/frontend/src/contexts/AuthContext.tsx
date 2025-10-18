@@ -69,6 +69,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         const result = await response.json();
         setUser(result.data.user);
+        console.log('Google login successful, response:', result);
         localStorage.setItem('accessToken', result.data.accessToken);
         localStorage.setItem('refreshToken', result.data.refreshToken);
       } else {
@@ -79,6 +80,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     }
   };
+
+
 
   const loginWithPassword = async (email: string, password: string) => {
     try {
@@ -92,6 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const result = await response.json();
+        console.log('Password login successful, response:', result);
         setUser(result.data.user);
         localStorage.setItem('accessToken', result.data.accessToken);
         localStorage.setItem('refreshToken', result.data.refreshToken);

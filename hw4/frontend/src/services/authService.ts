@@ -34,7 +34,7 @@ class AuthService extends ApiService {
   // 取得當前使用者資訊
   async getCurrentUser(): Promise<UserDTO> {
     const response = await this.get<ApiResponse<UserDTO>>(
-      API_ENDPOINTS.AUTH.ME
+      API_ENDPOINTS.AUTH.PROFILE
     );
     return response.data;
   }
