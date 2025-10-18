@@ -55,6 +55,18 @@ export const API_ENDPOINTS = {
     LIKE: (id: string) => `/api/treasures/${id}/like`,
     FAVORITE: (id: string) => `/api/treasures/${id}/favorite`
   },
+  // 用戶相關
+  USERS: {
+    PROFILE: '/api/users/profile',
+    STATS: '/api/users/stats',
+    TREASURES: '/api/users/treasures',
+    FAVORITES: '/api/users/favorites',
+    UPDATE_PROFILE: '/api/users/profile',
+    UPLOAD_AVATAR: '/api/users/avatar',
+    DELETE_ACCOUNT: '/api/users/profile',
+    PUBLIC_PROFILE: (userId: string) => `/api/users/${userId}/profile`,
+    PUBLIC_TREASURES: (userId: string) => `/api/users/${userId}/treasures`
+  },
   // 留言相關
   COMMENTS: {
     LIST: (treasureId: string) => `/api/treasures/${treasureId}/comments`,

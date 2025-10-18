@@ -12,7 +12,8 @@ import {
   Stack,
   Text,
   Avatar,
-  Menu
+  Menu,
+  Modal
 } from '@mantine/core';
 import {
   IconPlus,
@@ -27,6 +28,7 @@ import { useDisclosure } from '@mantine/hooks';
 import GoogleMapComponent from '@/components/GoogleMapComponent';
 import TreasureForm from '@/components/TreasureForm';
 import TreasureCard from '@/components/TreasureCard';
+import TreasuresPage from '@/components/TreasuresPage';
 import ProfileModal from '@/components/ProfileModal';
 import LoginPage from '@/components/LoginPage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +39,7 @@ export default function HomePage() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [treasureFormOpened, { open: openTreasureForm, close: closeTreasureForm }] = useDisclosure(false);
   const [sidebarOpened, { open: openSidebar, close: closeSidebar }] = useDisclosure(false);
+  const [treasuresPageOpened, { open: openTreasuresPage, close: closeTreasuresPage }] = useDisclosure(false);
   const [profileModalOpened, { open: openProfileModal, close: closeProfileModal }] = useDisclosure(false);
   const [selectedTreasure, setSelectedTreasure] = useState<TreasureDTO | null>(null);
   
@@ -218,7 +221,7 @@ export default function HomePage() {
               <ActionIcon
                 variant="outline"
                 size="lg"
-                onClick={openSidebar}
+                onClick={openTreasuresPage}
               >
                 <IconFilter size={18} />
               </ActionIcon>
@@ -337,6 +340,17 @@ export default function HomePage() {
         onSubmit={handleTreasureSubmit}
         onCancel={closeTreasureForm}
       />
+
+      {/* 寶藏管理頁面 Modal */}
+      <Modal
+        opened={treasuresPageOpened}
+        onClose={closeTreasuresPage}
+        title="寶藏管理"
+        size="xl"
+        centered
+      >
+        <TreasuresPage />
+      </Modal>
     </AppShell>
   );
 }

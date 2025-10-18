@@ -43,42 +43,63 @@ class TreasureService extends ApiService {
 
   // 創建新寶藏
   async createTreasure(data: CreateTreasureRequest): Promise<TreasureDTO> {
-    const formData = new FormData();
-    
-    // 添加基本資料
-    formData.append('title', data.title);
-    formData.append('content', data.content);
-    formData.append('type', data.type);
-    formData.append('latitude', data.latitude.toString());
-    formData.append('longitude', data.longitude.toString());
-    
-    if (data.address) {
-      formData.append('address', data.address);
-    }
-    
-    if (data.linkUrl) {
-      formData.append('linkUrl', data.linkUrl);
-    }
-    
-    if (data.isLiveLocation) {
-      formData.append('isLiveLocation', data.isLiveLocation.toString());
-    }
-    
-    // 添加標籤
-    data.tags.forEach(tag => {
-      formData.append('tags', tag);
-    });
-    
-    // 添加媒體檔案
+    // 如果有媒體檔案，使用 FormData
     if (data.mediaFile) {
+      const formData = new FormData();
+      
+      // 添加基本資料
+      formData.append('title', data.title);
+      formData.append('content', data.content);
+      formData.append('type', data.type);
+      formData.append('latitude', data.latitude.toString());
+      formData.append('longitude', data.longitude.toString());
+      
+      if (data.address) {
+        formData.append('address', data.address);
+      }
+      
+      if (data.linkUrl) {
+        formData.append('linkUrl', data.linkUrl);
+      }
+      
+      if (data.isLiveLocation) {
+        formData.append('isLiveLocation', data.isLiveLocation.toString());
+      }
+      
+      // 添加標籤
+      data.tags.forEach(tag => {
+        formData.append('tags', tag);
+      });
+      
+      // 添加媒體檔案
       formData.append('mediaFile', data.mediaFile);
-    }
 
-    const response = await this.upload<ApiResponse<TreasureDTO>>(
-      API_ENDPOINTS.TREASURES.CREATE,
-      formData
-    );
-    return response.data;
+      const response = await this.upload<ApiResponse<TreasureDTO>>(
+        API_ENDPOINTS.TREASURES.CREATE,
+        formData
+      );
+      return response.data;
+    } else {
+      // 沒有媒體檔案，使用 JSON 格式
+      const requestData = {
+        title: data.title,
+        content: data.content,
+        type: data.type,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        address: data.address,
+        isLiveLocation: data.isLiveLocation || false,
+        tags: data.tags
+      };
+
+      console.log('創建寶藏請求資料:', requestData);
+
+      const response = await this.post<ApiResponse<TreasureDTO>>(
+        API_ENDPOINTS.TREASURES.CREATE,
+        requestData
+      );
+      return response.data;
+    }
   }
 
   // 更新寶藏

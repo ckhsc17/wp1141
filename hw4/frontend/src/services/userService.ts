@@ -1,4 +1,5 @@
 import { apiService } from './apiService';
+import { API_ENDPOINTS } from '@/utils/constants';
 
 export interface UserStats {
   uploadedTreasures: number;
@@ -39,7 +40,7 @@ class UserService {
    */
   async getCurrentUser(): Promise<UserProfile> {
     try {
-      const response = await apiService.get<{ success: boolean; data: UserProfile }>('/users/me');
+      const response = await apiService.get<{ success: boolean; data: UserProfile }>(API_ENDPOINTS.USERS.PROFILE);
       return response.data;
     } catch (error) {
       console.error('獲取用戶資料失敗:', error);
@@ -52,7 +53,7 @@ class UserService {
    */
   async getUserStats(): Promise<UserStats> {
     try {
-      const response = await apiService.get<{ success: boolean; data: UserStats }>('/users/me/stats');
+      const response = await apiService.get<{ success: boolean; data: UserStats }>(API_ENDPOINTS.USERS.STATS);
       return response.data;
     } catch (error) {
       console.error('獲取用戶統計失敗:', error);
@@ -80,7 +81,7 @@ class UserService {
             totalPages: number;
           };
         };
-      }>(`/users/me/treasures?page=${page}&limit=${limit}`);
+      }>(`${API_ENDPOINTS.USERS.TREASURES}?page=${page}&limit=${limit}`);
 
       const { treasures, pagination } = response.data;
       return {
@@ -114,7 +115,7 @@ class UserService {
             totalPages: number;
           };
         };
-      }>(`/users/me/favorites?page=${page}&limit=${limit}`);
+      }>(`${API_ENDPOINTS.USERS.FAVORITES}?page=${page}&limit=${limit}`);
 
       const { treasures, pagination } = response.data;
       return {
@@ -136,7 +137,7 @@ class UserService {
     avatar?: string;
   }): Promise<UserProfile> {
     try {
-      const response = await apiService.put<{ success: boolean; data: UserProfile }>('/users/me', data);
+      const response = await apiService.put<{ success: boolean; data: UserProfile }>(API_ENDPOINTS.USERS.UPDATE_PROFILE, data);
       return response.data;
     } catch (error) {
       console.error('更新用戶資料失敗:', error);
@@ -152,7 +153,7 @@ class UserService {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const response = await apiService.upload<{ success: boolean; data: { url: string } }>('/users/me/avatar', formData);
+      const response = await apiService.upload<{ success: boolean; data: { url: string } }>(API_ENDPOINTS.USERS.UPLOAD_AVATAR, formData);
       return response.data.url;
     } catch (error) {
       console.error('上傳頭像失敗:', error);
@@ -165,7 +166,7 @@ class UserService {
    */
   async deleteAccount(): Promise<void> {
     try {
-      await apiService.delete('/users/me');
+      await apiService.delete(API_ENDPOINTS.USERS.DELETE_ACCOUNT);
     } catch (error) {
       console.error('刪除帳號失敗:', error);
       throw new Error('無法刪除帳號');
