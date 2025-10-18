@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Box, Center, Loader, Text, Alert } from '@mantine/core';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
+import { API_ENDPOINTS } from '@/utils/constants';
 
 export default function AuthSuccess() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function AuthSuccess() {
         localStorage.setItem('refreshToken', refreshToken);
 
         // 獲取用戶資訊
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_ENDPOINTS.AUTH.PROFILE}`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`
           }

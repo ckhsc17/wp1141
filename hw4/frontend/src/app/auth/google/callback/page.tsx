@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Box, Center, Loader, Text, Alert } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
+import { API_ENDPOINTS } from '@/utils/constants';
 
 export default function GoogleCallback() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function GoogleCallback() {
 
       try {
         // 將授權碼發送到後端進行處理
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/google/callback?code=${code}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${API_ENDPOINTS.AUTH.GOOGLE_CALLBACK}?code=${code}`, {
           method: 'GET',
           credentials: 'include'
         });

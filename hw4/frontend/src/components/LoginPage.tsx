@@ -28,6 +28,7 @@ import {
 } from '@tabler/icons-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { API_ENDPOINTS } from '@/utils/constants';
 
 interface LoginPageProps {
   onLoginSuccess?: () => void;
@@ -57,7 +58,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
     try {
       // 直接重導向到後端的 Google OAuth 端點
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}${API_ENDPOINTS.AUTH.GOOGLE}`;
     } catch (err) {
       setIsLoading(false);
       setError(err instanceof Error ? err.message : '登入失敗，請稍後再試');

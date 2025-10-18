@@ -11,6 +11,7 @@ import {
 } from '@vis.gl/react-google-maps';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import type { Marker } from '@googlemaps/markerclusterer';
+import { GiTreasureMap, GiOpenChest } from 'react-icons/gi';
 import { TreasureMarker } from '@/types';
 
 interface GoogleMapComponentProps {
@@ -125,12 +126,37 @@ const TreasureMarkers: React.FC<{ markers: TreasureMarker[], onMarkerClick?: (po
           clickable={true}
           onClick={(ev) => handleMarkerClick(ev, treasureMarker)}
         >
-          <Pin 
-            background={'#FFD700'} 
-            glyphColor={'#8B4513'} 
-            borderColor={'#FF6B35'}
-            scale={1.2}
-          />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: '#FFD700',
+              border: '3px solid #FF6B35',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+              e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+            }}
+          >
+            <GiTreasureMap 
+              size={24} 
+              color="#8B4513" 
+              style={{
+                filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))'
+              }}
+            />
+          </div>
         </AdvancedMarker>
       ))}
     </>
