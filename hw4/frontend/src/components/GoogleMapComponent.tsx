@@ -44,30 +44,20 @@ const TreasureInfoWindow: React.FC<{
     <AdvancedMarker
       position={position}
       clickable={false}
+      zIndex={1000}
     >
       <div
         style={{
-          position: 'relative',
-          transform: 'translate(-50%, -100%)',
-          marginBottom: '10px'
+          position: 'absolute',
+          bottom: '50px', // 固定距離標記底部的像素距離
+          left: '50%',
+          transform: 'translateX(-50%)',
+          pointerEvents: 'auto', // 確保可以點擊
+          minWidth: '300px',
+          maxWidth: '90vw',
+          overflow: 'visible' // 確保箭頭不被裁切
         }}
       >
-        {/* 對話框箭頭 */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '-8px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 0,
-            height: 0,
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderTop: '8px solid white',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-          }}
-        />
-        
         {/* 資訊卡片 */}
         <Card
           shadow="lg"
@@ -75,12 +65,47 @@ const TreasureInfoWindow: React.FC<{
           radius="md"
           withBorder
           style={{
-            width: '300px',
-            maxWidth: '90vw',
             backgroundColor: 'white',
-            position: 'relative'
+            position: 'relative',
+            border: '2px solid #e9ecef',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            width: '100%',
+            overflow: 'visible' // 確保箭頭不被隱藏
           }}
         >
+          {/* 箭頭邊框 */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-12px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '12px solid transparent',
+              borderRight: '12px solid transparent',
+              borderTop: '12px solid #dee2e6',
+              zIndex: 1
+            }}
+          />
+          
+          {/* 對話框箭頭 - 指向標記 */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-10px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '10px solid transparent',
+              borderRight: '10px solid transparent',
+              borderTop: '10px solid #ffffff',
+              zIndex: 2
+            }}
+          />
+
+
           {/* 關閉按鈕 */}
           <ActionIcon
             variant="subtle"
@@ -90,7 +115,11 @@ const TreasureInfoWindow: React.FC<{
               position: 'absolute',
               top: '8px',
               right: '8px',
-              zIndex: 1
+              zIndex: 10,
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              '&:hover': {
+                backgroundColor: 'rgba(248, 249, 250, 1)'
+              }
             }}
           >
             <IconX size={16} />
