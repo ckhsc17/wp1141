@@ -56,6 +56,7 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   };
 
   const handleFavorite = () => {
+    console.log('TreasureCard handleFavorite 被調用:', treasure.id, 'isFavorited:', treasure.isFavorited);
     onFavorite?.(treasure.id);
   };
 
@@ -220,15 +221,21 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
 
           <Group gap="xs">
             <ActionIcon
-              variant={treasure.isLiked ? 'filled' : 'subtle'}
-              color={treasure.isLiked ? 'red' : 'gray'}
+              variant="subtle"
+              color="gray"
               onClick={handleLike}
               size="sm"
             >
               {treasure.isLiked ? (
-                <IconHeartFilled size={compact ? 14 : 16} />
+                <IconHeartFilled 
+                  size={compact ? 14 : 16} 
+                  color="#ef4444" // 紅色填滿
+                />
               ) : (
-                <IconHeart size={compact ? 14 : 16} />
+                <IconHeart 
+                  size={compact ? 14 : 16} 
+                  color="#6b7280" // 灰色空心
+                />
               )}
             </ActionIcon>
             <Text size="xs" c="dimmed">
@@ -236,15 +243,21 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
             </Text>
 
             <ActionIcon
-              variant={treasure.isFavorited ? 'filled' : 'subtle'}
-              color={treasure.isFavorited ? 'yellow' : 'gray'}
+              variant="subtle"
+              color="gray"
               onClick={handleFavorite}
               size="sm"
             >
               {treasure.isFavorited ? (
-                <IconBookmarkFilled size={compact ? 14 : 16} />
+                <IconBookmarkFilled 
+                  size={compact ? 14 : 16} 
+                  color="#22c55e" // 綠色填滿
+                />
               ) : (
-                <IconBookmark size={compact ? 14 : 16} />
+                <IconBookmark 
+                  size={compact ? 14 : 16} 
+                  color="#6b7280" // 灰色空心
+                />
               )}
             </ActionIcon>
 
@@ -254,7 +267,10 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
               onClick={handleComment}
               size="sm"
             >
-              <IconMessage size={compact ? 14 : 16} />
+              <IconMessage 
+                size={compact ? 14 : 16} 
+                color="#6b7280" // 灰色
+              />
             </ActionIcon>
             <Text size="xs" c="dimmed">
               {treasure.commentsCount}

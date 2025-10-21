@@ -197,6 +197,16 @@ const TreasureMarkers: React.FC<{
   const [selectedTreasure, setSelectedTreasure] = useState<TreasureMarker | null>(null);
   const clusterer = useRef<MarkerClusterer | null>(null);
 
+  // 當 markers 更新時，同步更新 selectedTreasure
+  useEffect(() => {
+    if (selectedTreasure) {
+      const updatedTreasure = markers.find(marker => marker.id === selectedTreasure.id);
+      if (updatedTreasure) {
+        setSelectedTreasure(updatedTreasure);
+      }
+    }
+  }, [markers, selectedTreasure]);
+
   // 初始化 MarkerClusterer
   useEffect(() => {
     if (!map) return;

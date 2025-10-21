@@ -131,6 +131,7 @@ class TreasureService extends ApiService {
       API_ENDPOINTS.TREASURES.FAVORITE(id),
       {} // 傳送空物件作為 request body
     );
+    console.log('收藏狀態:', response.data);
     return response.data;
   }
 

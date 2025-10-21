@@ -582,6 +582,7 @@ export const toggleLike = async (
   }
 };
 
+
 /**
  * @swagger
  * /api/treasures/{id}/favorite:
@@ -630,7 +631,6 @@ export const toggleFavorite = async (
     const userId = req.user!.id;
 
     const result = await treasureService.toggleFavorite(id, userId);
-      return;
 
     if (!result.success) {
       if (result.error === 'Treasure not found') {

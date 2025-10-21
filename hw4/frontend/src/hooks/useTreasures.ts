@@ -190,12 +190,18 @@ export const useTreasures = (query?: TreasureQuery): UseTreasuresResult => {
 
   const favoriteTreasure = useCallback(async (id: string): Promise<void> => {
     try {
+      console.log('收藏寶藏:', id);
       const result = await treasureService.toggleFavorite(id);
-      setTreasures(prev => prev.map(treasure => 
-        treasure.id === id 
-          ? { ...treasure, isFavorited: result.isFavorited }
-          : treasure
-      ));
+      console.log('收藏結果:', result);
+      setTreasures(prev => {
+        const updated = prev.map(treasure => 
+          treasure.id === id 
+            ? { ...treasure, isFavorited: result.isFavorited }
+            : treasure
+        );
+        console.log('更新後的寶藏列表:', updated.find(t => t.id === id));
+        return updated;
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '收藏失敗';
       setError(errorMessage);
