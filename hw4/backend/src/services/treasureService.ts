@@ -417,7 +417,7 @@ export class TreasureService {
   /**
    * Toggle like on treasure
    */
-  async toggleLike(treasureId: string, userId: string): Promise<ServiceResult<{ isLiked: boolean }>> {
+  async toggleLike(treasureId: string, userId: string): Promise<ServiceResult<{ isLiked: boolean; likesCount: number }>> {
     try {
       console.log('Toggling like for treasureId:', treasureId, 'by userId:', userId);
       // Check if treasure exists
@@ -454,19 +454,23 @@ export class TreasureService {
           }
         });
 
-        // Update likes count
-        await prisma.treasure.update({
+        // Update likes count and get the updated treasure
+        const updatedTreasure = await prisma.treasure.update({
           where: { id: treasureId },
           data: {
             likesCount: {
               decrement: 1
             }
-          }
+          },
+          select: { likesCount: true }
         });
 
         return {
           success: true,
-          data: { isLiked: false }
+          data: { 
+            isLiked: false,
+            likesCount: updatedTreasure.likesCount
+          }
         };
       } else {
         // Add like
@@ -477,19 +481,23 @@ export class TreasureService {
           }
         });
 
-        // Update likes count
-        await prisma.treasure.update({
+        // Update likes count and get the updated treasure
+        const updatedTreasure = await prisma.treasure.update({
           where: { id: treasureId },
           data: {
             likesCount: {
               increment: 1
             }
-          }
+          },
+          select: { likesCount: true }
         });
 
         return {
           success: true,
-          data: { isLiked: true }
+          data: { 
+            isLiked: true,
+            likesCount: updatedTreasure.likesCount
+          }
         };
       }
     } catch (error) {

@@ -122,6 +122,7 @@ class TreasureService extends ApiService {
       API_ENDPOINTS.TREASURES.LIKE(id),
       {} // 傳送空物件作為 request body
     );
+    console.log('toggleLike 響應:', response.data);
     return response.data;
   }
 
