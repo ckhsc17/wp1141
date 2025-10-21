@@ -28,7 +28,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import TreasureCard from '@/components/TreasureCard';
 import TreasureForm from '@/components/TreasureForm';
 import { TreasureType, TreasureQuery, CreateTreasureRequest } from '@/types';
-import { TREASURE_TYPE_CONFIG } from '@/utils/constants';
+import { TREASURE_TYPE_CONFIG, COLORS } from '@/utils/constants';
 
 const TreasuresPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -112,10 +112,10 @@ const TreasuresPage: React.FC = () => {
         {/* 標題和創建按鈕 */}
         <Group justify="space-between" align="center">
           <div>
-            <Text size="xl" fw={700}>
+            <Text size="xl" fw={700} style={{ color: COLORS.TEXT.SECONDARY }}>
               探索寶藏
             </Text>
-            <Text size="sm" c="dimmed">
+            <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
               發現身邊的美好時光
             </Text>
           </div>
@@ -214,10 +214,10 @@ const TreasuresPage: React.FC = () => {
         ) : !loading && (
           <Center py="xl">
             <Stack align="center" gap="md">
-              <Text size="lg" c="dimmed">
+              <Text size="lg" style={{ color: COLORS.TEXT.SECONDARY }}>
                 還沒有寶藏
               </Text>
-              <Text size="sm" c="dimmed">
+              <Text size="sm" style={{ color: COLORS.TEXT.MUTED }}>
                 {isAuthenticated 
                   ? '成為第一個分享寶藏的人吧！' 
                   : '請登入後開始探索和分享寶藏'

@@ -22,7 +22,7 @@ import {
   IconExternalLink
 } from '@tabler/icons-react';
 import { TreasureCardProps, TreasureDTO } from '@/types';
-import { TREASURE_TYPE_CONFIG } from '@/utils/constants';
+import { TREASURE_TYPE_CONFIG, COLORS } from '@/utils/constants';
 import { useAuth } from '@/contexts/AuthContext';
 
 // 寶藏卡片內容組件（不含外框）
@@ -137,7 +137,7 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
           <Text fw={600} size={compact ? "md" : "lg"} mb={4}>
             {treasure.title}
           </Text>
-          <Text size="sm" c="dimmed" lineClamp={compact ? 2 : 3}>
+          <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }} lineClamp={compact ? 2 : 3}>
             {treasure.content}
           </Text>
         </div>
@@ -194,7 +194,7 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
               </Badge>
             ))}
             {compact && treasure.tags.length > 2 && (
-              <Text size="xs" c="dimmed">+{treasure.tags.length - 2}</Text>
+              <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>+{treasure.tags.length - 2}</Text>
             )}
           </Group>
         )}
@@ -208,13 +208,13 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
             >
               {treasure.user.name.charAt(0)}
             </Avatar>
-            <Text size={compact ? "xs" : "sm"} c="dimmed">
+            <Text size={compact ? "xs" : "sm"} style={{ color: COLORS.TEXT.SECONDARY }}>
               {treasure.user.name}
             </Text>
-            <Text size="xs" c="dimmed">
+            <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>
               •
             </Text>
-            <Text size="xs" c="dimmed">
+            <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>
               {formatDate(treasure.createdAt)}
             </Text>
           </Group>
@@ -229,16 +229,16 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
               {treasure.isLiked ? (
                 <IconHeartFilled 
                   size={compact ? 14 : 16} 
-                  color="#ef4444" // 紅色填滿
+                  color={COLORS.ICON.HEART}
                 />
               ) : (
                 <IconHeart 
                   size={compact ? 14 : 16} 
-                  color="#6b7280" // 灰色空心
+                  color={COLORS.ICON.DEFAULT}
                 />
               )}
             </ActionIcon>
-            <Text size="xs" c="dimmed">
+            <Text size="xs" style={{ color: COLORS.TEXT.SECONDARY }}>
               {treasure.likesCount}
             </Text>
 
@@ -251,12 +251,12 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
               {treasure.isFavorited ? (
                 <IconBookmarkFilled 
                   size={compact ? 14 : 16} 
-                  color="#22c55e" // 綠色填滿
+                  color={COLORS.ICON.BOOKMARK}
                 />
               ) : (
                 <IconBookmark 
                   size={compact ? 14 : 16} 
-                  color="#6b7280" // 灰色空心
+                  color={COLORS.ICON.DEFAULT}
                 />
               )}
             </ActionIcon>
@@ -269,10 +269,10 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
             >
               <IconMessage 
                 size={compact ? 14 : 16} 
-                color="#6b7280" // 灰色
+                color={COLORS.ICON.DEFAULT}
               />
             </ActionIcon>
-            <Text size="xs" c="dimmed">
+            <Text size="xs" style={{ color: COLORS.TEXT.SECONDARY }}>
               {treasure.commentsCount}
             </Text>
           </Group>

@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { Container, Title, Text, Button, Stack, Alert } from '@mantine/core';
 import { IconAlertCircle, IconHome } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
+import { COLORS } from '@/utils/constants';
 
 export default function AuthError() {
   const searchParams = useSearchParams();
@@ -42,7 +43,7 @@ export default function AuthError() {
             登入遇到問題
           </Title>
           
-          <Text ta="center" c="dimmed">
+          <Text ta="center" style={{ color: COLORS.TEXT.SECONDARY }}>
             請檢查您的網路連線並重新嘗試，或聯繫技術支援。
           </Text>
 

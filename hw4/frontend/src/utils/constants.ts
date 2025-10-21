@@ -203,6 +203,24 @@ export const MAP_CONFIG = {
   }
 };
 
+// 顏色配置
+export const COLORS = {
+  // 改善的灰色文字顏色，提高對比度和可讀性
+  TEXT: {
+    PRIMARY: '#1a1a1a',      // 主要文字顏色
+    SECONDARY: '#1a1a1a',    // 次要文字顏色（替代 dimmed）
+    MUTED: '#6b6b6b',        // 輕微淡化的文字
+    DISABLED: '#9ca3af'      // 禁用狀態文字
+  },
+  // 圖標顏色
+  ICON: {
+    DEFAULT: '#6b7280',      // 預設圖標顏色
+    ACTIVE: '#374151',       // 活躍狀態圖標
+    HEART: '#ef4444',        // 愛心紅色
+    BOOKMARK: '#22c55e'      // 收藏綠色
+  }
+};
+
 // 驗證規則
 export const VALIDATION_RULES = {
   TREASURE: {

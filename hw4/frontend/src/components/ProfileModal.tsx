@@ -33,6 +33,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { userService, UserStats } from '@/services/userService';
 import UserTreasuresModal from './UserTreasuresModal';
+import { COLORS } from '@/utils/constants';
 
 interface ProfileModalProps {
   opened: boolean;
@@ -101,7 +102,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
       <Modal
         opened={opened}
         onClose={onClose}
-        title="個人資料"
+        title="個人資料" style={{ color: COLORS.TEXT.SECONDARY }}
         size="md"
         centered
       >
@@ -123,8 +124,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                 {user.name}
               </Text>
               <Group gap="xs">
-                <IconMail size={16} color="gray" />
-                <Text size="sm" c="dimmed">
+                <IconMail size={16} color={COLORS.ICON.DEFAULT} />
+                <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
                   {user.email}
                 </Text>
               </Group>
@@ -137,7 +138,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
 
         {/* 統計資料 */}
         <div>
-          <Text size="lg" fw={600} mb="md">
+          <Text size="lg" fw={600} mb="md" style={{ color: COLORS.TEXT.SECONDARY }}>
             我的數據
           </Text>
           
@@ -173,7 +174,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                   <Text size="xl" fw={700} c="orange">
                     {stats.uploadedTreasures}
                   </Text>
-                  <Text size="sm" c="dimmed">
+                  <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
                     已上傳寶藏
                   </Text>
                 </Card>
@@ -194,7 +195,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                   <Text size="xl" fw={700} c="red">
                     {stats.favoritedTreasures}
                   </Text>
-                  <Text size="sm" c="dimmed">
+                  <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
                     已收藏寶藏
                   </Text>
                 </Card>
@@ -206,7 +207,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                   <Text size="xl" fw={700} c="green">
                     {stats.totalLikes}
                   </Text>
-                  <Text size="sm" c="dimmed">
+                  <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
                     獲得讚數
                   </Text>
                 </Card>
@@ -218,7 +219,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                   <Text size="xl" fw={700} c="blue">
                     {stats.totalComments}
                   </Text>
-                  <Text size="sm" c="dimmed">
+                  <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
                     留言數
                   </Text>
                 </Card>

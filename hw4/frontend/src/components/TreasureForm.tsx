@@ -18,6 +18,7 @@ import { IconUpload, IconInfoCircle } from '@tabler/icons-react';
 import { TreasureFormProps, TreasureType } from '@/types';
 import { TREASURE_TYPE_CONFIG, VALIDATION_RULES, APP_CONFIG } from '@/utils/constants';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { COLORS } from '@/utils/constants';
 
 const TreasureForm: React.FC<TreasureFormProps> = ({
   mode,
@@ -139,6 +140,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
       opened={opened}
       onClose={onClose}
       title={mode === 'create' ? '創建新寶藏' : '編輯寶藏'}
+      style={{ color: COLORS.TEXT.SECONDARY }}
       size="lg"
       centered
     >

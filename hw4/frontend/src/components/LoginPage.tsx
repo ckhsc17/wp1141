@@ -27,6 +27,7 @@ import {
   IconEyeOff
 } from '@tabler/icons-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { COLORS } from '@/utils/constants';
 import { useRouter } from 'next/navigation';
 import { API_ENDPOINTS } from '@/utils/constants';
 
@@ -147,13 +148,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 </Group>
                 <Text 
                   ta="center" 
-                  c="dimmed" 
                   size="lg"
                   style={{
                     maxWidth: '300px',
                     lineHeight: 1.6,
                     fontSize: 'clamp(14px, 3vw, 18px)',
-                    padding: '0 16px'
+                    padding: '0 16px',
+                    color: 'rgba(255, 255, 255, 0.8)' // 提高對比度
                   }}
                 >
                   發現隱藏的寶藏，創造專屬回憶
@@ -285,7 +286,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               />
 
               {!isLoginMode && (
-                <Text size="sm" c="dimmed" ta="right" style={{ cursor: 'pointer' }}>
+                <Text size="sm" ta="right" style={{ cursor: 'pointer', color: 'rgba(255, 255, 255, 0.7)' }}>
                   忘記密碼？
                 </Text>
               )}
@@ -313,7 +314,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
             {/* Mode Switch */}
             <Center>
-              <Text c="dimmed">
+              <Text style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                 {isLoginMode ? '第一次使用尋寶地圖？' : '已經有帳號了？'}
                 <Text
                   component="span"
@@ -347,8 +348,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               <Text 
                 ta="center" 
                 size="sm" 
-                c="dimmed" 
-                style={{ marginBottom: '8px' }}
+                style={{ marginBottom: '8px', color: 'rgba(255, 255, 255, 0.7)' }}
               >
                 繼續登入，代表您同意服務條款。
               </Text>

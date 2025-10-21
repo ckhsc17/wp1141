@@ -27,6 +27,7 @@ import {
   IconAlertCircle
 } from '@tabler/icons-react';
 import { userService, UserTreasure } from '@/services/userService';
+import { COLORS } from '@/utils/constants';
 
 interface UserTreasuresModalProps {
   opened: boolean;
@@ -127,7 +128,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
       <Stack gap="md">
         {/* 統計資訊 */}
         <Group justify="space-between">
-          <Text size="sm" c="dimmed">
+          <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
             共 {total} 個{mode === 'treasures' ? '寶藏' : '收藏'}
           </Text>
         </Group>
@@ -178,7 +179,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
                       </Group>
 
                       {/* 內容預覽 */}
-                      <Text size="xs" c="dimmed" lineClamp={2}>
+                      <Text size="xs" style={{ color: COLORS.TEXT.SECONDARY }} lineClamp={2}>
                         {treasure.content}
                       </Text>
 
@@ -186,7 +187,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
                       {treasure.address && (
                         <Group gap="xs">
                           <IconMapPin size={12} />
-                          <Text size="xs" c="dimmed" lineClamp={1}>
+                          <Text size="xs" style={{ color: COLORS.TEXT.SECONDARY }} lineClamp={1}>
                             {treasure.address}
                           </Text>
                         </Group>
@@ -201,7 +202,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
                             </Badge>
                           ))}
                           {treasure.tags.length > 3 && (
-                            <Text size="xs" c="dimmed">
+                            <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>
                               +{treasure.tags.length - 3}
                             </Text>
                           )}
@@ -245,7 +246,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
                       </Group>
 
                       {/* 創建時間 */}
-                      <Text size="xs" c="dimmed" ta="right">
+                      <Text size="xs" style={{ color: COLORS.TEXT.MUTED }} ta="right">
                         {formatDate(treasure.createdAt)}
                       </Text>
                     </Stack>
@@ -272,10 +273,10 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
         {!isLoading && treasures.length === 0 && !error && (
           <Center py="xl">
             <Stack align="center" gap="md">
-              <Text size="lg" c="dimmed">
+              <Text size="lg" style={{ color: COLORS.TEXT.SECONDARY }}>
                 {mode === 'treasures' ? '還沒有上傳任何寶藏' : '還沒有收藏任何寶藏'}
               </Text>
-              <Text size="sm" c="dimmed">
+              <Text size="sm" style={{ color: COLORS.TEXT.MUTED }}>
                 {mode === 'treasures' 
                   ? '開始探索並上傳你的第一個寶藏吧！' 
                   : '去探索其他人的寶藏並加入收藏吧！'

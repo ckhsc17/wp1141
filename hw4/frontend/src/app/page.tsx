@@ -34,6 +34,7 @@ import LoginPage from '@/components/LoginPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTreasures } from '@/hooks/useTreasures';
 import { MapLocation, TreasureMarker, TreasureType, CreateTreasureRequest, TreasureDTO } from '@/types';
+import { COLORS } from '@/utils/constants';
 
 export default function HomePage() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -288,7 +289,7 @@ export default function HomePage() {
       <Drawer
         opened={sidebarOpened}
         onClose={closeSidebar}
-        title="寶藏總覽"
+        title="寶藏總覽" style={{ color: COLORS.TEXT.SECONDARY }}
         size="lg"
         position="right"
       >
@@ -298,7 +299,7 @@ export default function HomePage() {
           
           <Text fw={600}>附近的寶藏 ({treasures.length})</Text>
           {treasures.length === 0 && !treasuresLoading && (
-            <Text c="dimmed">目前沒有寶藏，快來創建第一個吧！</Text>
+            <Text style={{ color: COLORS.TEXT.SECONDARY }}>目前沒有寶藏，快來創建第一個吧！</Text>
           )}
           {treasures.map(treasure => (
             <TreasureCard
@@ -331,7 +332,7 @@ export default function HomePage() {
       <Modal
         opened={treasuresPageOpened}
         onClose={closeTreasuresPage}
-        title="寶藏管理"
+        title="寶藏管理" style={{ color: COLORS.TEXT.SECONDARY }}
         size="xl"
         centered
       >
