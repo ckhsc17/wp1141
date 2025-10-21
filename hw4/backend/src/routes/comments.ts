@@ -9,7 +9,7 @@ import {
 import {
   validateCreateComment,
   validateUpdateComment,
-  validateUUIDParam
+  validateCUIDParam
 } from '../middleware/validation';
 import { authenticate, optionalAuthenticate } from '../middleware/auth';
 
@@ -24,34 +24,34 @@ const router = Router();
 
 // Comment routes for specific treasures
 router.post('/treasures/:treasureId/comments', 
-  validateUUIDParam('treasureId'),
+  validateCUIDParam('treasureId'),
   authenticate,
   validateCreateComment,
   createComment
 );
 
 router.get('/treasures/:treasureId/comments',
-  validateUUIDParam('treasureId'),
+  validateCUIDParam('treasureId'),
   optionalAuthenticate,
   getCommentsByTreasureId
 );
 
 // Individual comment routes
 router.get('/comments/:commentId',
-  validateUUIDParam('commentId'),
+  validateCUIDParam('commentId'),
   optionalAuthenticate,
   getCommentById
 );
 
 router.put('/comments/:commentId',
-  validateUUIDParam('commentId'),
+  validateCUIDParam('commentId'),
   authenticate,
   validateUpdateComment,
   updateComment
 );
 
 router.delete('/comments/:commentId',
-  validateUUIDParam('commentId'),
+  validateCUIDParam('commentId'),
   authenticate,
   deleteComment
 );

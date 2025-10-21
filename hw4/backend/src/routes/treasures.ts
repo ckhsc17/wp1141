@@ -12,7 +12,7 @@ import {
   validateCreateTreasure,
   validateUpdateTreasure,
   validateTreasureQuery,
-  validateUUIDParam
+  validateCUIDParam
 } from '../middleware/validation';
 import { authenticate, optionalAuthenticate } from '../middleware/auth';
 
@@ -27,15 +27,15 @@ const router = Router();
 
 // Public routes (with optional authentication)
 router.get('/', validateTreasureQuery, optionalAuthenticate, getTreasures);
-router.get('/:id', validateUUIDParam('id'), optionalAuthenticate, getTreasureById);
+router.get('/:id', validateCUIDParam('id'), optionalAuthenticate, getTreasureById);
 
 // Protected routes
 router.post('/', authenticate, validateCreateTreasure, createTreasure);
 router.put('/:id', authenticate, validateUpdateTreasure, updateTreasure);
-router.delete('/:id', authenticate, validateUUIDParam('id'), deleteTreasure);
+router.delete('/:id', authenticate, validateCUIDParam('id'), deleteTreasure);
 
 // Like and favorite routes
-router.post('/:id/like', authenticate, validateUUIDParam('id'), toggleLike);
-router.post('/:id/favorite', authenticate, validateUUIDParam('id'), toggleFavorite);
+router.post('/:id/like', authenticate, validateCUIDParam('id'), toggleLike);
+router.post('/:id/favorite', authenticate, validateCUIDParam('id'), toggleFavorite);
 
 export default router;

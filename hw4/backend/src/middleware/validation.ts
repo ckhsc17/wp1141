@@ -24,6 +24,16 @@ const validateUUID = (value: string, fieldName: string) => {
   }
 };
 
+// Helper function to validate CUID (used by Prisma)
+const validateCUID = (value: string, fieldName: string) => {
+  // CUID format: c + timestamp (8 chars) + counter (4 chars) + fingerprint (4 chars) + random (8 chars)
+  // Example: cl9ebqhxk00008vs83z1fkjyd
+  const cuidRegex = /^c[a-z0-9]{24,}$/i;
+  if (!cuidRegex.test(value)) {
+    throw createError.badRequest(`Invalid ${fieldName}`);
+  }
+};
+
 // Helper function to validate latitude
 const validateLatitude = (value: number, fieldName: string) => {
   if (value < -90 || value > 90) {
@@ -314,11 +324,23 @@ export const validateUpdateComment = (req: Request, res: Response, next: NextFun
 
 // ==================== Common Validations ====================
 
+export const validateCUIDParam = (paramName: string = 'id') => 
+  (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const value = req.params[paramName];
+      validateCUID(value, paramName);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+// 保留舊的 UUID 驗證以便向後兼容（但實際上使用 CUID 驗證）
 export const validateUUIDParam = (paramName: string = 'id') => 
   (req: Request, res: Response, next: NextFunction) => {
     try {
       const value = req.params[paramName];
-      validateUUID(value, paramName);
+      validateCUID(value, paramName); // 使用 CUID 驗證而不是 UUID
       next();
     } catch (error) {
       next(error);

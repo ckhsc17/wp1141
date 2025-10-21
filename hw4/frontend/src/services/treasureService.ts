@@ -119,7 +119,8 @@ class TreasureService extends ApiService {
   // 按讚/取消按讚
   async toggleLike(id: string): Promise<{ isLiked: boolean; likesCount: number }> {
     const response = await this.post<ApiResponse<{ isLiked: boolean; likesCount: number }>>(
-      API_ENDPOINTS.TREASURES.LIKE(id)
+      API_ENDPOINTS.TREASURES.LIKE(id),
+      {} // 傳送空物件作為 request body
     );
     return response.data;
   }
@@ -127,7 +128,8 @@ class TreasureService extends ApiService {
   // 收藏/取消收藏
   async toggleFavorite(id: string): Promise<{ isFavorited: boolean }> {
     const response = await this.post<ApiResponse<{ isFavorited: boolean }>>(
-      API_ENDPOINTS.TREASURES.FAVORITE(id)
+      API_ENDPOINTS.TREASURES.FAVORITE(id),
+      {} // 傳送空物件作為 request body
     );
     return response.data;
   }

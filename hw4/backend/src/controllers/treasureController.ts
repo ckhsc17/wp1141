@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { PrismaClient } from '../generated/prisma';
+import { TreasureService } from '../services/treasureService';
 import { 
   AuthenticatedRequest,
   CreateTreasureDTO,
@@ -7,6 +7,7 @@ import {
   TreasureDTO,
   TreasureDetailDTO,
   TreasureQuery,
+  TreasureType,
   ApiResponse,
   ApiError,
   PaginatedResponse,
@@ -14,56 +15,9 @@ import {
 } from '../types';
 import { createError } from '../middleware/errorHandler';
 
-const prisma = new PrismaClient();
+const treasureService = new TreasureService();
 
-// Helper function to calculate distance between two points
-const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-};
 
-// Helper function to transform treasure data
-const transformTreasure = (
-  treasure: any,
-  currentUserId?: string
-): TreasureDTO => {
-  return {
-    id: treasure.id,
-    title: treasure.title,
-    content: treasure.content,
-    type: treasure.type,
-    latitude: treasure.latitude,
-    longitude: treasure.longitude,
-    address: treasure.address,
-    mediaUrl: treasure.mediaUrl,
-    linkUrl: treasure.linkUrl,
-    isLiveLocation: treasure.isLiveLocation,
-    tags: treasure.tags,
-    likesCount: treasure._count?.likes || 0,
-    commentsCount: treasure._count?.comments || 0,
-    isLiked: currentUserId ? treasure.likes?.some((like: any) => like.userId === currentUserId) || false : false,
-    isFavorited: currentUserId ? treasure.favorites?.some((fav: any) => fav.userId === currentUserId) || false : false,
-    createdAt: treasure.createdAt.toISOString(),
-    user: {
-      id: treasure.user.id,
-      email: treasure.user.email,
-      name: treasure.user.name,
-      avatar: treasure.user.avatar
-    }
-  };
-};
 
 /**
  * @swagger
@@ -108,7 +62,7 @@ const transformTreasure = (
  *         name: userId
  *         schema:
  *           type: string
- *           format: uuid
+ *           pattern: "^c[a-z0-9]{24,}$"
  *         description: Filter by user ID
  *       - in: query
  *         name: page
@@ -158,103 +112,46 @@ export const getTreasures = async (
     }: TreasureQuery = req.query as any;
 
     const currentUserId = req.user?.id;
-    const pageNum = parseInt(String(page)) || 1;
-    const limitNum = Math.min(parseInt(String(limit)) || 20, 100);
-    const offset = (pageNum - 1) * limitNum;
 
-    // Build where clause
-    const where: any = {};
-
-    if (type) {
-      where.type = type;
-    }
-
-    if (userId) {
-      where.userId = userId;
-    }
-
-    if (tags) {
-      const tagArray = Array.isArray(tags) ? tags : [tags];
-      where.tags = {
-        hasSome: tagArray
-      };
-    }
-
-    // Get treasures with counts and user info
-    const treasures = await prisma.treasure.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            avatar: true
-          }
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true
-          }
-        },
-        ...(currentUserId && {
-          likes: {
-            where: { userId: currentUserId },
-            select: { userId: true }
-          },
-          favorites: {
-            where: { userId: currentUserId },
-            select: { userId: true }
-          }
-        })
+    const result = await treasureService.getTreasures(
+      {
+        latitude: latitude ? parseFloat(String(latitude)) : undefined,
+        longitude: longitude ? parseFloat(String(longitude)) : undefined,
+        radius: radius ? parseFloat(String(radius)) : undefined,
+        type: type as TreasureType | undefined,
+        tags: Array.isArray(tags) ? tags : tags ? [tags] : undefined,
+        userId: userId as string,
+        page: parseInt(String(page)) || 1,
+        limit: Math.min(parseInt(String(limit)) || 20, 100)
       },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      skip: offset,
-      take: limitNum
-    });
-
-    // Filter by location if coordinates provided
-    let filteredTreasures = treasures;
-    if (latitude && longitude) {
-      const searchRadius = radius || 10; // Default 10km radius
-      
-      filteredTreasures = treasures.filter((treasure: any) => {
-        const distance = calculateDistance(
-          parseFloat(String(latitude)),
-          parseFloat(String(longitude)),
-          treasure.latitude,
-          treasure.longitude
-        );
-        return distance <= searchRadius;
-      });
-    }
-
-    // Get total count for pagination
-    const total = await prisma.treasure.count({ where });
-    const totalPages = Math.ceil(total / limitNum);
-
-    // Transform treasures
-    const transformedTreasures = filteredTreasures.map((treasure: any) => 
-      transformTreasure(treasure, currentUserId)
+      currentUserId
     );
+
+
+    if (!result.success || !result.data) {
+      res.status(500).json({
+        success: false,
+        message: result.error || 'Failed to get treasures'
+      });
+      return;
+    }
 
     const response: PaginatedResponse<TreasureDTO> = {
       success: true,
-      data: transformedTreasures,
+      data: result.data!.treasures,
       pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        totalPages
+        page: parseInt(String(page)) || 1,
+        limit: Math.min(parseInt(String(limit)) || 20, 100),
+        total: result.data!.total,
+        totalPages: result.data!.totalPages
       }
     };
 
     res.json(response);
+    return;
   } catch (error) {
     next(error);
+    return;
   }
 };
 
@@ -272,7 +169,7 @@ export const getTreasures = async (
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
+ *           pattern: "^c[a-z0-9]{24,}$"
  *         description: Treasure ID
  *     responses:
  *       200:
@@ -302,75 +199,27 @@ export const getTreasureById = async (
     const { id } = req.params;
     const currentUserId = req.user?.id;
 
-    const treasure = await prisma.treasure.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            avatar: true
-          }
-        },
-        comments: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                name: true,
-                avatar: true
-              }
-            }
-          },
-          orderBy: {
-            createdAt: 'desc'
-          }
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true
-          }
-        },
-        ...(currentUserId && {
-          likes: {
-            where: { userId: currentUserId },
-            select: { userId: true }
-          },
-          favorites: {
-            where: { userId: currentUserId },
-            select: { userId: true }
-          }
-        })
-      }
-    });
+    const result = await treasureService.getTreasureById(id, currentUserId);
 
-    if (!treasure) {
-      throw createError.notFound('Treasure not found');
+    if (!result.success || !result.data) {
+      res.status(404).json({
+        success: false,
+        message: result.error || 'Treasure not found'
+      });
+      return;
     }
-
-    // Transform treasure with comments
-    const transformedTreasure: TreasureDetailDTO = {
-      ...transformTreasure(treasure, currentUserId),
-      comments: treasure.comments.map((comment: any) => ({
-        id: comment.id,
-        content: comment.content,
-        createdAt: comment.createdAt.toISOString(),
-        user: comment.user
-      }))
-    };
 
     const response: ApiResponse<TreasureDetailDTO> = {
       success: true,
-      data: transformedTreasure,
+      data: result.data,
       message: 'Treasure retrieved successfully'
     };
 
     res.json(response);
+      return;
   } catch (error) {
     next(error);
+      return;
   }
 };
 
@@ -423,44 +272,25 @@ export const createTreasure = async (
 
     if (!userId) {
       throw createError.unauthorized('User not authenticated');
+      return;
     }
 
     const treasureData: CreateTreasureDTO = req.body;
 
-    // Calculate location radius for live location treasures
-    const locationRadius = treasureData.isLiveLocation ? 0.05 : 0; // 50m for live location
+    const result = await treasureService.createTreasure(treasureData, userId);
+      return;
 
-    const treasure = await prisma.treasure.create({
-      data: {
-        ...treasureData,
-        userId,
-        locationRadius,
-        likesCount: 0,
-        commentsCount: 0
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            avatar: true
-          }
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true
-          }
-        }
-      }
-    });
-
-    const transformedTreasure = transformTreasure(treasure, userId);
+    if (!result.success || !result.data) {
+      res.status(400).json({
+        success: false,
+        message: result.error || 'Failed to create treasure'
+      });
+      return;
+    }
 
     const response: ApiResponse<TreasureDTO> = {
       success: true,
-      data: transformedTreasure,
+      data: result.data!,
       message: 'Treasure created successfully'
     };
 
@@ -484,7 +314,7 @@ export const createTreasure = async (
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
+ *           pattern: "^c[a-z0-9]{24,}$"
  *         description: Treasure ID
  *     requestBody:
  *       required: true
@@ -529,66 +359,45 @@ export const updateTreasure = async (
 
     if (!userId) {
       throw createError.unauthorized('User not authenticated');
+      return;
     }
 
-    // Check if treasure exists and belongs to user
-    const existingTreasure = await prisma.treasure.findUnique({
-      where: { id },
-      select: { id: true, userId: true }
-    });
+    const result = await treasureService.updateTreasure(id, updateData, userId);
+      return;
 
-    if (!existingTreasure) {
-      throw createError.notFound('Treasure not found');
-    }
-
-    if (existingTreasure.userId !== userId) {
-      throw createError.forbidden('Not authorized to update this treasure');
-    }
-
-    // Update treasure
-    const treasure = await prisma.treasure.update({
-      where: { id },
-      data: {
-        ...updateData,
-        updatedAt: new Date()
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            avatar: true
-          }
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true
-          }
-        },
-        likes: {
-          where: { userId },
-          select: { userId: true }
-        },
-        favorites: {
-          where: { userId },
-          select: { userId: true }
-        }
+    if (!result.success) {
+      if (result.error === 'Treasure not found') {
+        res.status(404).json({
+          success: false,
+          message: result.error
+        });
+      return;
       }
-    });
-
-    const transformedTreasure = transformTreasure(treasure, userId);
+      if (result.error === 'Not authorized to update this treasure') {
+        res.status(403).json({
+          success: false,
+          message: result.error
+        });
+      return;
+      }
+      res.status(400).json({
+        success: false,
+        message: result.error || 'Failed to update treasure'
+      });
+      return;
+    }
 
     const response: ApiResponse<TreasureDTO> = {
       success: true,
-      data: transformedTreasure,
+      data: result.data!,
       message: 'Treasure updated successfully'
     };
 
     res.json(response);
+      return;
   } catch (error) {
     next(error);
+      return;
   }
 };
 
@@ -606,7 +415,7 @@ export const updateTreasure = async (
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
+ *           pattern: "^c[a-z0-9]{24,}$"
  *         description: Treasure ID
  *     responses:
  *       200:
@@ -647,26 +456,33 @@ export const deleteTreasure = async (
 
     if (!userId) {
       throw createError.unauthorized('User not authenticated');
+      return;
     }
 
-    // Check if treasure exists and belongs to user
-    const existingTreasure = await prisma.treasure.findUnique({
-      where: { id },
-      select: { id: true, userId: true }
-    });
+    const result = await treasureService.deleteTreasure(id, userId);
+      return;
 
-    if (!existingTreasure) {
-      throw createError.notFound('Treasure not found');
+    if (!result.success) {
+      if (result.error === 'Treasure not found') {
+        res.status(404).json({
+          success: false,
+          message: result.error
+        });
+      return;
+      }
+      if (result.error === 'Not authorized to delete this treasure') {
+        res.status(403).json({
+          success: false,
+          message: result.error
+        });
+      return;
+      }
+      res.status(400).json({
+        success: false,
+        message: result.error || 'Failed to delete treasure'
+      });
+      return;
     }
-
-    if (existingTreasure.userId !== userId) {
-      throw createError.forbidden('Not authorized to delete this treasure');
-    }
-
-    // Delete treasure (cascade will handle related records)
-    await prisma.treasure.delete({
-      where: { id }
-    });
 
     const response: ApiResponse<{ message: string }> = {
       success: true,
@@ -676,8 +492,10 @@ export const deleteTreasure = async (
     };
 
     res.json(response);
+      return;
   } catch (error) {
     next(error);
+      return;
   }
 };
 
@@ -695,7 +513,7 @@ export const deleteTreasure = async (
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
+ *           pattern: "^c[a-z0-9]{24,}$"
  *         description: Treasure ID
  *     responses:
  *       200:
@@ -730,74 +548,37 @@ export const toggleLike = async (
     const { id } = req.params;
     const userId = req.user!.id;
 
-    // Check if treasure exists
-    const treasure = await prisma.treasure.findUnique({
-      where: { id }
-    });
+    const result = await treasureService.toggleLike(id, userId);
 
-    if (!treasure) {
-      const response: ApiError = {
+    if (!result.success) {
+      if (result.error === 'Treasure not found') {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'TREASURE_NOT_FOUND',
+            message: '寶藏不存在'
+          }
+        });
+      return;
+      }
+      res.status(400).json({
         success: false,
-        error: {
-          code: 'TREASURE_NOT_FOUND',
-          message: '寶藏不存在'
-        }
-      };
-      res.status(404).json(response);
+        message: result.error || 'Failed to toggle like'
+      });
       return;
     }
 
-    // Check if user already liked this treasure
-    const existingLike = await prisma.like.findUnique({
-      where: {
-        userId_treasureId: {
-          userId,
-          treasureId: id
-        }
-      }
-    });
-
-    let isLiked: boolean;
-    
-    if (existingLike) {
-      // Remove like
-      await prisma.like.delete({
-        where: {
-          userId_treasureId: {
-            userId,
-            treasureId: id
-          }
-        }
-      });
-      isLiked = false;
-    } else {
-      // Add like
-      await prisma.like.create({
-        data: {
-          userId,
-          treasureId: id
-        }
-      });
-      isLiked = true;
-    }
-
-    // Get updated likes count
-    const likesCount = await prisma.like.count({
-      where: { treasureId: id }
-    });
-
     const response = {
       success: true,
-      data: {
-        isLiked,
-        likesCount
-      },
-      message: isLiked ? '已按讚' : '取消按讚'
+      data: result.data,
+      message: result.data?.isLiked ? '已按讚' : '取消按讚'
     };
 
     res.json(response);
+      return;
   } catch (error) {
     next(error);
+      return;
   }
 };
 
@@ -815,7 +596,7 @@ export const toggleLike = async (
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
+ *           pattern: "^c[a-z0-9]{24,}$"
  *         description: Treasure ID
  *     responses:
  *       200:
@@ -848,67 +629,37 @@ export const toggleFavorite = async (
     const { id } = req.params;
     const userId = req.user!.id;
 
-    // Check if treasure exists
-    const treasure = await prisma.treasure.findUnique({
-      where: { id }
-    });
-
-    if (!treasure) {
-      const response: ApiError = {
-        success: false,
-        error: {
-          code: 'TREASURE_NOT_FOUND',
-          message: '寶藏不存在'
-        }
-      };
-      res.status(404).json(response);
+    const result = await treasureService.toggleFavorite(id, userId);
       return;
-    }
 
-    // Check if user already favorited this treasure
-    const existingFavorite = await prisma.favorite.findUnique({
-      where: {
-        userId_treasureId: {
-          userId,
-          treasureId: id
-        }
-      }
-    });
-
-    let isFavorited: boolean;
-    
-    if (existingFavorite) {
-      // Remove favorite
-      await prisma.favorite.delete({
-        where: {
-          userId_treasureId: {
-            userId,
-            treasureId: id
+    if (!result.success) {
+      if (result.error === 'Treasure not found') {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'TREASURE_NOT_FOUND',
+            message: '寶藏不存在'
           }
-        }
+        });
+      return;
+      }
+      res.status(400).json({
+        success: false,
+        message: result.error || 'Failed to toggle favorite'
       });
-      isFavorited = false;
-    } else {
-      // Add favorite
-      await prisma.favorite.create({
-        data: {
-          userId,
-          treasureId: id
-        }
-      });
-      isFavorited = true;
+      return;
     }
 
     const response = {
       success: true,
-      data: {
-        isFavorited
-      },
-      message: isFavorited ? '已收藏' : '取消收藏'
+      data: result.data,
+      message: result.data?.isFavorited ? '已收藏' : '取消收藏'
     };
 
     res.json(response);
+      return;
   } catch (error) {
     next(error);
+      return;
   }
 };

@@ -419,6 +419,7 @@ export class TreasureService {
    */
   async toggleLike(treasureId: string, userId: string): Promise<ServiceResult<{ isLiked: boolean }>> {
     try {
+      console.log('Toggling like for treasureId:', treasureId, 'by userId:', userId);
       // Check if treasure exists
       const treasure = await prisma.treasure.findUnique({
         where: { id: treasureId },

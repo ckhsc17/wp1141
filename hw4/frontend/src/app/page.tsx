@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppShell,
   Container,
@@ -18,7 +18,6 @@ import {
 import {
   IconPlus,
   IconFilter,
-  IconLocation,
   IconMap,
   IconUser,
   IconSettings,
@@ -65,13 +64,10 @@ export default function HomePage() {
     refetch: refetchTreasures
   } = useTreasures({});
 
-  // 處理獲取當前位置
-  const handleGetCurrentLocation = () => {
-    console.log('嘗試獲取當前位置...');
-    
+  // 自動獲取當前位置
+  useEffect(() => {
     if (!navigator.geolocation) {
       console.error('瀏覽器不支援地理位置功能');
-      alert('此瀏覽器不支援地理位置功能');
       return;
     }
 
@@ -88,7 +84,7 @@ export default function HomePage() {
       },
       (error) => {
         console.error('獲取位置失敗:', error);
-        alert('無法獲取您的位置，請檢查位置權限設定');
+        // 獲取位置失敗時使用預設位置（台北101）
       },
       {
         enableHighAccuracy: true,
@@ -96,7 +92,7 @@ export default function HomePage() {
         maximumAge: 60000
       }
     );
-  };
+  }, []);
 
   // 將寶藏資料轉換為地圖標記格式
   const treasureMarkersForMap: TreasureMarker[] = treasures.map(treasure => ({
@@ -201,15 +197,6 @@ export default function HomePage() {
             </Group>
             
             <Group>
-              <Button
-                leftSection={<IconLocation size={16} />}
-                variant="outline"
-                size="sm"
-                onClick={handleGetCurrentLocation}
-              >
-                我的位置
-              </Button>
-              
               <Button
                 leftSection={<IconPlus size={16} />}
                 onClick={openTreasureForm}

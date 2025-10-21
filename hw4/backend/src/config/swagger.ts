@@ -41,8 +41,8 @@ const options = {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
-              description: 'Unique user identifier'
+              pattern: '^c[a-z0-9]{24,}$',
+              description: 'Unique user identifier (CUID format)'
             },
             email: {
               type: 'string',
@@ -72,8 +72,8 @@ const options = {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
-              description: 'Unique treasure identifier'
+              pattern: '^c[a-z0-9]{24,}$',
+              description: 'Unique treasure identifier (CUID format)'
             },
             title: {
               type: 'string',
@@ -162,8 +162,8 @@ const options = {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
-              description: 'Unique comment identifier'
+              pattern: '^c[a-z0-9]{24,}$',
+              description: 'Unique comment identifier (CUID format)'
             },
             content: {
               type: 'string',

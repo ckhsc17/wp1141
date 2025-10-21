@@ -149,7 +149,7 @@ const TreasureMarkers: React.FC<{ markers: TreasureMarker[], onMarkerClick?: (po
               e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
             }}
           >
-            <GiTreasureMap 
+            <GiOpenChest 
               size={24} 
               color="#8B4513" 
               style={{
