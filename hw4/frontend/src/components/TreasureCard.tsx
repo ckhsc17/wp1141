@@ -21,17 +21,31 @@ import {
   IconTrash,
   IconExternalLink
 } from '@tabler/icons-react';
-import { TreasureCardProps } from '@/types';
+import { TreasureCardProps, TreasureDTO } from '@/types';
 import { TREASURE_TYPE_CONFIG } from '@/utils/constants';
 import { useAuth } from '@/contexts/AuthContext';
 
-const TreasureCard: React.FC<TreasureCardProps> = ({
+// 寶藏卡片內容組件（不含外框）
+interface TreasureCardContentProps {
+  treasure: TreasureDTO;
+  onLike?: (treasureId: string) => void;
+  onFavorite?: (treasureId: string) => void;
+  onComment?: (treasureId: string) => void;
+  onEdit?: (treasure: TreasureDTO) => void;
+  onDelete?: (treasureId: string) => void;
+  showOwnerMenu?: boolean;
+  compact?: boolean; // 緊湊模式，用於 InfoWindow
+}
+
+export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   treasure,
   onLike,
   onFavorite,
   onComment,
   onEdit,
-  onDelete
+  onDelete,
+  showOwnerMenu = true,
+  compact = false
 }) => {
   const { user } = useAuth();
   const typeConfig = TREASURE_TYPE_CONFIG[treasure.type];
@@ -60,7 +74,7 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('zh-TW', {
-      year: 'numeric',
+      year: compact ? undefined : 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -69,61 +83,60 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
   };
 
   return (
-    <Card shadow="sm" padding="md" radius="md" withBorder>
-      <Card.Section withBorder inheritPadding py="xs">
-        <Group justify="space-between">
-          <Group gap="xs">
-            <Text 
-              size="lg" 
-              style={{ 
-                fontSize: rem(24),
-                lineHeight: 1
-              }}
-            >
-              {typeConfig.icon}
-            </Text>
-            <Badge 
-              color={typeConfig.color}
-              variant="light"
-              size="sm"
-            >
-              {typeConfig.label}
-            </Badge>
-          </Group>
-          
-          {isOwner && (
-            <Menu shadow="md" width={120}>
-              <Menu.Target>
-                <ActionIcon variant="subtle" size="sm">
-                  <IconDots size={16} />
-                </ActionIcon>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Item 
-                  leftSection={<IconEdit size={14} />}
-                  onClick={handleEdit}
-                >
-                  編輯
-                </Menu.Item>
-                <Menu.Item 
-                  leftSection={<IconTrash size={14} />}
-                  color="red"
-                  onClick={handleDelete}
-                >
-                  刪除
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-          )}
+    <>
+      {/* 標題區域 */}
+      <Group justify="space-between" mb="md">
+        <Group gap="xs">
+          <Text 
+            size={compact ? "md" : "lg"} 
+            style={{ 
+              fontSize: compact ? rem(20) : rem(24),
+              lineHeight: 1
+            }}
+          >
+            {typeConfig.icon}
+          </Text>
+          <Badge 
+            color={typeConfig.color}
+            variant="light"
+            size={compact ? "xs" : "sm"}
+          >
+            {typeConfig.label}
+          </Badge>
         </Group>
-      </Card.Section>
+        
+        {showOwnerMenu && isOwner && (
+          <Menu shadow="md" width={120}>
+            <Menu.Target>
+              <ActionIcon variant="subtle" size="sm">
+                <IconDots size={16} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item 
+                leftSection={<IconEdit size={14} />}
+                onClick={handleEdit}
+              >
+                編輯
+              </Menu.Item>
+              <Menu.Item 
+                leftSection={<IconTrash size={14} />}
+                color="red"
+                onClick={handleDelete}
+              >
+                刪除
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        )}
+      </Group>
 
-      <Stack gap="md" mt="md">
+      <Stack gap={compact ? "xs" : "md"}>
         <div>
-          <Text fw={600} size="lg" mb={4}>
+          <Text fw={600} size={compact ? "md" : "lg"} mb={4}>
             {treasure.title}
           </Text>
-          <Text size="sm" c="dimmed" lineClamp={3}>
+          <Text size="sm" c="dimmed" lineClamp={compact ? 2 : 3}>
             {treasure.content}
           </Text>
         </div>
@@ -148,7 +161,7 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
         {treasure.mediaUrl && (
           <div>
             {treasure.type === 'music' || treasure.type === 'audio' ? (
-              <audio controls style={{ width: '100%' }}>
+              <audio controls style={{ width: '100%', height: compact ? '28px' : 'auto' }}>
                 <source src={treasure.mediaUrl} type="audio/mpeg" />
                 您的瀏覽器不支援音頻播放
               </audio>
@@ -158,7 +171,9 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
                 alt={treasure.title}
                 style={{ 
                   maxWidth: '100%', 
-                  borderRadius: '4px' 
+                  maxHeight: compact ? '100px' : 'auto',
+                  borderRadius: '4px',
+                  objectFit: 'cover'
                 }}
               />
             )}
@@ -167,7 +182,7 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
 
         {treasure.tags.length > 0 && (
           <Group gap="xs">
-            {treasure.tags.map((tag, index) => (
+            {treasure.tags.slice(0, compact ? 2 : treasure.tags.length).map((tag, index) => (
               <Badge 
                 key={index}
                 variant="outline" 
@@ -177,6 +192,9 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
                 #{tag}
               </Badge>
             ))}
+            {compact && treasure.tags.length > 2 && (
+              <Text size="xs" c="dimmed">+{treasure.tags.length - 2}</Text>
+            )}
           </Group>
         )}
 
@@ -184,12 +202,12 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
           <Group gap="xs">
             <Avatar 
               src={treasure.user.avatar} 
-              size={24}
+              size={compact ? 20 : 24}
               radius="xl"
             >
               {treasure.user.name.charAt(0)}
             </Avatar>
-            <Text size="sm" c="dimmed">
+            <Text size={compact ? "xs" : "sm"} c="dimmed">
               {treasure.user.name}
             </Text>
             <Text size="xs" c="dimmed">
@@ -208,9 +226,9 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
               size="sm"
             >
               {treasure.isLiked ? (
-                <IconHeartFilled size={16} />
+                <IconHeartFilled size={compact ? 14 : 16} />
               ) : (
-                <IconHeart size={16} />
+                <IconHeart size={compact ? 14 : 16} />
               )}
             </ActionIcon>
             <Text size="xs" c="dimmed">
@@ -224,9 +242,9 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
               size="sm"
             >
               {treasure.isFavorited ? (
-                <IconBookmarkFilled size={16} />
+                <IconBookmarkFilled size={compact ? 14 : 16} />
               ) : (
-                <IconBookmark size={16} />
+                <IconBookmark size={compact ? 14 : 16} />
               )}
             </ActionIcon>
 
@@ -236,7 +254,7 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
               onClick={handleComment}
               size="sm"
             >
-              <IconMessage size={16} />
+              <IconMessage size={compact ? 14 : 16} />
             </ActionIcon>
             <Text size="xs" c="dimmed">
               {treasure.commentsCount}
@@ -244,6 +262,30 @@ const TreasureCard: React.FC<TreasureCardProps> = ({
           </Group>
         </Group>
       </Stack>
+    </>
+  );
+};
+
+const TreasureCard: React.FC<TreasureCardProps> = ({
+  treasure,
+  onLike,
+  onFavorite,
+  onComment,
+  onEdit,
+  onDelete
+}) => {
+  return (
+    <Card shadow="sm" padding="md" radius="md" withBorder>
+      <TreasureCardContent
+        treasure={treasure}
+        onLike={onLike}
+        onFavorite={onFavorite}
+        onComment={onComment}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        showOwnerMenu={true}
+        compact={false}
+      />
     </Card>
   );
 };

@@ -21,7 +21,8 @@ import {
   IconMap,
   IconUser,
   IconSettings,
-  IconLogout
+  IconLogout,
+  IconList
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import GoogleMapComponent from '@/components/GoogleMapComponent';
@@ -40,7 +41,6 @@ export default function HomePage() {
   const [sidebarOpened, { open: openSidebar, close: closeSidebar }] = useDisclosure(false);
   const [treasuresPageOpened, { open: openTreasuresPage, close: closeTreasuresPage }] = useDisclosure(false);
   const [profileModalOpened, { open: openProfileModal, close: closeProfileModal }] = useDisclosure(false);
-  const [selectedTreasure, setSelectedTreasure] = useState<TreasureDTO | null>(null);
   
   // 預設地圖中心（台北101）
   const [mapCenter, setMapCenter] = useState<MapLocation>({
@@ -116,8 +116,8 @@ export default function HomePage() {
     
     if (clickedTreasure) {
       console.log('標記點擊 - 寶藏:', clickedTreasure.title);
-      setSelectedTreasure(clickedTreasure);
-      openSidebar();
+      // 不再設置 selectedTreasure 和打開側邊欄
+      // InfoWindow 會自動在地圖上顯示寶藏詳情
     }
   };
 
@@ -158,8 +158,6 @@ export default function HomePage() {
       try {
         await deleteTreasure(treasureId);
         await refetchTreasures();
-        setSelectedTreasure(null);
-        closeSidebar();
       } catch (error) {
         console.error('刪除失敗:', error);
         alert('刪除失敗，請稍後再試');
@@ -208,7 +206,17 @@ export default function HomePage() {
               <ActionIcon
                 variant="outline"
                 size="lg"
+                onClick={openSidebar}
+                title="寶藏列表"
+              >
+                <IconList size={18} />
+              </ActionIcon>
+              
+              <ActionIcon
+                variant="outline"
+                size="lg"
                 onClick={openTreasuresPage}
+                title="寶藏管理"
               >
                 <IconFilter size={18} />
               </ActionIcon>
@@ -269,6 +277,8 @@ export default function HomePage() {
             showCurrentLocation={showCurrentLocation}
             onMapClick={handleMapClick}
             onMarkerClick={handleMarkerClick}
+            onLike={handleLike}
+            onFavorite={handleFavorite}
             height="calc(100vh - 100px)"
             width="100%"
           />
@@ -278,7 +288,7 @@ export default function HomePage() {
       <Drawer
         opened={sidebarOpened}
         onClose={closeSidebar}
-        title={selectedTreasure ? selectedTreasure.title : "寶藏總覽"}
+        title="寶藏總覽"
         size="lg"
         position="right"
       >
@@ -286,30 +296,19 @@ export default function HomePage() {
           {treasuresLoading && <Text>載入中...</Text>}
           {treasuresError && <Text c="red">載入失敗: {treasuresError}</Text>}
           
-          {selectedTreasure ? (
+          <Text fw={600}>附近的寶藏 ({treasures.length})</Text>
+          {treasures.length === 0 && !treasuresLoading && (
+            <Text c="dimmed">目前沒有寶藏，快來創建第一個吧！</Text>
+          )}
+          {treasures.map(treasure => (
             <TreasureCard
-              treasure={selectedTreasure}
+              key={treasure.id}
+              treasure={treasure}
               onLike={handleLike}
               onFavorite={handleFavorite}
-              onDelete={user?.id === selectedTreasure.user.id ? handleDelete : undefined}
+              onDelete={user?.id === treasure.user.id ? handleDelete : undefined}
             />
-          ) : (
-            <>
-              <Text fw={600}>附近的寶藏 ({treasures.length})</Text>
-              {treasures.length === 0 && !treasuresLoading && (
-                <Text c="dimmed">目前沒有寶藏，快來創建第一個吧！</Text>
-              )}
-              {treasures.map(treasure => (
-                <TreasureCard
-                  key={treasure.id}
-                  treasure={treasure}
-                  onLike={handleLike}
-                  onFavorite={handleFavorite}
-                  onDelete={user?.id === treasure.user.id ? handleDelete : undefined}
-                />
-              ))}
-            </>
-          )}
+          ))}
         </Stack>
       </Drawer>
 

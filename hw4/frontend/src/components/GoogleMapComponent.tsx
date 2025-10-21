@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Box, Center, Text } from '@mantine/core';
+import { Box, Center, Text, Card, ActionIcon } from '@mantine/core';
 import { 
   APIProvider, 
   Map, 
@@ -12,7 +12,9 @@ import {
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import type { Marker } from '@googlemaps/markerclusterer';
 import { GiTreasureMap, GiOpenChest } from 'react-icons/gi';
+import { IconX } from '@tabler/icons-react';
 import { TreasureMarker } from '@/types';
+import { TreasureCardContent } from './TreasureCard';
 
 interface GoogleMapComponentProps {
   center: google.maps.LatLngLiteral;
@@ -22,9 +24,92 @@ interface GoogleMapComponentProps {
   showCurrentLocation?: boolean;
   onMarkerClick?: (position: google.maps.LatLngLiteral) => void;
   onMapClick?: (position: google.maps.LatLngLiteral) => void;
+  onLike?: (treasureId: string) => void;
+  onFavorite?: (treasureId: string) => void;
+  onComment?: (treasureId: string) => void;
   height?: string;
   width?: string;
 }
+
+// 寶藏資訊窗口組件
+const TreasureInfoWindow: React.FC<{
+  treasure: TreasureMarker;
+  position: google.maps.LatLngLiteral;
+  onClose: () => void;
+  onLike?: (treasureId: string) => void;
+  onFavorite?: (treasureId: string) => void;
+  onComment?: (treasureId: string) => void;
+}> = ({ treasure, position, onClose, onLike, onFavorite, onComment }) => {
+  return (
+    <AdvancedMarker
+      position={position}
+      clickable={false}
+    >
+      <div
+        style={{
+          position: 'relative',
+          transform: 'translate(-50%, -100%)',
+          marginBottom: '10px'
+        }}
+      >
+        {/* 對話框箭頭 */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '-8px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 0,
+            height: 0,
+            borderLeft: '8px solid transparent',
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid white',
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+          }}
+        />
+        
+        {/* 資訊卡片 */}
+        <Card
+          shadow="lg"
+          padding="md"
+          radius="md"
+          withBorder
+          style={{
+            width: '300px',
+            maxWidth: '90vw',
+            backgroundColor: 'white',
+            position: 'relative'
+          }}
+        >
+          {/* 關閉按鈕 */}
+          <ActionIcon
+            variant="subtle"
+            size="sm"
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              zIndex: 1
+            }}
+          >
+            <IconX size={16} />
+          </ActionIcon>
+
+          {/* 使用 TreasureCardContent 組件 */}
+          <TreasureCardContent
+            treasure={treasure.treasure}
+            onLike={onLike}
+            onFavorite={onFavorite}
+            onComment={onComment}
+            showOwnerMenu={false} // InfoWindow 中不顯示編輯/刪除選單
+            compact={true} // 使用緊湊模式
+          />
+        </Card>
+      </div>
+    </AdvancedMarker>
+  );
+};
 
 // 當前位置標記組件
 const CurrentLocationMarker: React.FC<{ 
@@ -65,12 +150,22 @@ const CurrentLocationMarker: React.FC<{
 };
 
 // 寶藏標記組件
-const TreasureMarkers: React.FC<{ markers: TreasureMarker[], onMarkerClick?: (position: google.maps.LatLngLiteral) => void }> = ({ 
+const TreasureMarkers: React.FC<{ 
+  markers: TreasureMarker[];
+  onMarkerClick?: (position: google.maps.LatLngLiteral) => void;
+  onLike?: (treasureId: string) => void;
+  onFavorite?: (treasureId: string) => void;
+  onComment?: (treasureId: string) => void;
+}> = ({ 
   markers, 
-  onMarkerClick 
+  onMarkerClick,
+  onLike,
+  onFavorite,
+  onComment
 }) => {
   const map = useMap();
   const [markerInstances, setMarkerInstances] = useState<{[key: string]: Marker}>({});
+  const [selectedTreasure, setSelectedTreasure] = useState<TreasureMarker | null>(null);
   const clusterer = useRef<MarkerClusterer | null>(null);
 
   // 初始化 MarkerClusterer
@@ -95,10 +190,18 @@ const TreasureMarkers: React.FC<{ markers: TreasureMarker[], onMarkerClick?: (po
     console.log('寶藏標記被點擊:', marker.title || marker.id);
     map.panTo(ev.latLng);
     
+    // 設置選中的寶藏以顯示 InfoWindow
+    setSelectedTreasure(marker);
+    
     if (onMarkerClick) {
       onMarkerClick({ lat: marker.position.lat, lng: marker.position.lng });
     }
   }, [map, onMarkerClick]);
+
+  // 關閉 InfoWindow
+  const handleCloseInfoWindow = useCallback(() => {
+    setSelectedTreasure(null);
+  }, []);
 
   // 設定標記參照
   const setMarkerRef = useCallback((marker: Marker | null, id: string) => {
@@ -134,19 +237,26 @@ const TreasureMarkers: React.FC<{ markers: TreasureMarker[], onMarkerClick?: (po
               width: '40px',
               height: '40px',
               borderRadius: '50%',
-              backgroundColor: '#FFD700',
-              border: '3px solid #FF6B35',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+              backgroundColor: selectedTreasure?.id === treasureMarker.id ? '#FF6B35' : '#FFD700',
+              border: `3px solid ${selectedTreasure?.id === treasureMarker.id ? '#FFD700' : '#FF6B35'}`,
+              boxShadow: selectedTreasure?.id === treasureMarker.id 
+                ? '0 6px 12px rgba(255, 107, 53, 0.4)' 
+                : '0 4px 8px rgba(0,0,0,0.3)',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
+              transform: selectedTreasure?.id === treasureMarker.id ? 'scale(1.1)' : 'scale(1)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.1)';
-              e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
+              if (selectedTreasure?.id !== treasureMarker.id) {
+                e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+              if (selectedTreasure?.id !== treasureMarker.id) {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+              }
             }}
           >
             <GiOpenChest 
@@ -159,6 +269,21 @@ const TreasureMarkers: React.FC<{ markers: TreasureMarker[], onMarkerClick?: (po
           </div>
         </AdvancedMarker>
       ))}
+      
+      {/* 顯示選中寶藏的 InfoWindow */}
+      {selectedTreasure && (
+        <TreasureInfoWindow
+          treasure={selectedTreasure}
+          position={{ 
+            lat: selectedTreasure.position.lat, 
+            lng: selectedTreasure.position.lng 
+          }}
+          onClose={handleCloseInfoWindow}
+          onLike={onLike}
+          onFavorite={onFavorite}
+          onComment={onComment}
+        />
+      )}
     </>
   );
 };
@@ -172,6 +297,9 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   showCurrentLocation = false,
   onMarkerClick,
   onMapClick,
+  onLike,
+  onFavorite,
+  onComment,
   height = '400px',
   width = '100%'
 }) => {
@@ -235,7 +363,10 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
         >
           <TreasureMarkers 
             markers={markers} 
-            onMarkerClick={onMarkerClick} 
+            onMarkerClick={onMarkerClick}
+            onLike={onLike}
+            onFavorite={onFavorite}
+            onComment={onComment}
           />
           {showCurrentLocation && currentLocation && (
             <CurrentLocationMarker position={currentLocation} />
