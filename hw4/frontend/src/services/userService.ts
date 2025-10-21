@@ -74,20 +74,16 @@ class UserService {
         success: boolean;
         data: {
           treasures: UserTreasure[];
-          pagination: {
-            total: number;
-            page: number;
-            limit: number;
-            totalPages: number;
-          };
+          total: number;
+          totalPages: number;
         };
       }>(`${API_ENDPOINTS.USERS.TREASURES}?page=${page}&limit=${limit}`);
 
-      const { treasures, pagination } = response.data;
+      const { treasures, total, totalPages } = response.data;
       return {
         treasures,
-        total: pagination.total,
-        hasMore: page < pagination.totalPages
+        total,
+        hasMore: page < totalPages
       };
     } catch (error) {
       console.error('獲取用戶寶藏失敗:', error);
@@ -107,21 +103,17 @@ class UserService {
       const response = await apiService.get<{
         success: boolean;
         data: {
-          treasures: UserTreasure[];
-          pagination: {
-            total: number;
-            page: number;
-            limit: number;
-            totalPages: number;
-          };
+          favorites: UserTreasure[];
+          total: number;
+          totalPages: number;
         };
       }>(`${API_ENDPOINTS.USERS.FAVORITES}?page=${page}&limit=${limit}`);
 
-      const { treasures, pagination } = response.data;
+      const { favorites, total, totalPages } = response.data;
       return {
-        treasures,
-        total: pagination.total,
-        hasMore: page < pagination.totalPages
+        treasures: favorites, // 將 favorites 映射為 treasures
+        total,
+        hasMore: page < totalPages
       };
     } catch (error) {
       console.error('獲取收藏列表失敗:', error);
