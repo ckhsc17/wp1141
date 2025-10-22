@@ -28,8 +28,10 @@ import {
   IconAlertCircle,
   IconUser,
   IconMail,
-  IconGift
+  IconBookmark,
 } from '@tabler/icons-react';
+import { FaSearch } from 'react-icons/fa';
+import { GiTreasureMap, GiOpenChest, GiArchiveRegister, GiChest } from 'react-icons/gi';
 import { useAuth } from '@/contexts/AuthContext';
 import { userService, UserStats } from '@/services/userService';
 import UserTreasuresModal from './UserTreasuresModal';
@@ -170,7 +172,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                     setTreasuresModalOpened(true);
                   }}
                 >
-                  <IconGift size={32} color="#FD7E14" style={{ margin: '0 auto 8px' }} />
+                  <GiOpenChest size={32} color="#FD7E14" style={{ margin: '0 auto 8px' }} />
                   <Text size="xl" fw={700} c="orange">
                     {stats.uploadedTreasures}
                   </Text>
@@ -191,8 +193,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                     setTreasuresModalOpened(true);
                   }}
                 >
-                  <IconHeart size={32} color="#FF6B6B" style={{ margin: '0 auto 8px' }} />
-                  <Text size="xl" fw={700} c="red">
+                  <IconBookmark size={32} color="#51CF66" style={{ margin: '0 auto 8px' }} />
+                  <Text size="xl" fw={700} c="green">
                     {stats.favoritedTreasures}
                   </Text>
                   <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
@@ -203,24 +205,24 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
               
               <Grid.Col span={6}>
                 <Card withBorder p="md" ta="center">
-                  <IconHeart size={32} color="#51CF66" style={{ margin: '0 auto 8px' }} />
-                  <Text size="xl" fw={700} c="green">
+                  <FaSearch size={32} color="#1abc9c" style={{ margin: '0 auto 8px' }} />
+                  <Text size="xl" fw={700} c="blue">
                     {stats.totalLikes}
                   </Text>
                   <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
-                    獲得讚數
+                    已發現寶藏
                   </Text>
                 </Card>
               </Grid.Col>
               
               <Grid.Col span={6}>
                 <Card withBorder p="md" ta="center">
-                  <IconMapPin size={32} color="#339AF0" style={{ margin: '0 auto 8px' }} />
-                  <Text size="xl" fw={700} c="blue">
+                  <IconTrophy size={32} color="#f1c40f" style={{ margin: '0 auto 8px' }} />
+                  <Text size="xl" fw={700} c="gold">
                     {stats.totalComments}
                   </Text>
                   <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
-                    留言數
+                    已獲得寶藏
                   </Text>
                 </Card>
               </Grid.Col>

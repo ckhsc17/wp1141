@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Stack,
@@ -17,7 +17,6 @@ import { useForm } from '@mantine/form';
 import { IconUpload, IconInfoCircle } from '@tabler/icons-react';
 import { TreasureFormProps, TreasureType } from '@/types';
 import { TREASURE_TYPE_CONFIG, VALIDATION_RULES, APP_CONFIG } from '@/utils/constants';
-import { useGeolocation } from '@/hooks/useGeolocation';
 import { COLORS } from '@/utils/constants';
 
 const TreasureForm: React.FC<TreasureFormProps> = ({
@@ -29,10 +28,11 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
   onCancel,
   isLoading = false
 }) => {
+  console.log('TreasureForm 渲染，props:', { mode, opened, initialData });
+  
   const [selectedType, setSelectedType] = useState<TreasureType | null>(
     initialData?.type || null
   );
-  const { getCurrentLocation, loading: locationLoading } = useGeolocation();
 
   const form = useForm({
     initialValues: {
@@ -93,6 +93,32 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
     }
   });
 
+  // 當 initialData 變化時更新表單值
+  useEffect(() => {
+    console.log('TreasureForm initialData 變化:', initialData);
+    if (initialData) {
+      const newValues = {
+        title: initialData.title || '',
+        content: initialData.content || '',
+        type: initialData.type || TreasureType.TEXT,
+        latitude: initialData.latitude || 0,
+        longitude: initialData.longitude || 0,
+        address: initialData.address || '',
+        mediaFile: null,
+        linkUrl: initialData.linkUrl || '',
+        tags: initialData.tags || [],
+        isLiveLocation: initialData.isLiveLocation || false
+      };
+      console.log('設置表單值:', newValues);
+      form.setValues(newValues);
+      
+      // 如果有類型資訊，也更新 selectedType
+      if (initialData.type) {
+        setSelectedType(initialData.type);
+      }
+    }
+  }, [initialData]);
+
   const isValidUrl = (string: string) => {
     try {
       new URL(string);
@@ -102,20 +128,6 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
     }
   };
 
-  const handleGetCurrentLocation = async () => {
-    try {
-      const location = await getCurrentLocation();
-      form.setFieldValue('latitude', location.lat);
-      form.setFieldValue('longitude', location.lng);
-      
-      // 如果是「活在當下」類型，自動啟用即時定位
-      if (selectedType === TreasureType.LIVE_MOMENT) {
-        form.setFieldValue('isLiveLocation', true);
-      }
-    } catch (error) {
-      console.error('取得位置失敗:', error);
-    }
-  };
 
   const handleSubmit = (values: typeof form.values) => {
     onSubmit({
@@ -214,6 +226,14 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
             {...form.getInputProps('tags')}
           />
 
+          <TextInput
+            label="地址"
+            placeholder="地址資訊"
+            {...form.getInputProps('address')}
+            readOnly
+            style={{ color: COLORS.TEXT.SECONDARY }}
+          />
+
           <Group grow>
             <TextInput
               label="緯度"
@@ -228,15 +248,6 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
               readOnly
             />
           </Group>
-
-          <Button
-            variant="outline"
-            onClick={handleGetCurrentLocation}
-            loading={locationLoading}
-            fullWidth
-          >
-            取得目前位置
-          </Button>
 
           {showLiveLocation && (
             <Switch

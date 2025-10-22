@@ -15,6 +15,8 @@ import { GiTreasureMap, GiOpenChest } from 'react-icons/gi';
 import { IconX } from '@tabler/icons-react';
 import { TreasureMarker } from '@/types';
 import { TreasureCardContent } from './TreasureCard';
+import { LocationInfoWindow, getInfoWindowContainerStyle, getInfoWindowCardStyle, INFO_WINDOW_STYLES } from './InfoWindow';
+import { useReverseGeocoding } from '@/hooks/useReverseGeocoding';
 
 interface GoogleMapComponentProps {
   center: google.maps.LatLngLiteral;
@@ -27,6 +29,7 @@ interface GoogleMapComponentProps {
   onLike?: (treasureId: string) => void;
   onFavorite?: (treasureId: string) => void;
   onComment?: (treasureId: string) => void;
+  onAddTreasureAtLocation?: (position: google.maps.LatLngLiteral, address?: string) => void;
   height?: string;
   width?: string;
 }
@@ -46,17 +49,9 @@ const TreasureInfoWindow: React.FC<{
       clickable={false}
       zIndex={1000}
     >
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '50px', // 固定距離標記底部的像素距離
-          left: '50%',
-          transform: 'translateX(-50%)',
-          pointerEvents: 'auto', // 確保可以點擊
-          minWidth: '300px',
-          maxWidth: '90vw',
-          overflow: 'visible' // 確保箭頭不被裁切
-        }}
+      <div 
+        style={getInfoWindowContainerStyle()}
+        onClick={(e) => e.stopPropagation()} // 阻止事件冒泡到地圖
       >
         {/* 資訊卡片 */}
         <Card
@@ -64,46 +59,13 @@ const TreasureInfoWindow: React.FC<{
           padding="md"
           radius="md"
           withBorder
-          style={{
-            backgroundColor: 'white',
-            position: 'relative',
-            border: '2px solid #e9ecef',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            width: '100%',
-            overflow: 'visible' // 確保箭頭不被隱藏
-          }}
+          style={getInfoWindowCardStyle()}
         >
           {/* 箭頭邊框 */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-12px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 0,
-              height: 0,
-              borderLeft: '12px solid transparent',
-              borderRight: '12px solid transparent',
-              borderTop: '12px solid #dee2e6',
-              zIndex: 1
-            }}
-          />
+          <div style={INFO_WINDOW_STYLES.arrowBorder} />
           
           {/* 對話框箭頭 - 指向標記 */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-10px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 0,
-              height: 0,
-              borderLeft: '10px solid transparent',
-              borderRight: '10px solid transparent',
-              borderTop: '10px solid #ffffff',
-              zIndex: 2
-            }}
-          />
+          <div style={INFO_WINDOW_STYLES.arrow} />
 
 
           {/* 關閉按鈕 */}
@@ -111,16 +73,7 @@ const TreasureInfoWindow: React.FC<{
             variant="subtle"
             size="sm"
             onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              zIndex: 10,
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              '&:hover': {
-                backgroundColor: 'rgba(248, 249, 250, 1)'
-              }
-            }}
+            style={INFO_WINDOW_STYLES.closeButton}
           >
             <IconX size={16} />
           </ActionIcon>
@@ -185,12 +138,14 @@ const TreasureMarkers: React.FC<{
   onLike?: (treasureId: string) => void;
   onFavorite?: (treasureId: string) => void;
   onComment?: (treasureId: string) => void;
+  onCloseLocationInfo?: () => void;
 }> = ({ 
   markers, 
   onMarkerClick,
   onLike,
   onFavorite,
-  onComment
+  onComment,
+  onCloseLocationInfo
 }) => {
   const map = useMap();
   const [markerInstances, setMarkerInstances] = useState<{[key: string]: Marker}>({});
@@ -229,13 +184,18 @@ const TreasureMarkers: React.FC<{
     console.log('寶藏標記被點擊:', marker.title || marker.id);
     map.panTo(ev.latLng);
     
+    // 關閉位置資訊窗口（如果有的話）
+    if (onCloseLocationInfo) {
+      onCloseLocationInfo();
+    }
+    
     // 設置選中的寶藏以顯示 InfoWindow
     setSelectedTreasure(marker);
     
     if (onMarkerClick) {
       onMarkerClick({ lat: marker.position.lat, lng: marker.position.lng });
     }
-  }, [map, onMarkerClick]);
+  }, [map, onMarkerClick, onCloseLocationInfo]);
 
   // 關閉 InfoWindow
   const handleCloseInfoWindow = useCallback(() => {
@@ -339,35 +299,79 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   onLike,
   onFavorite,
   onComment,
+  onAddTreasureAtLocation,
   height = '400px',
   width = '100%'
 }) => {
+  // Location info state
+  const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLngLiteral | null>(null);
+  const [isLocationInfoOpen, setIsLocationInfoOpen] = useState(false);
+  const { address, loading: addressLoading, error: addressError, getAddress, clearResult } = useReverseGeocoding();
+
   console.log('GoogleMapComponent 渲染中...', { 
     center, 
     zoom, 
     markersCount: markers.length,
     currentLocation,
-    showCurrentLocation
+    showCurrentLocation,
+    selectedLocation
   });
 
   // 處理地圖點擊
   const handleMapClick = useCallback((ev: MapMouseEvent) => {
     console.log('地圖被點擊:', ev.detail.latLng);
     
-    if (onMapClick && ev.detail.latLng) {
-      onMapClick({
+    if (ev.detail.latLng) {
+      const clickPosition = {
         lat: ev.detail.latLng.lat,
         lng: ev.detail.latLng.lng
+      };
+      
+      // 如果當前有位置資訊窗口打開，先關閉它
+      if (isLocationInfoOpen) {
+        setSelectedLocation(null);
+        setIsLocationInfoOpen(false);
+        clearResult();
+        return; // 不打開新的窗口，只是關閉當前的
+      }
+      
+      // 打開新的位置資訊窗口
+      setSelectedLocation(clickPosition);
+      setIsLocationInfoOpen(true);
+      getAddress(clickPosition.lat, clickPosition.lng);
+      
+      // Call original onMapClick callback if provided
+      if (onMapClick) {
+        onMapClick(clickPosition);
+      }
+    }
+  }, [onMapClick, getAddress, isLocationInfoOpen, clearResult]);
+
+  // 處理關閉位置資訊窗口
+  const handleCloseLocationInfo = useCallback(() => {
+    setSelectedLocation(null);
+    setIsLocationInfoOpen(false);
+    clearResult();
+  }, [clearResult]);
+
+  // 處理在指定位置新增寶藏
+  const handleAddTreasureAtLocation = useCallback((position: google.maps.LatLngLiteral) => {
+    if (onAddTreasureAtLocation) {
+      onAddTreasureAtLocation(position, address || undefined);
+    }
+    // Close the location info window after handling
+    handleCloseLocationInfo();
+  }, [onAddTreasureAtLocation, handleCloseLocationInfo, address]);
+
+  // 處理攝影機變更（使用節流避免過度觸發）
+  const handleCameraChanged = useCallback((ev: MapCameraChangedEvent) => {
+    // 只在 zoom 變化時記錄，避免拖拽時的頻繁 log
+    if (ev.detail.zoom !== undefined) {
+      console.log('地圖縮放變更:', {
+        center: ev.detail.center,
+        zoom: ev.detail.zoom
       });
     }
-  }, [onMapClick]);
-
-  // 處理攝影機變更
-  const handleCameraChanged = useCallback((ev: MapCameraChangedEvent) => {
-    console.log('攝影機變更:', {
-      center: ev.detail.center,
-      zoom: ev.detail.zoom
-    });
   }, []);
 
   return (
@@ -376,10 +380,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
         height, 
         width, 
         position: 'relative',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        border: '2px solid #FFD700',
-        boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)'
+        overflow: 'hidden'
       }}
     >
       <APIProvider 
@@ -406,9 +407,22 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
             onLike={onLike}
             onFavorite={onFavorite}
             onComment={onComment}
+            onCloseLocationInfo={handleCloseLocationInfo}
           />
           {showCurrentLocation && currentLocation && (
             <CurrentLocationMarker position={currentLocation} />
+          )}
+          
+          {/* 顯示位置資訊窗口 */}
+          {selectedLocation && isLocationInfoOpen && (
+            <LocationInfoWindow
+              position={selectedLocation}
+              address={address}
+              addressLoading={addressLoading}
+              addressError={addressError}
+              onClose={handleCloseLocationInfo}
+              onAddTreasureHere={handleAddTreasureAtLocation}
+            />
           )}
         </Map>
       </APIProvider>

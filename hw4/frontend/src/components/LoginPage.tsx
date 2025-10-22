@@ -285,11 +285,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 }}
               />
 
-              {!isLoginMode && (
+              {/* {!isLoginMode && (
                 <Text size="sm" ta="right" style={{ cursor: 'pointer', color: 'rgba(255, 255, 255, 0.7)' }}>
                   忘記密碼？
                 </Text>
-              )}
+              )} */}
             </Stack>
 
             {/* Login/Register Button */}

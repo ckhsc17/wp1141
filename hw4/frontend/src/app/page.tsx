@@ -5,7 +5,6 @@ import {
   AppShell,
   Container,
   Group,
-  Title,
   Button,
   ActionIcon,
   Drawer,
@@ -42,6 +41,9 @@ export default function HomePage() {
   const [sidebarOpened, { open: openSidebar, close: closeSidebar }] = useDisclosure(false);
   const [treasuresPageOpened, { open: openTreasuresPage, close: closeTreasuresPage }] = useDisclosure(false);
   const [profileModalOpened, { open: openProfileModal, close: closeProfileModal }] = useDisclosure(false);
+  
+  // 寶藏表單的預填數據
+  const [treasureFormInitialData, setTreasureFormInitialData] = useState<Partial<CreateTreasureRequest> | undefined>(undefined);
   
   // 預設地圖中心（台北101）
   const [mapCenter, setMapCenter] = useState<MapLocation>({
@@ -108,6 +110,25 @@ export default function HomePage() {
     console.log('地圖點擊:', location);
   };
 
+  // 處理在指定位置新增寶藏
+  const handleAddTreasureAtLocation = (position: google.maps.LatLngLiteral, address?: string) => {
+    console.log('在位置新增寶藏:', position, '地址:', address);
+    
+    // 設置預填數據
+    const initialData = {
+      latitude: position.lat,
+      longitude: position.lng,
+      address: address || '地址不可用'
+    };
+    console.log('設置 treasureFormInitialData:', initialData);
+    setTreasureFormInitialData(initialData);
+    
+    // 設置地圖中心到點擊位置
+    setMapCenter(position);
+    // 打開寶藏表單
+    openTreasureForm();
+  };
+
   const handleMarkerClick = (position: google.maps.LatLngLiteral) => {
     // 找到被點擊的寶藏
     const clickedTreasure = treasures.find(treasure => 
@@ -129,6 +150,7 @@ export default function HomePage() {
       await createTreasure(data);
       await refetchTreasures();
       closeTreasureForm();
+      setTreasureFormInitialData(undefined);
     } catch (error) {
       console.error('創建寶藏失敗:', error);
       alert('創建寶藏失敗，請稍後再試');
@@ -182,19 +204,12 @@ export default function HomePage() {
 
   return (
     <AppShell
-      header={{ height: 70 }}
-      padding="md"
+      header={{ height: 60 }}
+      padding={0}
     >
       <AppShell.Header>
         <Container size="xl" h="100%">
           <Group h="100%" justify="space-between">
-            <Group>
-              <IconMap size={32} color="#FD7E14" />
-              <Title order={2} c="orange">
-                尋寶地圖
-              </Title>
-            </Group>
-            
             <Group>
               <Button
                 leftSection={<IconPlus size={16} />}
@@ -221,69 +236,68 @@ export default function HomePage() {
               >
                 <IconFilter size={18} />
               </ActionIcon>
+            </Group>
 
-              {/* 用戶個人資料選單 */}
-              <Menu shadow="md" width={200}>
-                <Menu.Target>
-                  <ActionIcon
-                    variant="light"
-                    size="lg"
+            {/* 用戶個人資料選單 */}
+            <Menu shadow="md" width={200}>
+              <Menu.Target>
+                <ActionIcon
+                  variant="light"
+                  size="lg"
+                  radius="50%"
+                >
+                  <Avatar
+                    src={user?.avatar}
+                    size="sm"
                     radius="50%"
                   >
-                    <Avatar
-                      src={user?.avatar}
-                      size="sm"
-                      radius="50%"
-                    >
-                      <IconUser size={16} />
-                    </Avatar>
-                  </ActionIcon>
-                </Menu.Target>
+                    <IconUser size={16} />
+                  </Avatar>
+                </ActionIcon>
+              </Menu.Target>
 
-                <Menu.Dropdown>
-                  <Menu.Label>{user?.name}</Menu.Label>
-                  <Menu.Item
-                    leftSection={<IconUser size={14} />}
-                    onClick={openProfileModal}
-                  >
-                    個人資料
-                  </Menu.Item>
-                  <Menu.Item
-                    leftSection={<IconSettings size={14} />}
-                  >
-                    設定
-                  </Menu.Item>
-                  <Menu.Divider />
-                  <Menu.Item
-                    leftSection={<IconLogout size={14} />}
-                    color="red"
-                    onClick={logout}
-                  >
-                    登出
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
-            </Group>
+              <Menu.Dropdown>
+                <Menu.Label>{user?.name}</Menu.Label>
+                <Menu.Item
+                  leftSection={<IconUser size={14} />}
+                  onClick={openProfileModal}
+                >
+                  個人資料
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<IconSettings size={14} />}
+                >
+                  設定
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item
+                  leftSection={<IconLogout size={14} />}
+                  color="red"
+                  onClick={logout}
+                >
+                  登出
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
           </Group>
         </Container>
       </AppShell.Header>
 
       <AppShell.Main>
-        <Container size="xl" h="calc(100vh - 70px)">
-          <GoogleMapComponent
-            center={mapCenter}
-            zoom={15}
-            markers={treasureMarkersForMap}
-            currentLocation={currentLocation}
-            showCurrentLocation={showCurrentLocation}
-            onMapClick={handleMapClick}
-            onMarkerClick={handleMarkerClick}
-            onLike={handleLike}
-            onFavorite={handleFavorite}
-            height="calc(100vh - 100px)"
-            width="100%"
-          />
-        </Container>
+        <GoogleMapComponent
+          center={mapCenter}
+          zoom={15}
+          markers={treasureMarkersForMap}
+          currentLocation={currentLocation}
+          showCurrentLocation={showCurrentLocation}
+          onMapClick={handleMapClick}
+          onMarkerClick={handleMarkerClick}
+          onLike={handleLike}
+          onFavorite={handleFavorite}
+          onAddTreasureAtLocation={handleAddTreasureAtLocation}
+          height="calc(100vh - 60px)"
+          width="100%"
+        />
       </AppShell.Main>
 
       <Drawer
@@ -320,13 +334,20 @@ export default function HomePage() {
       />
 
       {/* 寶藏表單 Modal */}
-      <TreasureForm
-        mode="create"
-        opened={treasureFormOpened}
-        onClose={closeTreasureForm}
-        onSubmit={handleTreasureSubmit}
-        onCancel={closeTreasureForm}
-      />
+        <TreasureForm
+          mode="create"
+          opened={treasureFormOpened}
+          onClose={() => {
+            closeTreasureForm();
+            setTreasureFormInitialData(undefined);
+          }}
+          initialData={treasureFormInitialData}
+          onSubmit={handleTreasureSubmit}
+          onCancel={() => {
+            closeTreasureForm();
+            setTreasureFormInitialData(undefined);
+          }}
+        />
 
       {/* 寶藏管理頁面 Modal */}
       <Modal
