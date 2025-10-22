@@ -131,6 +131,27 @@ async function createTreasures(users: any[]) {
     const user = faker.helpers.arrayElement(users);
     const type = faker.helpers.enumValue(TreasureType);
     
+    // Determine visibility settings: 10% isHidden=true, 10% isHidden=false, 80% isPublic=true
+    const visibilityRandom = faker.number.float({ min: 0, max: 1 });
+    let isHidden = null;
+    let isPublic = null;
+    let amount = null;
+    
+    if (visibilityRandom < 0.1) {
+      // 10% isHidden = true (treasure mode, hidden)
+      isHidden = true;
+    } else if (visibilityRandom < 0.2) {
+      // 10% isHidden = false (treasure mode, public)
+      isHidden = false;
+    } else {
+      // 80% isPublic = true (life moment mode, public)
+      isPublic = true;
+      // Add some amount data for life moments occasionally
+      if (faker.datatype.boolean({ probability: 0.3 })) {
+        amount = faker.commerce.price({ min: 10, max: 1000, dec: 0 }) + ' TWD';
+      }
+    }
+
     const treasure = await prisma.treasure.create({
       data: {
         userId: user.id,
@@ -140,6 +161,9 @@ async function createTreasures(users: any[]) {
         latitude: landmark.lat + faker.number.float({ min: -0.001, max: 0.001, fractionDigits: 6 }),
         longitude: landmark.lng + faker.number.float({ min: -0.001, max: 0.001, fractionDigits: 6 }),
         address: landmark.address,
+        amount,
+        isPublic,
+        isHidden,
         mediaUrl: type === TreasureType.music || type === TreasureType.audio 
           ? faker.internet.url() 
           : undefined,
@@ -163,6 +187,27 @@ async function createTreasures(users: any[]) {
     const type = faker.helpers.enumValue(TreasureType);
     const location = getRandomLocation();
     
+    // Determine visibility settings: 10% isHidden=true, 10% isHidden=false, 80% isPublic=true
+    const visibilityRandom = faker.number.float({ min: 0, max: 1 });
+    let isHidden = null;
+    let isPublic = null;
+    let amount = null;
+    
+    if (visibilityRandom < 0.1) {
+      // 10% isHidden = true (treasure mode, hidden)
+      isHidden = true;
+    } else if (visibilityRandom < 0.2) {
+      // 10% isHidden = false (treasure mode, public)
+      isHidden = false;
+    } else {
+      // 80% isPublic = true (life moment mode, public)
+      isPublic = true;
+      // Add some amount data for life moments occasionally
+      if (faker.datatype.boolean({ probability: 0.3 })) {
+        amount = faker.commerce.price({ min: 10, max: 1000, dec: 0 }) + ' TWD';
+      }
+    }
+
     const treasure = await prisma.treasure.create({
       data: {
         userId: user.id,
@@ -172,6 +217,9 @@ async function createTreasures(users: any[]) {
         latitude: location.latitude,
         longitude: location.longitude,
         address: faker.location.streetAddress(),
+        amount,
+        isPublic,
+        isHidden,
         mediaUrl: type === TreasureType.music || type === TreasureType.audio 
           ? faker.internet.url() 
           : undefined,
