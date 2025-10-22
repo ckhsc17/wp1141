@@ -32,6 +32,9 @@ export interface Treasure {
   latitude: number;
   longitude: number;
   address?: string;
+  amount?: string;
+  isPublic?: boolean;
+  isHidden?: boolean;
   mediaUrl?: string;
   linkUrl?: string;
   isLiveLocation: boolean;
@@ -84,6 +87,9 @@ export interface CreateTreasureDTO {
   latitude: number;
   longitude: number;
   address?: string;
+  amount?: string;
+  isPublic?: boolean;
+  isHidden?: boolean;
   linkUrl?: string;
   tags: string[];
   isLiveLocation?: boolean;
@@ -94,6 +100,9 @@ export interface UpdateTreasureDTO {
   content?: string;
   tags?: string[];
   linkUrl?: string;
+  amount?: string;
+  isPublic?: boolean;
+  isHidden?: boolean;
 }
 
 export interface TreasureDTO {
@@ -104,6 +113,9 @@ export interface TreasureDTO {
   latitude: number;
   longitude: number;
   address?: string;
+  amount?: string;
+  isPublic?: boolean;
+  isHidden?: boolean;
   mediaUrl?: string;
   linkUrl?: string;
   isLiveLocation: boolean;

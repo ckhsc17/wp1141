@@ -45,6 +45,9 @@ export default function HomePage() {
   // 寶藏表單的預填數據
   const [treasureFormInitialData, setTreasureFormInitialData] = useState<Partial<CreateTreasureRequest> | undefined>(undefined);
   
+  // 寶藏創建模式
+  const [treasureCreationMode, setTreasureCreationMode] = useState<'treasure' | 'life_moment'>('treasure');
+  
   // 預設地圖中心（台北101）
   const [mapCenter, setMapCenter] = useState<MapLocation>({
     lat: 25.0330,
@@ -111,8 +114,8 @@ export default function HomePage() {
   };
 
   // 處理在指定位置新增寶藏
-  const handleAddTreasureAtLocation = (position: google.maps.LatLngLiteral, address?: string) => {
-    console.log('在位置新增寶藏:', position, '地址:', address);
+  const handleAddTreasureAtLocation = (position: google.maps.LatLngLiteral, address?: string, mode: 'treasure' | 'life_moment' = 'treasure') => {
+    console.log('在位置新增寶藏:', position, '地址:', address, '模式:', mode);
     
     // 設置預填數據
     const initialData = {
@@ -122,6 +125,7 @@ export default function HomePage() {
     };
     console.log('設置 treasureFormInitialData:', initialData);
     setTreasureFormInitialData(initialData);
+    setTreasureCreationMode(mode);
     
     // 設置地圖中心到點擊位置
     setMapCenter(position);
@@ -336,6 +340,7 @@ export default function HomePage() {
       {/* 寶藏表單 Modal */}
         <TreasureForm
           mode="create"
+          creationMode={treasureCreationMode}
           opened={treasureFormOpened}
           onClose={() => {
             closeTreasureForm();

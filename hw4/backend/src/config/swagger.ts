@@ -105,6 +105,21 @@ const options = {
               description: 'Human-readable address',
               nullable: true
             },
+            amount: {
+              type: 'string',
+              description: 'Amount or price information',
+              nullable: true
+            },
+            isPublic: {
+              type: 'boolean',
+              description: 'Whether this is a public life moment',
+              nullable: true
+            },
+            isHidden: {
+              type: 'boolean',
+              description: 'Whether this treasure is hidden until discovered',
+              nullable: true
+            },
             mediaUrl: {
               type: 'string',
               format: 'uri',
@@ -218,6 +233,22 @@ const options = {
               description: 'Human-readable address',
               nullable: true
             },
+            amount: {
+              type: 'string',
+              maxLength: 100,
+              description: 'Amount or price information',
+              nullable: true
+            },
+            isPublic: {
+              type: 'boolean',
+              description: 'Whether this is a public life moment (for life_moment mode)',
+              nullable: true
+            },
+            isHidden: {
+              type: 'boolean',
+              description: 'Whether this treasure is hidden until discovered (for treasure mode)',
+              nullable: true
+            },
             linkUrl: {
               type: 'string',
               format: 'uri',
@@ -269,6 +300,22 @@ const options = {
               type: 'string',
               format: 'uri',
               description: 'External link URL',
+              nullable: true
+            },
+            amount: {
+              type: 'string',
+              maxLength: 100,
+              description: 'Amount or price information',
+              nullable: true
+            },
+            isPublic: {
+              type: 'boolean',
+              description: 'Whether this is a public life moment',
+              nullable: true
+            },
+            isHidden: {
+              type: 'boolean',
+              description: 'Whether this treasure is hidden until discovered',
               nullable: true
             }
           }

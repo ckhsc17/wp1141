@@ -11,16 +11,21 @@ import {
   MultiSelect,
   Switch,
   Alert,
-  rem
+  rem,
+  ActionIcon,
+  Tooltip,
+  Center
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconUpload, IconInfoCircle } from '@tabler/icons-react';
+import { IconUpload, IconInfoCircle, IconWorld, IconLock } from '@tabler/icons-react';
+import { GiOpenChest, GiChest } from 'react-icons/gi';
 import { TreasureFormProps, TreasureType } from '@/types';
 import { TREASURE_TYPE_CONFIG, VALIDATION_RULES, APP_CONFIG } from '@/utils/constants';
 import { COLORS } from '@/utils/constants';
 
 const TreasureForm: React.FC<TreasureFormProps> = ({
   mode,
+  creationMode = 'treasure',
   opened,
   onClose,
   initialData,
@@ -33,6 +38,11 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
   const [selectedType, setSelectedType] = useState<TreasureType | null>(
     initialData?.type || null
   );
+  
+  // Visibility toggle state
+  const [visibilityState, setVisibilityState] = useState<boolean>(
+    creationMode === 'treasure' ? false : true // treasure: false=hidden, life_moment: true=public
+  );
 
   const form = useForm({
     initialValues: {
@@ -42,6 +52,9 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
       latitude: initialData?.latitude || 0,
       longitude: initialData?.longitude || 0,
       address: initialData?.address || '',
+      amount: initialData?.amount || '',
+      isPublic: initialData?.isPublic,
+      isHidden: initialData?.isHidden,
       mediaFile: null as File | null,
       linkUrl: initialData?.linkUrl || '',
       tags: initialData?.tags || [],
@@ -104,6 +117,9 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
         latitude: initialData.latitude || 0,
         longitude: initialData.longitude || 0,
         address: initialData.address || '',
+        amount: initialData.amount || '',
+        isPublic: initialData.isPublic,
+        isHidden: initialData.isHidden,
         mediaFile: null,
         linkUrl: initialData.linkUrl || '',
         tags: initialData.tags || [],
@@ -130,12 +146,25 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
 
 
   const handleSubmit = (values: typeof form.values) => {
-    onSubmit({
+    // Apply mode-based visibility logic
+    const submitData = {
       ...values,
       type: selectedType!,
       tags: Array.isArray(values.tags) ? values.tags : [],
       mediaFile: values.mediaFile || undefined
-    });
+    };
+
+    if (creationMode === 'treasure') {
+      // For treasure mode: set isHidden based on toggle, keep isPublic null
+      submitData.isHidden = !visibilityState; // false = hidden, true = public
+      submitData.isPublic = undefined;
+    } else {
+      // For life_moment mode: set isPublic based on toggle, keep isHidden null
+      submitData.isPublic = visibilityState; // true = public, false = private
+      submitData.isHidden = undefined;
+    }
+
+    onSubmit(submitData);
   };
 
   const treasureTypeOptions = Object.entries(TREASURE_TYPE_CONFIG).map(([value, config]) => ({
@@ -147,19 +176,99 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
   const showLinkInput = selectedType === TreasureType.LINK;
   const showLiveLocation = selectedType === TreasureType.LIVE_MOMENT;
 
+  // Get modal title based on mode
+  const getModalTitle = () => {
+    if (mode === 'edit') return '編輯寶藏';
+    return creationMode === 'treasure' ? '創建新寶藏' : '紀錄生活';
+  };
+
+  // Get submit button text based on mode
+  const getSubmitButtonText = () => {
+    if (mode === 'edit') return '更新寶藏';
+    return creationMode === 'treasure' ? '創建寶藏' : '紀錄生活';
+  };
+
+  // Render visibility toggle buttons
+  const renderVisibilityToggle = () => {
+    if (mode === 'edit') return null; // Don't show toggle in edit mode
+
+    if (creationMode === 'treasure') {
+      return (
+        <Center>
+          <Group gap="xs">
+            <Tooltip label="隱藏寶藏直到有人經過">
+              <ActionIcon
+                variant={!visibilityState ? "filled" : "light"}
+                color="blue"
+                size="lg"
+                onClick={() => setVisibilityState(false)}
+              >
+                <GiChest size={20} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="公開寶藏位置">
+              <ActionIcon
+                variant={visibilityState ? "filled" : "light"}
+                color="green"
+                size="lg"
+                onClick={() => setVisibilityState(true)}
+              >
+                <GiOpenChest size={20} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+        </Center>
+      );
+    } else {
+      return (
+        <Center>
+          <Group gap="xs">
+            <Tooltip label="公開">
+              <ActionIcon
+                variant={visibilityState ? "filled" : "light"}
+                color="blue"
+                size="lg"
+                onClick={() => setVisibilityState(true)}
+              >
+                <IconWorld size={20} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="私人">
+              <ActionIcon
+                variant={!visibilityState ? "filled" : "light"}
+                color="gray"
+                size="lg"
+                onClick={() => setVisibilityState(false)}
+              >
+                <IconLock size={20} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+        </Center>
+      );
+    }
+  };
+
   return (
     <Modal
       opened={opened}
       onClose={onClose}
-      title={mode === 'create' ? '創建新寶藏' : '編輯寶藏'}
-      style={{ color: COLORS.TEXT.SECONDARY }}
+      title={getModalTitle()}
       size="lg"
       centered
+      styles={{
+        header: {
+          display: 'flex',
+          justifyContent: 'center',
+          color: COLORS.TEXT.SECONDARY,
+        },
+      }}
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack gap="md">
           <Select
             label="寶藏類型"
+            style={{ color: COLORS.TEXT.SECONDARY }}
             placeholder="選擇寶藏類型"
             data={treasureTypeOptions}
             value={selectedType}
@@ -181,8 +290,12 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
             </Alert>
           )}
 
+          {/* Visibility Toggle Buttons */}
+          {renderVisibilityToggle()}
+
           <TextInput
             label="標題"
+            style={{ color: COLORS.TEXT.SECONDARY }}
             placeholder="為你的寶藏起個好名字"
             {...form.getInputProps('title')}
             required
@@ -190,6 +303,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
 
           <Textarea
             label="內容描述"
+            style={{ color: COLORS.TEXT.SECONDARY }}
             placeholder="描述這個寶藏的故事..."
             minRows={3}
             maxRows={6}
@@ -201,6 +315,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
           {showMediaUpload && (
             <FileInput
               label="音頻檔案"
+              style={{ color: COLORS.TEXT.SECONDARY }}
               placeholder="選擇音頻檔案"
               accept="audio/*"
               leftSection={<IconUpload size={rem(14)} />}
@@ -212,6 +327,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
           {showLinkInput && (
             <TextInput
               label="連結網址"
+              style={{ color: COLORS.TEXT.SECONDARY }}
               placeholder="https://..."
               {...form.getInputProps('linkUrl')}
               required
@@ -220,6 +336,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
 
           <MultiSelect
             label="標籤"
+            style={{ color: COLORS.TEXT.SECONDARY }}
             placeholder="新增標籤（按 Enter 確認）"
             data={[]}
             searchable
@@ -228,21 +345,23 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
 
           <TextInput
             label="地址"
+            style={{ color: COLORS.TEXT.SECONDARY }}
             placeholder="地址資訊"
             {...form.getInputProps('address')}
             readOnly
-            style={{ color: COLORS.TEXT.SECONDARY }}
           />
 
           <Group grow>
             <TextInput
               label="緯度"
+              style={{ color: COLORS.TEXT.SECONDARY }}
               placeholder="緯度"
               {...form.getInputProps('latitude')}
               readOnly
             />
             <TextInput
               label="經度"
+              style={{ color: COLORS.TEXT.SECONDARY }}
               placeholder="經度"
               {...form.getInputProps('longitude')}
               readOnly
@@ -270,7 +389,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
               loading={isLoading}
               disabled={!selectedType || (form.values.latitude === 0 && form.values.longitude === 0)}
             >
-              {mode === 'create' ? '創建寶藏' : '更新寶藏'}
+              {getSubmitButtonText()}
             </Button>
           </Group>
         </Stack>

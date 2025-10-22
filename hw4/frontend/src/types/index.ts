@@ -103,6 +103,9 @@ export interface CreateTreasureRequest {
   latitude: number;
   longitude: number;
   address?: string;
+  amount?: string;
+  isPublic?: boolean;
+  isHidden?: boolean;
   mediaFile?: File;
   linkUrl?: string;
   tags: string[];
@@ -114,6 +117,9 @@ export interface UpdateTreasureRequest {
   content?: string;
   tags?: string[];
   linkUrl?: string;
+  amount?: string;
+  isPublic?: boolean;
+  isHidden?: boolean;
 }
 
 export interface TreasureQuery {
@@ -135,6 +141,9 @@ export interface TreasureDTO {
   latitude: number;
   longitude: number;
   address?: string;
+  amount?: string;
+  isPublic?: boolean;
+  isHidden?: boolean;
   mediaUrl?: string;
   linkUrl?: string;
   isLiveLocation: boolean;
@@ -225,6 +234,7 @@ export interface TreasureCardProps {
 
 export interface TreasureFormProps {
   mode: 'create' | 'edit';
+  creationMode?: 'treasure' | 'life_moment';
   opened: boolean;
   onClose: () => void;
   initialData?: Partial<CreateTreasureRequest>;

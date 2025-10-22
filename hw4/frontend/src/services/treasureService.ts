@@ -58,6 +58,18 @@ class TreasureService extends ApiService {
         formData.append('address', data.address);
       }
       
+      if (data.amount) {
+        formData.append('amount', data.amount);
+      }
+      
+      if (data.isPublic !== undefined) {
+        formData.append('isPublic', data.isPublic.toString());
+      }
+      
+      if (data.isHidden !== undefined) {
+        formData.append('isHidden', data.isHidden.toString());
+      }
+      
       if (data.linkUrl) {
         formData.append('linkUrl', data.linkUrl);
       }
@@ -74,6 +86,8 @@ class TreasureService extends ApiService {
       // 添加媒體檔案
       formData.append('mediaFile', data.mediaFile);
 
+      console.log('創建寶藏請求資料 formData:', formData);
+
       const response = await this.upload<ApiResponse<TreasureDTO>>(
         API_ENDPOINTS.TREASURES.CREATE,
         formData
@@ -88,11 +102,15 @@ class TreasureService extends ApiService {
         latitude: data.latitude,
         longitude: data.longitude,
         address: data.address,
+        amount: data.amount,
+        isPublic: data.isPublic,
+        isHidden: data.isHidden,
+        linkUrl: data.linkUrl || null,
         isLiveLocation: data.isLiveLocation || false,
         tags: data.tags
       };
 
-      console.log('創建寶藏請求資料:', requestData);
+      console.log('創建寶藏請求資料 json:', requestData);
 
       const response = await this.post<ApiResponse<TreasureDTO>>(
         API_ENDPOINTS.TREASURES.CREATE,

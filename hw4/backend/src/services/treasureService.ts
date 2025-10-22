@@ -25,6 +25,9 @@ export class TreasureService {
       latitude: treasure.latitude,
       longitude: treasure.longitude,
       address: treasure.address,
+      amount: treasure.amount,
+      isPublic: treasure.isPublic,
+      isHidden: treasure.isHidden,
       mediaUrl: treasure.mediaUrl,
       linkUrl: treasure.linkUrl,
       isLiveLocation: treasure.isLiveLocation,
@@ -257,14 +260,17 @@ export class TreasureService {
       // Calculate location radius for live location treasures
       const locationRadius = treasureData.isLiveLocation ? 0.05 : 0; // 50m for live location
 
+      // Prepare data with mode-based visibility logic
+      const createData = {
+        ...treasureData,
+        userId,
+        locationRadius,
+        likesCount: 0,
+        commentsCount: 0
+      };
+
       const treasure = await prisma.treasure.create({
-        data: {
-          ...treasureData,
-          userId,
-          locationRadius,
-          likesCount: 0,
-          commentsCount: 0
-        },
+        data: createData,
         include: {
           user: {
             select: {

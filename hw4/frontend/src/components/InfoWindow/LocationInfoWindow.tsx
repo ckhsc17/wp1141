@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, ActionIcon, Text, Button, Stack, Group, Loader } from '@mantine/core';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
-import { IconX, IconMapPin, IconPlus } from '@tabler/icons-react';
+import { IconX, IconMapPin, IconPlus, IconHeart } from '@tabler/icons-react';
 import { getInfoWindowContainerStyle, getInfoWindowCardStyle, INFO_WINDOW_STYLES } from './InfoWindowStyles';
 import { COLORS } from '@/utils/constants';
 
@@ -17,7 +17,7 @@ export interface LocationInfoWindowProps {
   /** Callback when the close button is clicked */
   onClose: () => void;
   /** Callback when "Add Treasure Here" button is clicked */
-  onAddTreasureHere?: (position: google.maps.LatLngLiteral) => void;
+  onAddTreasureHere?: (position: google.maps.LatLngLiteral, mode: 'treasure' | 'life_moment') => void;
 }
 
 /**
@@ -41,9 +41,9 @@ export const LocationInfoWindow: React.FC<LocationInfoWindowProps> = ({
   /**
    * Handle "Add Treasure Here" button click
    */
-  const handleAddTreasure = () => {
+  const handleAddTreasure = (mode: 'treasure' | 'life_moment') => {
     if (onAddTreasureHere) {
-      onAddTreasureHere(position);
+      onAddTreasureHere(position, mode);
     }
   };
 
@@ -151,17 +151,28 @@ export const LocationInfoWindow: React.FC<LocationInfoWindowProps> = ({
               {renderAddressSection()}
             </Stack>
 
-            {/* Add Treasure Button */}
+            {/* Add Treasure Buttons */}
             {onAddTreasureHere && (
-              <Button
-                leftSection={<IconPlus size={16} />}
-                variant="filled"
-                size="sm"
-                onClick={handleAddTreasure}
-                fullWidth
-              >
-                在此新增寶藏
-              </Button>
+              <Stack gap="xs">
+                <Button
+                  leftSection={<IconPlus size={16} />}
+                  variant="filled"
+                  size="sm"
+                  onClick={() => handleAddTreasure('treasure')}
+                  fullWidth
+                >
+                  埋藏寶藏
+                </Button>
+                <Button
+                  leftSection={<IconHeart size={16} />}
+                  variant="light"
+                  size="sm"
+                  onClick={() => handleAddTreasure('life_moment')}
+                  fullWidth
+                >
+                  紀錄生活
+                </Button>
+              </Stack>
             )}
           </Stack>
         </Card>

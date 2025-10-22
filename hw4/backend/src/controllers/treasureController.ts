@@ -278,7 +278,6 @@ export const createTreasure = async (
     const treasureData: CreateTreasureDTO = req.body;
 
     const result = await treasureService.createTreasure(treasureData, userId);
-      return;
 
     if (!result.success || !result.data) {
       res.status(400).json({
@@ -363,7 +362,6 @@ export const updateTreasure = async (
     }
 
     const result = await treasureService.updateTreasure(id, updateData, userId);
-      return;
 
     if (!result.success) {
       if (result.error === 'Treasure not found') {
@@ -460,7 +458,6 @@ export const deleteTreasure = async (
     }
 
     const result = await treasureService.deleteTreasure(id, userId);
-      return;
 
     if (!result.success) {
       if (result.error === 'Treasure not found') {

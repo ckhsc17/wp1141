@@ -95,7 +95,7 @@ export const validateRefreshToken = (req: Request, res: Response, next: NextFunc
 
 export const validateCreateTreasure = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { title, content, type, latitude, longitude, address, linkUrl, tags, isLiveLocation } = req.body;
+    const { title, content, type, latitude, longitude, address, amount, isPublic, isHidden, linkUrl, tags, isLiveLocation } = req.body;
     
     // Required fields
     validateRequired(title, 'Title');
@@ -138,7 +138,27 @@ export const validateCreateTreasure = (req: Request, res: Response, next: NextFu
       validateLength(address, 'Address', 0, 500);
     }
     
-    if (linkUrl !== undefined) {
+    if (amount !== undefined) {
+      if (typeof amount !== 'string') {
+        throw createError.badRequest('Amount must be a string');
+      }
+      validateLength(amount, 'Amount', 0, 100);
+    }
+    
+    if (isPublic !== undefined) {
+      if (typeof isPublic !== 'boolean') {
+        throw createError.badRequest('isPublic must be a boolean');
+      }
+    }
+    
+    if (isHidden !== undefined) {
+      if (typeof isHidden !== 'boolean') {
+        throw createError.badRequest('isHidden must be a boolean');
+      }
+    }
+    
+    if (linkUrl !== undefined && linkUrl !== null) {
+      console.log('checking linkUrl:', linkUrl);
       if (typeof linkUrl !== 'string') {
         throw createError.badRequest('Link URL must be a string');
       }

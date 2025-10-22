@@ -29,7 +29,7 @@ interface GoogleMapComponentProps {
   onLike?: (treasureId: string) => void;
   onFavorite?: (treasureId: string) => void;
   onComment?: (treasureId: string) => void;
-  onAddTreasureAtLocation?: (position: google.maps.LatLngLiteral, address?: string) => void;
+  onAddTreasureAtLocation?: (position: google.maps.LatLngLiteral, address?: string, mode?: 'treasure' | 'life_moment') => void;
   height?: string;
   width?: string;
 }
@@ -355,9 +355,9 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   }, [clearResult]);
 
   // 處理在指定位置新增寶藏
-  const handleAddTreasureAtLocation = useCallback((position: google.maps.LatLngLiteral) => {
+  const handleAddTreasureAtLocation = useCallback((position: google.maps.LatLngLiteral, mode: 'treasure' | 'life_moment') => {
     if (onAddTreasureAtLocation) {
-      onAddTreasureAtLocation(position, address || undefined);
+      onAddTreasureAtLocation(position, address || undefined, mode);
     }
     // Close the location info window after handling
     handleCloseLocationInfo();
