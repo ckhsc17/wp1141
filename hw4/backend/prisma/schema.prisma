@@ -44,6 +44,9 @@ model Treasure {
   latitude         Float       @db.DoublePrecision
   longitude        Float       @db.DoublePrecision
   address          String?     @db.VarChar(255)
+  amount           String?     @db.VarChar(100) // 新增金額欄位
+  isPublic         Boolean?    // 新增公開狀態欄位（用於生活碎片）
+  isHidden         Boolean?    // 新增隱藏狀態欄位（用於寶藏）
   mediaUrl         String?     @db.VarChar(500)
   linkUrl          String?     @db.VarChar(500)
   isLiveLocation   Boolean     @default(false)
