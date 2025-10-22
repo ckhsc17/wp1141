@@ -35,3 +35,53 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Google Maps InfoWindow 樣式自定義 */
+/* 針對 Google Maps 原生 InfoWindow 的標題字體改善 */
+.gm-style .gm-style-iw-c {
+  /* InfoWindow 容器 */
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.gm-style .gm-style-iw-d {
+  /* InfoWindow 內容區域 */
+  overflow: hidden !important;
+}
+
+/* InfoWindow 標題樣式 */
+.gm-style .gm-style-iw-t {
+  font-weight: 600 !important;
+  color: #1a1a1a !important; /* 深色標題，提高對比度 */
+  font-size: 16px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 4px !important;
+}
+
+/* InfoWindow 地址和其他文字 */
+.gm-style .gm-style-iw-d .gm-style-iw-t + div {
+  color: #4a4a4a !important; /* 次要文字顏色 */
+  font-size: 14px !important;
+  line-height: 1.3 !important;
+}
+
+/* InfoWindow 內的所有文字 */
+.gm-style .gm-style-iw-d div {
+  color: #1a1a1a !important;
+  font-weight: 500 !important;
+}
+
+/* InfoWindow 內的連結 */
+.gm-style .gm-style-iw-d a {
+  color: #0066cc !important;
+  font-weight: 500 !important;
+}
+
+/* InfoWindow 關閉按鈕 */
+.gm-style .gm-ui-hover-effect {
+  opacity: 0.8 !important;
+}
+
+.gm-style .gm-ui-hover-effect:hover {
+  opacity: 1 !important;
+}

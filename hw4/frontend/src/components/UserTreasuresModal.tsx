@@ -122,6 +122,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
       opened={opened}
       onClose={onClose}
       title={title}
+      style={{ color: COLORS.TEXT.SECONDARY }}
       size="xl"
       padding="lg"
     >
