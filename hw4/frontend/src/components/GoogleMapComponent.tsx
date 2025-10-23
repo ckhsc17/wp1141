@@ -12,7 +12,8 @@ import {
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import type { Marker } from '@googlemaps/markerclusterer';
 import { GiTreasureMap, GiOpenChest } from 'react-icons/gi';
-import { IconX } from '@tabler/icons-react';
+import { IconX, IconSparkles } from '@tabler/icons-react';
+import { FaPuzzlePiece } from 'react-icons/fa';
 import { TreasureMarker } from '@/types';
 import { TreasureCardContent } from './TreasureCard';
 import { LocationInfoWindow, getInfoWindowContainerStyle, getInfoWindowCardStyle, INFO_WINDOW_STYLES } from './InfoWindow';
@@ -145,6 +146,48 @@ const CurrentLocationMarker: React.FC<{
   );
 };
 
+// 根據寶藏屬性選擇圖標
+const getTreasureIcon = (treasure: TreasureMarker) => {
+  const { isPublic, isHidden } = treasure.treasure;
+  
+  // isPublic = true：顯示「日常碎片」圖標
+  if (isPublic === true) {
+    return (
+      <FaPuzzlePiece
+        size={24} 
+        color="#8B4513" 
+        style={{
+          filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))'
+        }}
+      />
+    );
+  }
+  
+  // isHidden = false：顯示寶箱圖標
+  if (isHidden === false) {
+    return (
+      <GiOpenChest 
+        size={24} 
+        color="#8B4513" 
+        style={{
+          filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))'
+        }}
+      />
+    );
+  }
+  
+  // 默認情況：顯示寶箱圖標
+  return (
+    <GiOpenChest 
+      size={24} 
+      color="#8B4513" 
+      style={{
+        filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))'
+      }}
+    />
+  );
+};
+
 // 寶藏標記組件
 const TreasureMarkers: React.FC<{ 
   markers: TreasureMarker[];
@@ -274,13 +317,7 @@ const TreasureMarkers: React.FC<{
               }
             }}
           >
-            <GiOpenChest 
-              size={24} 
-              color="#8B4513" 
-              style={{
-                filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))'
-              }}
-            />
+            {getTreasureIcon(treasureMarker)}
           </div>
         </AdvancedMarker>
       ))}
