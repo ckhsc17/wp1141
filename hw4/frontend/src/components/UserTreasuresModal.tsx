@@ -17,6 +17,7 @@ import {
   Title,
   Box
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconMapPin,
   IconHeart,
@@ -27,6 +28,9 @@ import {
   IconAlertCircle
 } from '@tabler/icons-react';
 import { userService, UserTreasure } from '@/services/userService';
+import { treasureService } from '@/services/treasureService';
+import TreasureForm from './TreasureForm';
+import { CreateTreasureRequest, UpdateTreasureRequest } from '@/types';
 import { COLORS } from '@/utils/constants';
 
 interface UserTreasuresModalProps {
@@ -42,6 +46,11 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  
+  // 編輯表單狀態
+  const [editFormOpened, setEditFormOpened] = useState(false);
+  const [editingTreasure, setEditingTreasure] = useState<UserTreasure | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const title = mode === 'treasures' ? '我的寶藏' : '我的收藏';
   const pageSize = 6;
@@ -82,6 +91,97 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     fetchTreasures(page);
+  };
+
+  // 處理編輯寶藏
+  const handleEditTreasure = (treasure: UserTreasure) => {
+    setEditingTreasure(treasure);
+    setEditFormOpened(true);
+  };
+
+  // 處理更新寶藏
+  const handleUpdateTreasure = async (data: CreateTreasureRequest) => {
+    if (!editingTreasure) return;
+
+    setIsUpdating(true);
+    try {
+      const updateData: UpdateTreasureRequest = {
+        title: data.title,
+        content: data.content,
+        tags: data.tags,
+        linkUrl: data.linkUrl,
+        amount: data.amount,
+        isPublic: data.isPublic,
+        isHidden: data.isHidden
+      };
+
+      await treasureService.updateTreasure(editingTreasure.id, updateData);
+      
+      // 更新本地狀態
+      setTreasures(prev => prev.map(t => 
+        t.id === editingTreasure.id 
+          ? { ...t, ...updateData }
+          : t
+      ));
+      
+      setEditFormOpened(false);
+      setEditingTreasure(null);
+      
+      notifications.show({
+        title: '更新成功',
+        message: '寶藏已成功更新',
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('更新寶藏失敗:', error);
+      setError('更新寶藏失敗');
+      notifications.show({
+        title: '更新失敗',
+        message: '更新寶藏時發生錯誤',
+        color: 'red',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // 處理刪除寶藏
+  const handleDeleteTreasure = (treasure: UserTreasure) => {
+    const confirmed = window.confirm(`確定要刪除「${treasure.title}」嗎？此操作無法復原。`);
+    
+    if (confirmed) {
+      deleteTreasure(treasure);
+    }
+  };
+
+  // 執行刪除操作
+  const deleteTreasure = async (treasure: UserTreasure) => {
+    try {
+      await treasureService.deleteTreasure(treasure.id);
+      
+      // 從本地狀態移除
+      setTreasures(prev => prev.filter(t => t.id !== treasure.id));
+      setTotal(prev => prev - 1);
+      
+      // 如果當前頁面沒有寶藏了，回到上一頁
+      if (treasures.length === 1 && currentPage > 1) {
+        handlePageChange(currentPage - 1);
+      }
+
+      notifications.show({
+        title: '刪除成功',
+        message: '寶藏已成功刪除',
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('刪除寶藏失敗:', error);
+      setError('刪除寶藏失敗');
+      notifications.show({
+        title: '刪除失敗',
+        message: '刪除寶藏時發生錯誤',
+        color: 'red',
+      });
+    }
   };
 
   // 格式化日期
@@ -232,12 +332,22 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
                           {mode === 'treasures' && (
                             <>
                               <Tooltip label="編輯">
-                                <ActionIcon size="sm" variant="light" color="blue">
+                                <ActionIcon 
+                                  size="sm" 
+                                  variant="light" 
+                                  color="blue"
+                                  onClick={() => handleEditTreasure(treasure)}
+                                >
                                   <IconEdit size={14} />
                                 </ActionIcon>
                               </Tooltip>
                               <Tooltip label="刪除">
-                                <ActionIcon size="sm" variant="light" color="red">
+                                <ActionIcon 
+                                  size="sm" 
+                                  variant="light" 
+                                  color="red"
+                                  onClick={() => handleDeleteTreasure(treasure)}
+                                >
                                   <IconTrash size={14} />
                                 </ActionIcon>
                               </Tooltip>
@@ -287,6 +397,38 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
           </Center>
         )}
       </Stack>
+
+      {/* 編輯寶藏表單 */}
+      {editingTreasure && (
+        <TreasureForm
+          mode="edit"
+          opened={editFormOpened}
+          onClose={() => {
+            setEditFormOpened(false);
+            setEditingTreasure(null);
+          }}
+          initialData={{
+            title: editingTreasure.title,
+            content: editingTreasure.content,
+            type: editingTreasure.type as any,
+            latitude: editingTreasure.latitude,
+            longitude: editingTreasure.longitude,
+            address: editingTreasure.address,
+            amount: editingTreasure.amount,
+            isPublic: editingTreasure.isPublic,
+            isHidden: editingTreasure.isHidden,
+            linkUrl: editingTreasure.linkUrl,
+            tags: editingTreasure.tags,
+            isLiveLocation: editingTreasure.isLiveLocation
+          }}
+          onSubmit={handleUpdateTreasure}
+          onCancel={() => {
+            setEditFormOpened(false);
+            setEditingTreasure(null);
+          }}
+          isLoading={isUpdating}
+        />
+      )}
     </Modal>
   );
 };

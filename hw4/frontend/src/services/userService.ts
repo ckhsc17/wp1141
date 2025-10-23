@@ -23,6 +23,9 @@ export interface UserTreasure {
   latitude: number;
   longitude: number;
   address?: string;
+  amount?: string;
+  isPublic?: boolean;
+  isHidden?: boolean;
   mediaUrl?: string;
   linkUrl?: string;
   isLiveLocation: boolean;
@@ -80,6 +83,7 @@ class UserService {
       }>(`${API_ENDPOINTS.USERS.TREASURES}?page=${page}&limit=${limit}`);
 
       const { treasures, total, totalPages } = response.data;
+      console.log('獲取用戶寶藏資料:', treasures);
       return {
         treasures,
         total,

@@ -70,7 +70,7 @@ class TreasureService extends ApiService {
         formData.append('isHidden', data.isHidden.toString());
       }
       
-      if (data.linkUrl) {
+      if (data.linkUrl && data.linkUrl !== null) {
         formData.append('linkUrl', data.linkUrl);
       }
       
@@ -122,6 +122,7 @@ class TreasureService extends ApiService {
 
   // 更新寶藏
   async updateTreasure(id: string, data: UpdateTreasureRequest): Promise<TreasureDTO> {
+    console.log('更新寶藏請求資料:', data);
     const response = await this.put<ApiResponse<TreasureDTO>>(
       API_ENDPOINTS.TREASURES.UPDATE(id),
       data

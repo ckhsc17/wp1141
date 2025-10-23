@@ -19,7 +19,10 @@ export class CommentService {
     try {
       // Check if treasure exists
       const treasure = await prisma.treasure.findUnique({
-        where: { id: treasureId },
+        where: { 
+          id: treasureId,
+          deletedAt: null // Only get non-deleted treasures
+        },
         select: { id: true }
       });
 

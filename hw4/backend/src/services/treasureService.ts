@@ -72,7 +72,9 @@ export class TreasureService {
       const offset = (pageNum - 1) * limitNum;
 
       // Build where clause
-      const where: any = {};
+      const where: any = {
+        deletedAt: null // Only get non-deleted treasures
+      };
 
       if (type) {
         where.type = type;
@@ -175,7 +177,10 @@ export class TreasureService {
   ): Promise<ServiceResult<TreasureDetailDTO>> {
     try {
       const treasure = await prisma.treasure.findUnique({
-        where: { id: treasureId },
+        where: { 
+          id: treasureId,
+          deletedAt: null // Only get non-deleted treasures
+        },
         include: {
           user: {
             select: {
@@ -314,7 +319,10 @@ export class TreasureService {
     try {
       // Check if treasure exists and belongs to user
       const existingTreasure = await prisma.treasure.findUnique({
-        where: { id: treasureId },
+        where: { 
+          id: treasureId,
+          deletedAt: null // Only get non-deleted treasures
+        },
         select: { id: true, userId: true }
       });
 
@@ -386,7 +394,10 @@ export class TreasureService {
     try {
       // Check if treasure exists and belongs to user
       const existingTreasure = await prisma.treasure.findUnique({
-        where: { id: treasureId },
+        where: { 
+          id: treasureId,
+          deletedAt: null // Only get non-deleted treasures
+        },
         select: { id: true, userId: true }
       });
 
@@ -404,9 +415,12 @@ export class TreasureService {
         };
       }
 
-      // Delete treasure (cascade will handle related records)
-      await prisma.treasure.delete({
-        where: { id: treasureId }
+      // Soft delete treasure by setting deletedAt timestamp
+      await prisma.treasure.update({
+        where: { id: treasureId },
+        data: {
+          deletedAt: new Date()
+        }
       });
 
       return {
@@ -428,7 +442,10 @@ export class TreasureService {
       console.log('Toggling like for treasureId:', treasureId, 'by userId:', userId);
       // Check if treasure exists
       const treasure = await prisma.treasure.findUnique({
-        where: { id: treasureId },
+        where: { 
+          id: treasureId,
+          deletedAt: null // Only get non-deleted treasures
+        },
         select: { id: true }
       });
 
@@ -524,7 +541,10 @@ export class TreasureService {
     try {
       // Check if treasure exists
       const treasure = await prisma.treasure.findUnique({
-        where: { id: treasureId },
+        where: { 
+          id: treasureId,
+          deletedAt: null // Only get non-deleted treasures
+        },
         select: { id: true }
       });
 

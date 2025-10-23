@@ -157,7 +157,7 @@ export const validateCreateTreasure = (req: Request, res: Response, next: NextFu
       }
     }
     
-    if (linkUrl !== undefined && linkUrl !== null) {
+    if (linkUrl !== undefined && linkUrl !== null && linkUrl !== '') {
       console.log('checking linkUrl:', linkUrl);
       if (typeof linkUrl !== 'string') {
         throw createError.badRequest('Link URL must be a string');
@@ -197,7 +197,7 @@ export const validateUpdateTreasure = (req: Request, res: Response, next: NextFu
     const { id } = req.params;
     const { title, content, tags, linkUrl } = req.body;
     
-    validateUUID(id, 'treasure ID');
+    validateCUID(id, 'treasure ID');
     
     if (title !== undefined) {
       if (typeof title !== 'string') {
@@ -232,7 +232,7 @@ export const validateUpdateTreasure = (req: Request, res: Response, next: NextFu
       }
     }
     
-    if (linkUrl !== undefined) {
+    if (linkUrl !== undefined && linkUrl !== null && linkUrl !== '') {
       if (typeof linkUrl !== 'string') {
         throw createError.badRequest('Link URL must be a string');
       }
