@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   AppShell,
   Container,
@@ -92,12 +92,17 @@ export default function HomePage() {
   });
 
   // 位置更新回調（帶防抖優化）
+  const lastTreasureRefetchRef = useRef<number>(0);
   const handleLocationUpdate = useCallback(async (location: MapLocation, distanceMoved: number) => {
     console.log(`位置更新: ${location.lat}, ${location.lng}, 移動距離: ${distanceMoved.toFixed(2)}m`);
     
-    // 如果是首次獲取位置或移動距離超過閾值，重新載入寶藏
-    if (distanceMoved === 0 || distanceMoved >= locationTrackingOptions.minDistanceThreshold) {
+    // 額外的防抖機制：避免過於頻繁的寶藏重新載入（最多每30秒一次）
+    const now = Date.now();
+    const timeSinceLastRefetch = now - lastTreasureRefetchRef.current;
+    
+    if (distanceMoved === 0 || (distanceMoved > 0 && timeSinceLastRefetch >= 30000)) {
       console.log('觸發寶藏重新載入');
+      lastTreasureRefetchRef.current = now;
       
       try {
         await refetchTreasures();
@@ -110,8 +115,10 @@ export default function HomePage() {
       if (distanceMoved === 0) {
         setMapCenter(location);
       }
+    } else if (distanceMoved > 0) {
+      console.log(`跳過寶藏重新載入，距離上次載入僅 ${timeSinceLastRefetch}ms`);
     }
-  }, [refetchTreasures, locationTrackingOptions.minDistanceThreshold]);
+  }, [refetchTreasures]);
 
   // 使用位置追蹤 hook
   const {
@@ -135,13 +142,16 @@ export default function HomePage() {
       console.log('用戶未登入，停止位置追蹤');
       stopTracking();
     }
+  }, [isAuthenticated, isTracking]); // 移除 startTracking 和 stopTracking 依賴
 
+  // 組件卸載時清理
+  useEffect(() => {
     return () => {
       if (isTracking) {
         stopTracking();
       }
     };
-  }, [isAuthenticated, isTracking, startTracking, stopTracking]);
+  }, []); // 空依賴項，只在組件卸載時執行
 
   // 處理位置設定保存
   const handleLocationSettingsSave = useCallback((newSettings: typeof locationTrackingOptions) => {
@@ -155,7 +165,7 @@ export default function HomePage() {
         startTracking();
       }, 1000);
     }
-  }, [isTracking, stopTracking, startTracking]);
+  }, [isTracking]); // 移除 stopTracking 和 startTracking 依賴
 
   // 將寶藏資料轉換為地圖標記格式
   const treasureMarkersForMap: TreasureMarker[] = treasures.map(treasure => ({
@@ -234,6 +244,23 @@ export default function HomePage() {
       console.error('收藏失敗:', error);
     }
   };
+
+  // 處理留言
+  const handleComment = async (treasureId: string) => {
+    try {
+      console.log('留言寶藏:', treasureId);
+      // 留言功能現在直接在 InfoWindow 中處理
+    } catch (error) {
+      console.error('留言失敗:', error);
+    }
+  };
+
+  // 處理留言數量變化
+  const handleCommentsCountChange = useCallback(async (treasureId: string, newCount: number) => {
+    console.log(`寶藏 ${treasureId} 的留言數量變更為: ${newCount}`);
+    // 重新載入寶藏資料以更新留言數量
+    await refetchTreasures();
+  }, [refetchTreasures]);
 
   // 處理刪除
   const handleDelete = async (treasureId: string) => {
@@ -388,6 +415,8 @@ export default function HomePage() {
           onMarkerClick={handleMarkerClick}
           onLike={handleLike}
           onFavorite={handleFavorite}
+          onComment={handleComment}
+          onCommentsCountChange={handleCommentsCountChange}
           onAddTreasureAtLocation={handleAddTreasureAtLocation}
           height="calc(100vh - 60px)"
           width="100%"

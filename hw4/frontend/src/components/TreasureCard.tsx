@@ -24,6 +24,7 @@ import {
 import { TreasureCardProps, TreasureDTO } from '@/types';
 import { TREASURE_TYPE_CONFIG, COLORS } from '@/utils/constants';
 import { useAuth } from '@/contexts/AuthContext';
+import CommentSection from './CommentSection';
 
 // 寶藏卡片內容組件（不含外框）
 interface TreasureCardContentProps {
@@ -33,8 +34,10 @@ interface TreasureCardContentProps {
   onComment?: (treasureId: string) => void;
   onEdit?: (treasure: TreasureDTO) => void;
   onDelete?: (treasureId: string) => void;
+  onCommentsCountChange?: (treasureId: string, newCount: number) => void;
   showOwnerMenu?: boolean;
   compact?: boolean; // 緊湊模式，用於 InfoWindow
+  showComments?: boolean; // 是否顯示留言區塊
 }
 
 export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
@@ -44,8 +47,10 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   onComment,
   onEdit,
   onDelete,
+  onCommentsCountChange,
   showOwnerMenu = true,
-  compact = false
+  compact = false,
+  showComments = false
 }) => {
   const { user } = useAuth();
   const typeConfig = TREASURE_TYPE_CONFIG[treasure.type];
@@ -61,6 +66,7 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   };
 
   const handleComment = () => {
+    // 留言功能現在直接在 InfoWindow 中處理
     onComment?.(treasure.id);
   };
 
@@ -278,6 +284,16 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
           </Group>
         </Group>
       </Stack>
+
+      {/* 留言區塊 */}
+      {showComments && (
+        <CommentSection
+          treasureId={treasure.id}
+          commentsCount={treasure.commentsCount}
+          onCommentsCountChange={(newCount) => onCommentsCountChange?.(treasure.id, newCount)}
+          compact={compact}
+        />
+      )}
     </>
   );
 };

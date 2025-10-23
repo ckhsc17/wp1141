@@ -171,6 +171,12 @@ export interface CommentDTO {
   user: UserDTO;
 }
 
+export interface CommentsResponse {
+  comments: CommentDTO[];
+  total: number;
+  totalPages: number;
+}
+
 // ==================== API Response Types ====================
 
 export interface ApiResponse<T> {

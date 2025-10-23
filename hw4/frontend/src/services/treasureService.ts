@@ -158,7 +158,7 @@ class TreasureService extends ApiService {
   // 取得寶藏留言
   async getComments(treasureId: string): Promise<CommentDTO[]> {
     const response = await this.get<ApiResponse<CommentDTO[]>>(
-      API_ENDPOINTS.COMMENTS.LIST(treasureId)
+      API_ENDPOINTS.COMMENTS.GET_BY_TREASURE_ID(treasureId)
     );
     return response.data;
   }

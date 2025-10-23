@@ -62,6 +62,32 @@ const options = {
           },
           required: ['id', 'email', 'name']
         },
+        UserDTO: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              pattern: '^c[a-z0-9]{24,}$',
+              description: 'Unique user identifier (CUID format)'
+            },
+            email: {
+              type: 'string',
+              format: 'email',
+              description: 'User email address'
+            },
+            name: {
+              type: 'string',
+              description: 'User display name'
+            },
+            avatar: {
+              type: 'string',
+              format: 'uri',
+              description: 'User avatar URL',
+              nullable: true
+            }
+          },
+          required: ['id', 'email', 'name']
+        },
         TreasureType: {
           type: 'string',
           enum: ['music', 'audio', 'text', 'link', 'live_moment'],
@@ -194,6 +220,41 @@ const options = {
             }
           },
           required: ['id', 'content', 'createdAt', 'user']
+        },
+        CommentDTO: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              pattern: '^c[a-z0-9]{24,}$',
+              description: 'Unique comment identifier (CUID format)'
+            },
+            content: {
+              type: 'string',
+              description: 'Comment content'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Creation timestamp (ISO string)'
+            },
+            user: {
+              $ref: '#/components/schemas/UserDTO'
+            }
+          },
+          required: ['id', 'content', 'createdAt', 'user']
+        },
+        CreateCommentDTO: {
+          type: 'object',
+          properties: {
+            content: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 500,
+              description: 'Comment content'
+            }
+          },
+          required: ['content']
         },
         CreateTreasure: {
           type: 'object',

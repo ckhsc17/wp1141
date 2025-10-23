@@ -74,6 +74,17 @@ export const useLocationTracking = (
   const lastUpdateTimeRef = useRef<number>(0);
   const lastApiCallTimeRef = useRef<number>(0);
   const pendingUpdateRef = useRef<boolean>(false);
+  const currentLocationRef = useRef<MapLocation | null>(null);
+  const onLocationUpdateRef = useRef(onLocationUpdate);
+
+  // 更新 ref 值
+  useEffect(() => {
+    currentLocationRef.current = currentLocation;
+  }, [currentLocation]);
+
+  useEffect(() => {
+    onLocationUpdateRef.current = onLocationUpdate;
+  }, [onLocationUpdate]);
 
   // 獲取當前位置
   const getCurrentPosition = useCallback((): Promise<MapLocation | null> => {
@@ -157,8 +168,8 @@ export const useLocationTracking = (
       let shouldUpdate = forceUpdate;
       let shouldTriggerCallback = false;
 
-      if (currentLocation) {
-        distance = calculateDistance(currentLocation, newLocation);
+      if (currentLocationRef.current) {
+        distance = calculateDistance(currentLocationRef.current, newLocation);
         setDistanceMoved(prev => prev + distance);
         
         // 檢查是否移動了足夠的距離
@@ -174,17 +185,17 @@ export const useLocationTracking = (
       }
 
       if (shouldUpdate) {
-        setLastLocation(currentLocation);
+        setLastLocation(currentLocationRef.current);
         setCurrentLocation(newLocation);
         lastUpdateTimeRef.current = now;
       }
       
       // 限制 API 調用頻率（最多每 10 秒一次）
-      if (shouldTriggerCallback && onLocationUpdate) {
+      if (shouldTriggerCallback && onLocationUpdateRef.current) {
         const timeSinceLastApiCall = now - lastApiCallTimeRef.current;
         if (forceUpdate || timeSinceLastApiCall >= 10000) {
           lastApiCallTimeRef.current = now;
-          onLocationUpdate(newLocation, distance);
+          onLocationUpdateRef.current(newLocation, distance);
         } else {
           console.log(`API 調用過於頻繁，跳過此次回調（距離上次 ${timeSinceLastApiCall}ms）`);
         }
@@ -192,13 +203,13 @@ export const useLocationTracking = (
     } finally {
       pendingUpdateRef.current = false;
     }
-  }, [currentLocation, getCurrentPosition, opts.enableDistanceTracking, opts.minDistanceThreshold, onLocationUpdate]);
+  }, [getCurrentPosition, opts.enableDistanceTracking, opts.minDistanceThreshold]); // 移除 currentLocation 和 onLocationUpdate 依賴
 
   // 強制更新位置
   const forceUpdate = useCallback(async (): Promise<MapLocation | null> => {
     await updateLocation(true);
-    return currentLocation;
-  }, [updateLocation, currentLocation]);
+    return currentLocationRef.current;
+  }, [updateLocation]);
 
   // 開始追蹤
   const startTracking = useCallback(() => {
@@ -228,8 +239,9 @@ export const useLocationTracking = (
             lng: position.coords.longitude
           };
           
-          if (currentLocation) {
-            const distance = calculateDistance(currentLocation, newLocation);
+          // 使用 ref 來避免依賴項問題
+          if (currentLocationRef.current) {
+            const distance = calculateDistance(currentLocationRef.current, newLocation);
             if (distance >= opts.minDistanceThreshold) {
               updateLocation();
             }
@@ -245,7 +257,7 @@ export const useLocationTracking = (
         }
       );
     }
-  }, [isTracking, opts, updateLocation, currentLocation]);
+  }, [isTracking]); // 只依賴 isTracking
 
   // 停止追蹤
   const stopTracking = useCallback(() => {

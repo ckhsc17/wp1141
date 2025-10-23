@@ -71,10 +71,11 @@ export const API_ENDPOINTS = {
   },
   // 留言相關
   COMMENTS: {
-    LIST: (treasureId: string) => `/api/treasures/${treasureId}/comments`,
+    GET_BY_TREASURE_ID: (treasureId: string) => `/api/treasures/${treasureId}/comments`,
     CREATE: (treasureId: string) => `/api/treasures/${treasureId}/comments`,
-    UPDATE: (id: string) => `/api/comments/${id}`,
-    DELETE: (id: string) => `/api/comments/${id}`
+    GET_BY_ID: (commentId: string) => `/api/comments/${commentId}`,
+    UPDATE: (commentId: string) => `/api/comments/${commentId}`,
+    DELETE: (commentId: string) => `/api/comments/${commentId}`
   },
   // 檔案上傳
   UPLOAD: '/api/upload',
