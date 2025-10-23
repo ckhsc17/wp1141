@@ -29,7 +29,7 @@ export const TREASURE_TYPE_CONFIG: TreasureTypeConfig = {
   [TreasureType.LIVE_MOMENT]: {
     label: '活在當下',
     icon: '📍',
-    color: '#FFEAA7',
+    color: '#FFCC28',
     description: '記錄當下此刻的美好'
   }
 };

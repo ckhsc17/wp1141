@@ -30,8 +30,8 @@ import {
   IconMail,
   IconBookmark,
 } from '@tabler/icons-react';
-import { FaSearch } from 'react-icons/fa';
-import { GiTreasureMap, GiOpenChest, GiArchiveRegister, GiChest } from 'react-icons/gi';
+import { FaPuzzlePiece } from 'react-icons/fa';
+import { GiOpenChest, GiArchiveRegister, GiChest } from 'react-icons/gi';
 import { useAuth } from '@/contexts/AuthContext';
 import { userService, UserStats } from '@/services/userService';
 import UserTreasuresModal from './UserTreasuresModal';
@@ -205,12 +205,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
               
               <Grid.Col span={6}>
                 <Card withBorder p="md" ta="center">
-                  <FaSearch size={32} color="#1abc9c" style={{ margin: '0 auto 8px' }} />
+                  <FaPuzzlePiece size={32} color="#228be6" style={{ margin: '0 auto 8px' }} />
                   <Text size="xl" fw={700} c="blue">
                     {stats.totalLikes}
                   </Text>
                   <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
-                    已發現寶藏
+                    已上傳碎片
                   </Text>
                 </Card>
               </Grid.Col>
