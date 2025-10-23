@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   Text,
@@ -55,6 +55,7 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   const { user } = useAuth();
   const typeConfig = TREASURE_TYPE_CONFIG[treasure.type];
   const isOwner = user?.id === treasure.user.id;
+  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
 
   const handleLike = () => {
     onLike?.(treasure.id);
@@ -66,7 +67,13 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   };
 
   const handleComment = () => {
-    // 留言功能現在直接在 InfoWindow 中處理
+    // 切換留言區展開狀態
+    console.log('TreasureCard handleComment:', { 
+      treasureId: treasure.id, 
+      currentExpanded: isCommentsExpanded, 
+      willBeExpanded: !isCommentsExpanded 
+    });
+    setIsCommentsExpanded(!isCommentsExpanded);
     onComment?.(treasure.id);
   };
 
@@ -292,6 +299,8 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
           commentsCount={treasure.commentsCount}
           onCommentsCountChange={(newCount) => onCommentsCountChange?.(treasure.id, newCount)}
           compact={compact}
+          isExpanded={isCommentsExpanded}
+          onToggleExpanded={() => setIsCommentsExpanded(!isCommentsExpanded)}
         />
       )}
     </>

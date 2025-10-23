@@ -34,6 +34,8 @@ interface CommentSectionProps {
   commentsCount: number;
   onCommentsCountChange?: (newCount: number) => void;
   compact?: boolean;
+  isExpanded?: boolean; // 外部控制展開狀態
+  onToggleExpanded?: () => void; // 外部控制展開/收合的回調
 }
 
 interface CommentItemProps {
@@ -167,6 +169,10 @@ const CommentItem: React.FC<CommentItemProps> = ({
               minRows={2}
               maxRows={4}
               size={compact ? "xs" : "sm"}
+              style={{ 
+                position: 'relative',
+                zIndex: 10
+              }}
             />
             <Group gap="xs">
               <Button
@@ -211,16 +217,31 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   treasureId,
   commentsCount,
   onCommentsCountChange,
-  compact = false
+  compact = false,
+  isExpanded: externalIsExpanded,
+  onToggleExpanded
 }) => {
   const { user, isAuthenticated } = useAuth();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [internalIsExpanded, setInternalIsExpanded] = useState(false);
+  
+  // 使用外部控制的展開狀態，如果沒有則使用內部狀態
+  const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
+  
   const [comments, setComments] = useState<CommentDTO[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedComments, setHasLoadedComments] = useState(false);
+  
+  console.log('CommentSection 狀態:', { 
+    treasureId, 
+    externalIsExpanded, 
+    internalIsExpanded, 
+    isExpanded, 
+    hasLoadedComments,
+    commentsCount: comments.length 
+  });
 
   // 載入留言
   const loadComments = async () => {
@@ -242,13 +263,29 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     }
   };
 
+  // 當展開狀態變為 true 時自動載入留言
+  React.useEffect(() => {
+    if (isExpanded && !hasLoadedComments) {
+      loadComments();
+    }
+  }, [isExpanded, hasLoadedComments]);
+
   // 展開/收合留言區
   const toggleExpanded = async () => {
-    if (!isExpanded) {
-      setIsExpanded(true);
-      await loadComments();
+    if (onToggleExpanded) {
+      // 使用外部控制
+      onToggleExpanded();
+      if (!isExpanded) {
+        await loadComments();
+      }
     } else {
-      setIsExpanded(false);
+      // 使用內部狀態
+      if (!internalIsExpanded) {
+        setInternalIsExpanded(true);
+        await loadComments();
+      } else {
+        setInternalIsExpanded(false);
+      }
     }
   };
 
@@ -302,27 +339,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 
   return (
     <Stack gap="xs">
-      <Divider />
-      
-      {/* 留言按鈕 */}
-      <Group justify="space-between" align="center">
-        <Button
-          variant="subtle"
-          size={compact ? "xs" : "sm"}
-          leftSection={<IconMessage size={compact ? 12 : 14} />}
-          rightSection={
-            isExpanded ? 
-              <IconChevronUp size={compact ? 12 : 14} /> : 
-              <IconChevronDown size={compact ? 12 : 14} />
-          }
-          onClick={toggleExpanded}
-          style={{ color: COLORS.TEXT.SECONDARY }}
-        >
-          {commentsCount > 0 ? `${commentsCount} 則留言` : '留言'}
-        </Button>
-      </Group>
+      {/* <Divider /> */}
 
-      {/* 展開的留言區域 */}
+      {/* 展開的留言區域 - 直接顯示，不需要按鈕控制 */}
       <Collapse in={isExpanded}>
         <Stack gap="md">
           {/* 新增留言 */}
@@ -345,6 +364,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                   minRows={2}
                   maxRows={4}
                   size={compact ? "xs" : "sm"}
+                  style={{ 
+                    position: 'relative',
+                    zIndex: 10
+                  }}
                 />
                 <Group justify="flex-end">
                   <Button

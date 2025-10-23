@@ -93,7 +93,13 @@ export const LocationInfoWindow: React.FC<LocationInfoWindowProps> = ({
     >
       <div 
         style={getInfoWindowContainerStyle()}
-        onClick={(e) => e.stopPropagation()} // 阻止事件冒泡到地圖
+        onClick={(e) => {
+          // 只有當點擊的不是輸入元素時才阻止冒泡
+          const target = e.target as HTMLElement;
+          if (!target.closest('textarea') && !target.closest('input') && !target.closest('button')) {
+            e.stopPropagation();
+          }
+        }}
       >
         <Card
           shadow="lg"
