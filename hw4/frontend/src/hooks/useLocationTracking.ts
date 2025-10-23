@@ -170,13 +170,18 @@ export const useLocationTracking = (
 
       if (currentLocationRef.current) {
         distance = calculateDistance(currentLocationRef.current, newLocation);
-        setDistanceMoved(prev => prev + distance);
         
-        // 檢查是否移動了足夠的距離
-        if (opts.enableDistanceTracking && distance >= opts.minDistanceThreshold) {
-          shouldUpdate = true;
-          shouldTriggerCallback = true;
-          console.log(`移動距離 ${distance.toFixed(2)}m 超過閾值 ${opts.minDistanceThreshold}m，觸發更新`);
+        // 只有當移動距離超過閾值時才累積距離（避免 GPS 誤差累積）
+        if (distance >= opts.minDistanceThreshold) {
+          setDistanceMoved(prev => prev + distance);
+          
+          if (opts.enableDistanceTracking) {
+            shouldUpdate = true;
+            shouldTriggerCallback = true;
+            console.log(`移動距離 ${distance.toFixed(2)}m 超過閾值 ${opts.minDistanceThreshold}m，觸發更新`);
+          }
+        } else {
+          console.log(`移動距離 ${distance.toFixed(2)}m 未超過閾值 ${opts.minDistanceThreshold}m，忽略此次更新`);
         }
       } else {
         // 首次獲取位置
