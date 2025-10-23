@@ -133,12 +133,18 @@ export class UserService {
       // 檢查權限：只有本人可以看到自己的所有寶藏
       const isOwner = userId === requestingUserId;
       
-      const whereClause = {
+      const whereClause: any = {
         userId,
-        deletedAt: null,
-        // 如果不是本人，可以在這裡添加公開性檢查
-        // ...(isOwner ? {} : { isPublic: true })
+        deletedAt: null
       };
+
+      // 如果不是本人，只能看到公開的寶藏
+      if (!isOwner) {
+        whereClause.OR = [
+          { isPublic: true },    // Public life moments
+          { isHidden: false }    // Public treasures
+        ];
+      }
 
       const [treasures, total] = await Promise.all([
         prisma.treasure.findMany({

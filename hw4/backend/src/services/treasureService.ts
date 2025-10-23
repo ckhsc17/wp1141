@@ -76,12 +76,24 @@ export class TreasureService {
         deletedAt: null // Only get non-deleted treasures
       };
 
-      if (type) {
-        where.type = type;
+      // If querying specific user's treasures and it's the same user, show all their treasures
+      if (userId && userId === currentUserId) {
+        // User can see all their own treasures (including hidden/private ones)
+        where.userId = userId;
+      } else {
+        // For public queries or other users' treasures, only show public ones
+        where.OR = [
+          { isPublic: true },    // Public life moments
+          { isHidden: false }    // Public treasures
+        ];
+        
+        if (userId) {
+          where.userId = userId;
+        }
       }
 
-      if (userId) {
-        where.userId = userId;
+      if (type) {
+        where.type = type;
       }
 
       if (tags) {
@@ -176,11 +188,38 @@ export class TreasureService {
     currentUserId?: string
   ): Promise<ServiceResult<TreasureDetailDTO>> {
     try {
-      const treasure = await prisma.treasure.findUnique({
+      // First, get the treasure to check ownership
+      const treasureCheck = await prisma.treasure.findUnique({
         where: { 
           id: treasureId,
-          deletedAt: null // Only get non-deleted treasures
+          deletedAt: null
         },
+        select: { userId: true }
+      });
+
+      if (!treasureCheck) {
+        return {
+          success: false,
+          error: 'Treasure not found'
+        };
+      }
+
+      // Build where clause based on ownership and visibility
+      const whereClause: any = { 
+        id: treasureId,
+        deletedAt: null
+      };
+
+      // If not the owner, add visibility restrictions
+      if (treasureCheck.userId !== currentUserId) {
+        whereClause.OR = [
+          { isPublic: true },    // Public life moments
+          { isHidden: false }    // Public treasures
+        ];
+      }
+
+      const treasure = await prisma.treasure.findFirst({
+        where: whereClause,
         include: {
           user: {
             select: {
