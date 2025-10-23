@@ -118,7 +118,11 @@ export const LocationInfoWindow: React.FC<LocationInfoWindowProps> = ({
           <ActionIcon
             variant="subtle"
             size="sm"
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onClose();
+            }}
             style={INFO_WINDOW_STYLES.closeButton}
             title="關閉"
           >
