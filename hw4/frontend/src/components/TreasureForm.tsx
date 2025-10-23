@@ -33,7 +33,6 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
   onCancel,
   isLoading = false
 }) => {
-  console.log('TreasureForm 渲染，props:', { mode, opened, initialData });
   
   const [selectedType, setSelectedType] = useState<TreasureType | null>(
     initialData?.type || null

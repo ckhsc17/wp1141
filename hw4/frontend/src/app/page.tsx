@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   AppShell,
   Container,
@@ -21,7 +21,9 @@ import {
   IconUser,
   IconSettings,
   IconLogout,
-  IconList
+  IconList,
+  IconMapPin,
+  IconRefresh
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import GoogleMapComponent from '@/components/GoogleMapComponent';
@@ -30,10 +32,22 @@ import TreasureCard from '@/components/TreasureCard';
 import TreasuresPage from '@/components/TreasuresPage';
 import ProfileModal from '@/components/ProfileModal';
 import LoginPage from '@/components/LoginPage';
+import LocationSettingsModal from '@/components/LocationSettingsModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTreasures } from '@/hooks/useTreasures';
+import { useLocationTracking } from '@/hooks/useLocationTracking';
 import { MapLocation, TreasureMarker, TreasureType, CreateTreasureRequest, TreasureDTO } from '@/types';
 import { COLORS } from '@/utils/constants';
+
+interface LocationTrackingSettings {
+  updateInterval: number;
+  minDistanceThreshold: number;
+  enablePeriodicUpdate: boolean;
+  enableDistanceTracking: boolean;
+  enableHighAccuracy: boolean;
+  timeout: number;
+  maximumAge: number;
+}
 
 export default function HomePage() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -41,6 +55,7 @@ export default function HomePage() {
   const [sidebarOpened, { open: openSidebar, close: closeSidebar }] = useDisclosure(false);
   const [treasuresPageOpened, { open: openTreasuresPage, close: closeTreasuresPage }] = useDisclosure(false);
   const [profileModalOpened, { open: openProfileModal, close: closeProfileModal }] = useDisclosure(false);
+  const [locationSettingsOpened, { open: openLocationSettings, close: closeLocationSettings }] = useDisclosure(false);
   
   // 寶藏表單的預填數據
   const [treasureFormInitialData, setTreasureFormInitialData] = useState<Partial<CreateTreasureRequest> | undefined>(undefined);
@@ -54,11 +69,6 @@ export default function HomePage() {
     lng: 121.5654
   });
 
-  // 當前位置狀態
-  const [currentLocation, setCurrentLocation] = useState<MapLocation | null>(null);
-  const [showCurrentLocation, setShowCurrentLocation] = useState(false);
-
-  // 使用 useTreasures hook 獲取真實資料
   const {
     treasures,
     loading: treasuresLoading,
@@ -70,35 +80,82 @@ export default function HomePage() {
     refetch: refetchTreasures
   } = useTreasures({});
 
-  // 自動獲取當前位置
+  // 位置追蹤設定狀態
+  const [locationTrackingOptions, setLocationTrackingOptions] = useState({
+    updateInterval: 30000, // 30秒定時更新
+    minDistanceThreshold: 100, // 移動100米觸發更新
+    enablePeriodicUpdate: true,
+    enableDistanceTracking: true,
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 10000
+  });
+
+  // 位置更新回調（帶防抖優化）
+  const handleLocationUpdate = useCallback(async (location: MapLocation, distanceMoved: number) => {
+    console.log(`位置更新: ${location.lat}, ${location.lng}, 移動距離: ${distanceMoved.toFixed(2)}m`);
+    
+    // 如果是首次獲取位置或移動距離超過閾值，重新載入寶藏
+    if (distanceMoved === 0 || distanceMoved >= locationTrackingOptions.minDistanceThreshold) {
+      console.log('觸發寶藏重新載入');
+      
+      try {
+        await refetchTreasures();
+        console.log('寶藏重新載入完成');
+      } catch (error) {
+        console.error('寶藏重新載入失敗:', error);
+      }
+      
+      // 如果是首次獲取位置，將地圖中心移動到當前位置
+      if (distanceMoved === 0) {
+        setMapCenter(location);
+      }
+    }
+  }, [refetchTreasures, locationTrackingOptions.minDistanceThreshold]);
+
+  // 使用位置追蹤 hook
+  const {
+    currentLocation,
+    lastLocation,
+    isTracking,
+    error: locationError,
+    loading: locationLoading,
+    distanceMoved,
+    startTracking,
+    stopTracking,
+    forceUpdate
+  } = useLocationTracking(locationTrackingOptions, handleLocationUpdate);
+
+  // 自動開始位置追蹤
   useEffect(() => {
-    if (!navigator.geolocation) {
-      console.error('瀏覽器不支援地理位置功能');
-      return;
+    if (isAuthenticated && !isTracking) {
+      console.log('用戶已登入，開始位置追蹤');
+      startTracking();
+    } else if (!isAuthenticated && isTracking) {
+      console.log('用戶未登入，停止位置追蹤');
+      stopTracking();
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const newLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        console.log('成功獲取當前位置:', newLocation);
-        setCurrentLocation(newLocation);
-        setShowCurrentLocation(true);
-        setMapCenter(newLocation); // 移動地圖中心到當前位置
-      },
-      (error) => {
-        console.error('獲取位置失敗:', error);
-        // 獲取位置失敗時使用預設位置（台北101）
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
+    return () => {
+      if (isTracking) {
+        stopTracking();
       }
-    );
-  }, []);
+    };
+  }, [isAuthenticated, isTracking, startTracking, stopTracking]);
+
+  // 處理位置設定保存
+  const handleLocationSettingsSave = useCallback((newSettings: typeof locationTrackingOptions) => {
+    console.log('更新位置追蹤設定:', newSettings);
+    setLocationTrackingOptions(newSettings);
+    
+    // 如果正在追蹤，重新啟動以應用新設定
+    if (isTracking) {
+      stopTracking();
+      setTimeout(() => {
+        startTracking();
+      }, 1000);
+    }
+  }, [isTracking, stopTracking, startTracking]);
 
   // 將寶藏資料轉換為地圖標記格式
   const treasureMarkersForMap: TreasureMarker[] = treasures.map(treasure => ({
@@ -123,7 +180,6 @@ export default function HomePage() {
       longitude: position.lng,
       address: address || '地址不可用'
     };
-    console.log('設置 treasureFormInitialData:', initialData);
     setTreasureFormInitialData(initialData);
     setTreasureCreationMode(mode);
     
@@ -223,6 +279,39 @@ export default function HomePage() {
                 新增寶藏
               </Button>
               
+              {/* 位置追蹤狀態和控制 */}
+              {isAuthenticated && (
+                <Group gap="xs">
+                  <ActionIcon
+                    variant={isTracking ? "filled" : "outline"}
+                    color={isTracking ? "green" : "gray"}
+                    size="lg"
+                    onClick={isTracking ? stopTracking : startTracking}
+                    title={isTracking ? "停止位置追蹤" : "開始位置追蹤"}
+                  >
+                    <IconMapPin size={16} />
+                  </ActionIcon>
+                  
+                  {currentLocation && (
+                    <ActionIcon
+                      variant="outline"
+                      size="lg"
+                      onClick={forceUpdate}
+                      title="手動更新位置"
+                      loading={locationLoading}
+                    >
+                      <IconRefresh size={16} />
+                    </ActionIcon>
+                  )}
+                  
+                  {isTracking && distanceMoved > 0 && (
+                    <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>
+                      已移動 {distanceMoved.toFixed(0)}m
+                    </Text>
+                  )}
+                </Group>
+              )}
+              
               <ActionIcon
                 variant="outline"
                 size="lg"
@@ -269,9 +358,10 @@ export default function HomePage() {
                   個人資料
                 </Menu.Item>
                 <Menu.Item
-                  leftSection={<IconSettings size={14} />}
+                  leftSection={<IconMapPin size={14} />}
+                  onClick={openLocationSettings}
                 >
-                  設定
+                  位置追蹤設定
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
@@ -293,7 +383,7 @@ export default function HomePage() {
           zoom={15}
           markers={treasureMarkersForMap}
           currentLocation={currentLocation}
-          showCurrentLocation={showCurrentLocation}
+          showCurrentLocation={!!currentLocation}
           onMapClick={handleMapClick}
           onMarkerClick={handleMarkerClick}
           onLike={handleLike}
@@ -364,6 +454,21 @@ export default function HomePage() {
       >
         <TreasuresPage />
       </Modal>
+
+      {/* 個人檔案 Modal */}
+      <ProfileModal
+        opened={profileModalOpened}
+        onClose={closeProfileModal}
+      />
+
+      {/* 位置追蹤設定 Modal */}
+      <LocationSettingsModal
+        opened={locationSettingsOpened}
+        onClose={closeLocationSettings}
+        settings={locationTrackingOptions}
+        onSave={handleLocationSettingsSave}
+        isTracking={isTracking}
+      />
     </AppShell>
   );
 }
