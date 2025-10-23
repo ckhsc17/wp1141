@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Stack,
   Group,
@@ -162,16 +162,28 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
         {isEditing ? (
           <Stack gap="xs">
-            <Textarea
+            <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               placeholder="編輯留言..."
-              minRows={2}
-              maxRows={4}
-              size={compact ? "xs" : "sm"}
+              rows={2}
               style={{ 
+                width: '100%',
+                minHeight: '60px',
+                padding: '8px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: compact ? '12px' : '14px',
+                fontFamily: 'inherit',
+                resize: 'vertical',
                 position: 'relative',
                 zIndex: 10
+              }}
+              onFocus={(e) => {
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
               }}
             />
             <Group gap="xs">
@@ -233,15 +245,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedComments, setHasLoadedComments] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
-  console.log('CommentSection 狀態:', { 
-    treasureId, 
-    externalIsExpanded, 
-    internalIsExpanded, 
-    isExpanded, 
-    hasLoadedComments,
-    commentsCount: comments.length 
-  });
 
   // 載入留言
   const loadComments = async () => {
@@ -252,7 +257,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     
     try {
       const response = await commentService.getCommentsByTreasureId(treasureId);
-      console.log('Comments API response:', response);
       setComments(response?.comments || []);
       setHasLoadedComments(true);
     } catch (error) {
@@ -269,6 +273,23 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       loadComments();
     }
   }, [isExpanded, hasLoadedComments]);
+
+  // 防止焦點丟失的 useEffect
+  React.useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      // 如果點擊的是 textarea，保持焦點
+      if (textareaRef.current && e.target === textareaRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+        textareaRef.current.focus();
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick, true);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick, true);
+    };
+  }, []);
 
   // 展開/收合留言區
   const toggleExpanded = async () => {
@@ -338,11 +359,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   };
 
   return (
-    <Stack gap="xs">
-      {/* <Divider /> */}
+    <div onClick={(e) => e.stopPropagation()}>
+      <Stack gap="xs">
+        {/* <Divider /> */}
 
-      {/* 展開的留言區域 - 直接顯示，不需要按鈕控制 */}
-      <Collapse in={isExpanded}>
+        {/* 展開的留言區域 - 直接顯示，不需要按鈕控制 */}
+        <Collapse in={isExpanded}>
         <Stack gap="md">
           {/* 新增留言 */}
           {isAuthenticated && (
@@ -357,16 +379,42 @@ const CommentSection: React.FC<CommentSectionProps> = ({
               </Avatar>
               
               <Stack gap="xs" style={{ flex: 1 }}>
-                <Textarea
+                <textarea
+                  ref={textareaRef}
                   placeholder="寫下你的留言..."
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  minRows={2}
-                  maxRows={4}
-                  size={compact ? "xs" : "sm"}
+                  onChange={(e) => {
+                    setNewComment(e.target.value);
+                  }}
+                  rows={2}
                   style={{ 
+                    width: '100%',
+                    minHeight: '60px',
+                    padding: '8px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: compact ? '12px' : '14px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
                     position: 'relative',
-                    zIndex: 10
+                    zIndex: 10,
+                    pointerEvents: 'auto',
+                    userSelect: 'text',
+                    outline: 'none',
+                    backgroundColor: 'white'
+                  }}
+                  onFocus={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    // 立即聚焦，不使用 setTimeout
+                    if (textareaRef.current) {
+                      textareaRef.current.focus();
+                    }
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
                   }}
                 />
                 <Group justify="flex-end">
@@ -447,6 +495,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
         </Stack>
       </Collapse>
     </Stack>
+    </div>
   );
 };
 

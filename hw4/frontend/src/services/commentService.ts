@@ -8,11 +8,9 @@ class CommentService extends ApiService {
    */
   async getCommentsByTreasureId(treasureId: string, page = 1, limit = 20): Promise<CommentsResponse> {
     try {
-      console.log(`獲取寶藏的留言列表`, treasureId);
       const response = await this.get<{ data: CommentsResponse }>(
         `${API_ENDPOINTS.COMMENTS.GET_BY_TREASURE_ID(treasureId)}?page=${page}&limit=${limit}`
       );
-      console.log('getCommentsByTreasureId 響應:', response);
       return response.data;
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -29,7 +27,6 @@ class CommentService extends ApiService {
         API_ENDPOINTS.COMMENTS.CREATE(treasureId),
         commentData
       );
-      console.log('createComment 響應:', response);
       return response.data;
     } catch (error) {
       console.error('Error creating comment:', error);

@@ -62,17 +62,11 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   };
 
   const handleFavorite = () => {
-    console.log('TreasureCard handleFavorite 被調用:', treasure.id, 'isFavorited:', treasure.isFavorited);
     onFavorite?.(treasure.id);
   };
 
   const handleComment = () => {
     // 切換留言區展開狀態
-    console.log('TreasureCard handleComment:', { 
-      treasureId: treasure.id, 
-      currentExpanded: isCommentsExpanded, 
-      willBeExpanded: !isCommentsExpanded 
-    });
     setIsCommentsExpanded(!isCommentsExpanded);
     onComment?.(treasure.id);
   };

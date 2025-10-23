@@ -307,7 +307,7 @@ export const validateCreateComment = (req: Request, res: Response, next: NextFun
     const { treasureId } = req.params;
     const { content } = req.body;
     
-    validateUUID(treasureId, 'treasure ID');
+    validateCUID(treasureId, 'treasure ID');
     validateRequired(content, 'Content');
     
     if (typeof content !== 'string') {
