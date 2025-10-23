@@ -57,6 +57,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const [editContent, setEditContent] = useState(comment.content);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isOwner = currentUserId === comment.user.id;
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleEdit = async () => {
     if (editContent.trim() === comment.content.trim()) {
@@ -163,6 +164,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
         {isEditing ? (
           <Stack gap="xs">
             <textarea
+              ref={editTextareaRef}
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               placeholder="編輯留言..."
@@ -177,12 +179,24 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 fontFamily: 'inherit',
                 resize: 'vertical',
                 position: 'relative',
-                zIndex: 10
+                zIndex: 10,
+                pointerEvents: 'auto',
+                userSelect: 'text',
+                outline: 'none',
+                backgroundColor: 'white'
               }}
-              onFocus={(e) => {
+              onMouseDown={(e) => {
                 e.stopPropagation();
+                // 立即聚焦，不使用 setTimeout
+                if (editTextareaRef.current) {
+                  editTextareaRef.current.focus();
+                }
               }}
               onClick={(e) => {
+                e.stopPropagation();
+              }}
+              onKeyDown={(e) => {
+                // 防止空白鍵和 Enter 鍵的事件冒泡
                 e.stopPropagation();
               }}
             />
@@ -274,22 +288,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     }
   }, [isExpanded, hasLoadedComments]);
 
-  // 防止焦點丟失的 useEffect
-  React.useEffect(() => {
-    const handleDocumentClick = (e: MouseEvent) => {
-      // 如果點擊的是 textarea，保持焦點
-      if (textareaRef.current && e.target === textareaRef.current) {
-        e.preventDefault();
-        e.stopPropagation();
-        textareaRef.current.focus();
-      }
-    };
-
-    document.addEventListener('click', handleDocumentClick, true);
-    return () => {
-      document.removeEventListener('click', handleDocumentClick, true);
-    };
-  }, []);
+  // 防止焦點丟失的 useEffect - 移除全局監聽器，改用更精確的事件處理
 
   // 展開/收合留言區
   const toggleExpanded = async () => {
@@ -403,17 +402,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                     outline: 'none',
                     backgroundColor: 'white'
                   }}
-                  onFocus={(e) => {
-                    e.stopPropagation();
-                  }}
                   onMouseDown={(e) => {
                     e.stopPropagation();
-                    // 立即聚焦，不使用 setTimeout
-                    if (textareaRef.current) {
-                      textareaRef.current.focus();
-                    }
                   }}
                   onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onKeyDown={(e) => {
+                    // 防止空白鍵和 Enter 鍵的事件冒泡
                     e.stopPropagation();
                   }}
                 />

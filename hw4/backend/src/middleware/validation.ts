@@ -324,10 +324,9 @@ export const validateCreateComment = (req: Request, res: Response, next: NextFun
 
 export const validateUpdateComment = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const { commentId } = req.params;
     const { content } = req.body;
-    
-    validateUUID(id, 'comment ID');
+    validateCUID(commentId, 'comment ID');
     validateRequired(content, 'Content');
     
     if (typeof content !== 'string') {
