@@ -183,7 +183,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                 </Card>
               </Grid.Col>
               
-              {/* 右上: 已收藏寶藏 */}
+              {/* 右上: 已獲得寶藏 */}
               <Grid.Col span={6}>
                 <Card 
                   withBorder 
@@ -191,16 +191,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                   ta="center"
                   style={{ cursor: 'pointer' }}
                   onClick={() => {
-                    setTreasuresModalMode('favorites');
+                    setTreasuresModalMode('collects');
                     setTreasuresModalOpened(true);
                   }}
                 >
-                  <IconBookmark size={32} color="#51CF66" style={{ margin: '0 auto 8px' }} />
-                  <Text size="xl" fw={700} c="green">
-                    {stats.favoritedTreasures}
+                  <IconTrophy size={32} color="#f1c40f" style={{ margin: '0 auto 8px' }} />
+                  <Text size="xl" fw={700} c="gold">
+                    {stats.collectedTreasures}
                   </Text>
                   <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
-                    已收藏寶藏
+                    已獲得寶藏
                   </Text>
                 </Card>
               </Grid.Col>
@@ -227,7 +227,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                 </Card>
               </Grid.Col>
               
-              {/* 右下: 已獲得寶藏 */}
+              {/* 右下: 已收藏寶藏 */}
               <Grid.Col span={6}>
                 <Card 
                   withBorder 
@@ -235,16 +235,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                   ta="center"
                   style={{ cursor: 'pointer' }}
                   onClick={() => {
-                    setTreasuresModalMode('collects');
+                    setTreasuresModalMode('favorites');
                     setTreasuresModalOpened(true);
                   }}
                 >
-                  <IconTrophy size={32} color="#f1c40f" style={{ margin: '0 auto 8px' }} />
-                  <Text size="xl" fw={700} c="gold">
-                    {stats.collectedTreasures}
+                  <IconBookmark size={32} color="#51CF66" style={{ margin: '0 auto 8px' }} />
+                  <Text size="xl" fw={700} c="green">
+                    {stats.favoritedTreasures}
                   </Text>
                   <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
-                    已獲得寶藏
+                    已收藏碎片
                   </Text>
                 </Card>
               </Grid.Col>

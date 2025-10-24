@@ -72,15 +72,20 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
     try {
       let result;
       if (mode === 'treasures') {
-        result = await userService.getUserTreasures(page, pageSize);
+        result = await userService.getUserTreasures(page, pageSize, undefined, true); // 獲取 isHidden !== null 的寶藏
         setTreasures(result.treasures);
+        setTotal(result.total);
+        setTotalPages(Math.ceil(result.total / pageSize));
       } else if (mode === 'favorites') {
         result = await userService.getUserFavorites(page, pageSize);
         setTreasures(result.treasures);
+        setTotal(result.total);
+        setTotalPages(Math.ceil(result.total / pageSize));
       } else if (mode === 'fragments') {
-        // For fragments, we'll filter treasures where isPublic !== null
-        result = await userService.getUserTreasures(page, pageSize);
-        setTreasures(result.treasures.filter(t => t.isPublic !== null && t.isPublic !== undefined));
+        result = await userService.getUserTreasures(page, pageSize, true, undefined); // 獲取 isPublic !== null 的碎片
+        setTreasures(result.treasures);
+        setTotal(result.total);
+        setTotalPages(Math.ceil(result.total / pageSize));
       } else if (mode === 'collects') {
         const collectsResult = await userService.getUserCollects(page, pageSize);
         setCollects(collectsResult.collects);
@@ -89,6 +94,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
         return; // Early return for collects mode
       }
 
+      // 這裡的邏輯不再需要，因為各個模式已經在上面分別處理了 setTotal 和 setTotalPages
       // if (mode !== 'collects' && result) {
       //   setTotal(result.total);
       //   setTotalPages(Math.ceil(result.total / pageSize));

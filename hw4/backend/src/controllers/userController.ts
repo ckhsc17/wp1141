@@ -129,6 +129,16 @@ export const getCurrentUserStats = async (
  *           type: integer
  *           default: 20
  *         description: Number of items per page
+ *       - in: query
+ *         name: isPublic
+ *         schema:
+ *           type: boolean
+ *         description: Filter treasures where isPublic is not null (for fragments)
+ *       - in: query
+ *         name: isHidden
+ *         schema:
+ *           type: boolean
+ *         description: Filter treasures where isHidden is not null (for treasures)
  *     responses:
  *       200:
  *         description: User treasures retrieved successfully
@@ -153,8 +163,10 @@ export const getCurrentUserTreasures = async (
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100); // 最大限制100
+    const isPublic = req.query.isPublic === 'true' ? true : req.query.isPublic === 'false' ? false : undefined;
+    const isHidden = req.query.isHidden === 'true' ? true : req.query.isHidden === 'false' ? false : undefined;
 
-    const result = await userService.getUserTreasures(userId, userId, page, limit);
+    const result = await userService.getUserTreasures(userId, userId, page, limit, isPublic, isHidden);
 
     if (!result.success) {
       res.status(500).json({
@@ -427,6 +439,16 @@ export const getPublicUserProfile = async (
  *           type: integer
  *           default: 20
  *         description: Number of items per page
+ *       - in: query
+ *         name: isPublic
+ *         schema:
+ *           type: boolean
+ *         description: Filter treasures where isPublic is not null (for fragments)
+ *       - in: query
+ *         name: isHidden
+ *         schema:
+ *           type: boolean
+ *         description: Filter treasures where isHidden is not null (for treasures)
  *     responses:
  *       200:
  *         description: Public user treasures retrieved successfully
@@ -452,8 +474,10 @@ export const getPublicUserTreasures = async (
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    const isPublic = req.query.isPublic === 'true' ? true : req.query.isPublic === 'false' ? false : undefined;
+    const isHidden = req.query.isHidden === 'true' ? true : req.query.isHidden === 'false' ? false : undefined;
 
-    const result = await userService.getUserTreasures(userId, requestingUserId, page, limit);
+    const result = await userService.getUserTreasures(userId, requestingUserId, page, limit, isPublic, isHidden);
 
     if (!result.success) {
       res.status(404).json({

@@ -75,12 +75,19 @@ class UserService {
   /**
    * 獲取用戶的寶藏列表
    */
-  async getUserTreasures(page: number = 1, limit: number = 10): Promise<{
+  async getUserTreasures(page: number = 1, limit: number = 10, isPublic?: boolean, isHidden?: boolean): Promise<{
     treasures: UserTreasure[];
     total: number;
     hasMore: boolean;
   }> {
     try {
+      let url = `${API_ENDPOINTS.USERS.TREASURES}?page=${page}&limit=${limit}`;
+      if (isPublic !== undefined) {
+        url += `&isPublic=${isPublic}`;
+      }
+      if (isHidden !== undefined) {
+        url += `&isHidden=${isHidden}`;
+      }
       const response = await apiService.get<{
         success: boolean;
         data: {
@@ -88,7 +95,7 @@ class UserService {
           total: number;
           totalPages: number;
         };
-      }>(`${API_ENDPOINTS.USERS.TREASURES}?page=${page}&limit=${limit}`);
+      }>(url);
 
       const { treasures, total, totalPages } = response.data;
       console.log('獲取用戶寶藏資料:', treasures);

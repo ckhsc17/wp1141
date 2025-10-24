@@ -23,7 +23,8 @@ import {
   IconLogout,
   IconList,
   IconMapPin,
-  IconRefresh
+  IconRefresh,
+  IconHeart
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import GoogleMapComponent from '@/components/GoogleMapComponent';
@@ -168,6 +169,16 @@ export default function HomePage() {
     }
   }, [isTracking]); // 移除 stopTracking 和 startTracking 依賴
 
+  // 統一處理開啟創建表單的函數
+  const handleOpenCreateForm = (
+    mode: 'treasure' | 'life_moment',
+    initialPosData?: { latitude: number; longitude: number; address?: string } // 將 address 改為可選
+  ) => {
+    setTreasureCreationMode(mode);
+    setTreasureFormInitialData(initialPosData);
+    openTreasureForm();
+  };
+
   // 將寶藏資料轉換為地圖標記格式
   const treasureMarkersForMap: TreasureMarker[] = treasures.map(treasure => ({
     id: treasure.id,
@@ -303,118 +314,87 @@ export default function HomePage() {
 
   return (
     <AppShell
-      header={{ height: 60 }}
       padding={0}
     >
-      <AppShell.Header>
-        <Container size="xl" h="100%">
-          <Group h="100%" justify="space-between">
-            <Group>
-              <Button
-                leftSection={<IconPlus size={16} />}
-                onClick={openTreasureForm}
-                size="sm"
-              >
-                埋藏寶藏
-              </Button>
-              
-              {/* 位置追蹤狀態和控制 */}
-              {isAuthenticated && (
-                <Group gap="xs">
-                  <ActionIcon
-                    variant={isTracking ? "filled" : "outline"}
-                    color={isTracking ? "green" : "gray"}
-                    size="lg"
-                    onClick={isTracking ? stopTracking : startTracking}
-                    title={isTracking ? "停止位置追蹤" : "開始位置追蹤"}
-                  >
-                    <IconMapPin size={16} />
-                  </ActionIcon>
-                  
-                  {currentLocation && (
-                    <ActionIcon
-                      variant="outline"
-                      size="lg"
-                      onClick={forceUpdate}
-                      title="手動更新位置"
-                      loading={locationLoading}
-                    >
-                      <IconRefresh size={16} />
-                    </ActionIcon>
-                  )}
-                  
-                  {isTracking && distanceMoved > 0 && (
-                    <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>
-                      已移動 {distanceMoved.toFixed(0)}m
-                    </Text>
-                  )}
-                </Group>
-              )}
-              
+      {/* 移除 AppShell.Header */}
+
+      {/* 上方浮動按鈕 */}
+      <Group
+        style={{
+          position: 'fixed',
+          top: 20,
+          left: 20,
+          zIndex: 1000,
+          gap: 'md',
+        }}
+      >
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={() => handleOpenCreateForm('treasure')}
+          size="sm"
+        >
+          埋藏寶藏
+        </Button>
+
+        <Button
+          leftSection={<IconHeart size={16} />}
+          onClick={() => handleOpenCreateForm('life_moment')}
+          size="sm"
+        >
+          紀錄生活
+        </Button>
+        
+        {/* 位置追蹤狀態和控制 */}
+        {isAuthenticated && (
+          <Group gap="xs">
+            <ActionIcon
+              variant={isTracking ? "filled" : "outline"}
+              color={isTracking ? "green" : "gray"}
+              size="lg"
+              onClick={isTracking ? stopTracking : startTracking}
+              title={isTracking ? "停止位置追蹤" : "開始位置追蹤"}
+            >
+              <IconMapPin size={16} />
+            </ActionIcon>
+            
+            {currentLocation && (
               <ActionIcon
                 variant="outline"
                 size="lg"
-                onClick={openSidebar}
-                title="寶藏列表"
+                onClick={forceUpdate}
+                title="手動更新位置"
+                loading={locationLoading}
               >
-                <IconList size={18} />
+                <IconRefresh size={16} />
               </ActionIcon>
-              
-              <ActionIcon
-                variant="outline"
-                size="lg"
-                onClick={openTreasuresPage}
-                title="寶藏管理"
-              >
-                <IconFilter size={18} />
-              </ActionIcon>
-            </Group>
-
-            {/* 用戶個人資料選單 */}
-            <Menu shadow="md" width={200}>
-              <Menu.Target>
-                <ActionIcon
-                  variant="light"
-                  size="lg"
-                  radius="50%"
-                >
-                  <Avatar
-                    src={user?.avatar}
-                    size="sm"
-                    radius="50%"
-                  >
-                    <IconUser size={16} />
-                  </Avatar>
-                </ActionIcon>
-              </Menu.Target>
-
-              <Menu.Dropdown>
-                <Menu.Label>{user?.name}</Menu.Label>
-                <Menu.Item
-                  leftSection={<IconUser size={14} />}
-                  onClick={openProfileModal}
-                >
-                  個人資料
-                </Menu.Item>
-                <Menu.Item
-                  leftSection={<IconMapPin size={14} />}
-                  onClick={openLocationSettings}
-                >
-                  位置追蹤設定
-                </Menu.Item>
-                <Menu.Divider />
-                <Menu.Item
-                  leftSection={<IconLogout size={14} />}
-                  color="red"
-                  onClick={logout}
-                >
-                  登出
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
+            )}
+            
+            {isTracking && distanceMoved > 0 && (
+              <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>
+                已移動 {distanceMoved.toFixed(0)}m
+              </Text>
+            )}
           </Group>
-        </Container>
-      </AppShell.Header>
+        )}
+        
+        <ActionIcon
+          variant="outline"
+          size="lg"
+          onClick={openSidebar}
+          title="寶藏列表"
+        >
+          <IconList size={18} />
+        </ActionIcon>
+        
+        <ActionIcon
+          variant="outline"
+          size="lg"
+          onClick={openTreasuresPage}
+          title="寶藏管理"
+        >
+          <IconFilter size={18} />
+        </ActionIcon>
+      </Group>
 
       <AppShell.Main>
         <GoogleMapComponent
@@ -430,11 +410,66 @@ export default function HomePage() {
           onComment={handleComment}
           onCollect={handleCollect}
           onCommentsCountChange={handleCommentsCountChange}
-          onAddTreasureAtLocation={handleAddTreasureAtLocation}
-          height="calc(100vh - 60px)"
+          onAddTreasureAtLocation={(position, address) => handleOpenCreateForm('treasure', { latitude: position.lat, longitude: position.lng, address })}
+          height="100vh" // 調整為全高
           width="100%"
         />
       </AppShell.Main>
+
+      {/* 右上角的浮動按鈕，包含個人頭像 */}
+      <Group 
+        style={{
+          position: 'fixed',
+          top: 20, // 移到上方
+          right: 20, // 保持在右邊
+          zIndex: 1000,
+          // 移除 flexDirection: 'column-reverse',
+          // 移除 gap: 'md'
+        }}
+      >
+        {/* 用戶個人資料選單 */}
+        <Menu shadow="md" width={200} position="bottom-end"> {/* 調整菜單位置 */}
+          <Menu.Target>
+            <ActionIcon
+              variant="light"
+              size="lg" // 恢復到放大前的大小
+              radius="50%"
+            >
+              <Avatar
+                src={user?.avatar}
+                size="sm" // 恢復到放大前的大小
+                radius="50%"
+              >
+                <IconUser size={16} /> {/* 恢復到放大前的大小 */}
+              </Avatar>
+            </ActionIcon>
+          </Menu.Target>
+
+          <Menu.Dropdown>
+            <Menu.Label>{user?.name}</Menu.Label>
+            <Menu.Item
+              leftSection={<IconUser size={14} />}
+              onClick={openProfileModal}
+            >
+              個人資料
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<IconMapPin size={14} />}
+              onClick={openLocationSettings}
+            >
+              位置追蹤設定
+            </Menu.Item>
+            <Menu.Divider />
+            <Menu.Item
+              leftSection={<IconLogout size={14} />}
+              color="red"
+              onClick={logout}
+            >
+              登出
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      </Group>
 
       <Drawer
         opened={sidebarOpened}

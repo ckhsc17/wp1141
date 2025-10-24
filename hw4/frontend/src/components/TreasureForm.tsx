@@ -168,7 +168,10 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
 
   const treasureTypeOptions = Object.entries(TREASURE_TYPE_CONFIG).map(([value, config]) => ({
     value,
-    label: `${config.icon} ${config.label}`
+    label: `${config.icon} ${config.label}`,
+    style: {
+      color: COLORS.TEXT.SECONDARY,
+    },
   }));
 
   const showMediaUpload = selectedType === TreasureType.MUSIC || selectedType === TreasureType.AUDIO;
@@ -249,35 +252,27 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
   };
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title={getModalTitle()}
-      size="lg"
-      centered
-      styles={{
-        header: {
-          display: 'flex',
-          justifyContent: 'center',
-          color: COLORS.TEXT.SECONDARY,
-        },
-      }}
-    >
+      <Modal
+        opened={opened}
+        onClose={onClose}
+        title={getModalTitle()}
+        centered
+        size="lg"
+        styles={{
+          header: {
+            display: 'flex',
+            justifyContent: 'center',
+            color: COLORS.TEXT.SECONDARY,
+          },
+          title: {
+            flex: 1,
+            textAlign: 'center',
+            fontSize: '1.5rem', // 放大字體
+            fontWeight: 700,    // 加粗
+          },
+        }}
+      >
       <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Stack gap="md">
-          <Select
-            label="寶藏類型"
-            style={{ color: COLORS.TEXT.SECONDARY }}
-            placeholder="選擇寶藏類型"
-            data={treasureTypeOptions}
-            value={selectedType}
-            onChange={(value) => {
-              setSelectedType(value as TreasureType);
-              form.setFieldValue('type', value as TreasureType);
-            }}
-            required
-            disabled={mode === 'edit'}
-          />
 
           {selectedType && (
             <Alert 
@@ -291,6 +286,25 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
 
           {/* Visibility Toggle Buttons */}
           {renderVisibilityToggle()}
+
+          <Stack gap="md">
+          <Select
+            label="寶藏類型"
+            style={{ color: COLORS.TEXT.SECONDARY }}
+            placeholder="選擇寶藏類型"
+            data={treasureTypeOptions}
+            value={selectedType}
+            onChange={(value) => {
+              setSelectedType(value as TreasureType);
+              form.setFieldValue('type', value as TreasureType);
+            }}
+            required
+            disabled={mode === 'edit'}
+            styles={{
+              input: { color: COLORS.TEXT.SECONDARY },
+              option: { color: COLORS.TEXT.SECONDARY }, // Use 'option' key for dropdown items
+            }}
+          />
 
           <TextInput
             label="標題"

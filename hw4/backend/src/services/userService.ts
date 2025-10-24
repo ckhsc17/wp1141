@@ -122,7 +122,9 @@ export class UserService {
     userId: string,
     requestingUserId: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
+    isPublic?: boolean,
+    isHidden?: boolean
   ): Promise<ServiceResult<{ treasures: TreasureDTO[]; total: number; totalPages: number }>> {
     try {
       const skip = (page - 1) * limit;
@@ -135,12 +137,22 @@ export class UserService {
         deletedAt: null
       };
 
-      // 如果不是本人，只能看到公開的寶藏
+      // 如果不是本人，只能看到公開的寶藏 (isPublic: true 或 isHidden: false)
       if (!isOwner) {
         whereClause.OR = [
-          { isPublic: true },    // Public life moments
-          { isHidden: false }    // Public treasures
+          { isPublic: true },
+          { isHidden: false }
         ];
+      }
+
+      // 根據前端傳遞的 isPublic 參數進行篩選
+      if (isPublic !== undefined) {
+        whereClause.isPublic = { not: null }; // 篩選 isPublic 不為 null 的碎片
+      }
+      
+      // 根據前端傳遞的 isHidden 參數進行篩選
+      if (isHidden !== undefined) {
+        whereClause.isHidden = { not: null }; // 篩選 isHidden 不為 null 的寶藏
       }
 
       const [treasures, total] = await Promise.all([
