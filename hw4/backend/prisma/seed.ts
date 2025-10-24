@@ -357,6 +357,44 @@ async function createFavorites(users: any[], treasures: any[]) {
   return favorites;
 }
 
+async function createCollects(users: any[], treasures: any[]) {
+  console.log('🔨 Creating collects...');
+  
+  const collects = [];
+  // Only collect treasures that have isHidden !== null (actual treasures, not life moments)
+  const collectableTreasures = treasures.filter(t => !t.deletedAt && t.isHidden !== null);
+  
+  for (let i = 0; i < 80; i++) {
+    const user = faker.helpers.arrayElement(users);
+    const treasure = faker.helpers.arrayElement(collectableTreasures);
+    
+    // 避免重複收集
+    const existingCollect = await prisma.collect.findUnique({
+      where: {
+        userId_treasureId: {
+          userId: user.id,
+          treasureId: treasure.id
+        }
+      }
+    });
+    
+    if (!existingCollect) {
+      const collect = await prisma.collect.create({
+        data: {
+          userId: user.id,
+          treasureId: treasure.id,
+          createdAt: faker.date.past({ years: 1 }),
+          isLocked: faker.datatype.boolean({ probability: 0.3 }) // 30% chance to be locked
+        }
+      });
+      collects.push(collect);
+    }
+  }
+  
+  console.log(`✅ Created ${collects.length} collects`);
+  return collects;
+}
+
 async function updateCounts() {
   console.log('🔨 Updating counts...');
   
@@ -395,6 +433,7 @@ async function main() {
   try {
     // 清空現有數據
     console.log('🗑️  Cleaning existing data...');
+    await prisma.collect.deleteMany();
     await prisma.favorite.deleteMany();
     await prisma.comment.deleteMany();
     await prisma.like.deleteMany();
@@ -407,6 +446,7 @@ async function main() {
     const likes = await createLikes(users, treasures);
     const comments = await createComments(users, treasures);
     const favorites = await createFavorites(users, treasures);
+    const collects = await createCollects(users, treasures);
     
     // 更新計數
     await updateCounts();
@@ -419,6 +459,7 @@ async function main() {
 - Likes: ${likes.length}
 - Comments: ${comments.length}
 - Favorites: ${favorites.length}
+- Collects: ${collects.length}
     `);
     
   } catch (error) {

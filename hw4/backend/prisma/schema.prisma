@@ -30,6 +30,7 @@ model User {
   likes     Like[]
   comments  Comment[]
   favorites Favorite[]
+  collects  Collect[]
 
   @@map("users")
 }
@@ -63,6 +64,7 @@ model Treasure {
   likes     Like[]
   comments  Comment[]
   favorites Favorite[]
+  collects  Collect[]
 
   // Indexes for performance
   @@index([latitude, longitude])
@@ -124,6 +126,24 @@ model Favorite {
   @@unique([userId, treasureId])
   @@index([userId, createdAt])
   @@map("favorites")
+}
+
+// 收集模型
+model Collect {
+  id         String   @id @default(cuid())
+  userId     String
+  treasureId String
+  createdAt  DateTime @default(now())
+  isLocked   Boolean  @default(false)
+
+  // Relations
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  treasure Treasure @relation(fields: [treasureId], references: [id], onDelete: Cascade)
+
+  // 複合唯一約束：一個使用者對一個寶藏只能收集一次
+  @@unique([userId, treasureId])
+  @@index([userId, createdAt])
+  @@map("collects")
 }
 
 // 寶藏類型枚舉

@@ -71,6 +71,16 @@ export interface Favorite {
   treasure: Treasure;
 }
 
+export interface Collect {
+  id: string;
+  userId: string;
+  treasureId: string;
+  createdAt: Date;
+  isLocked: boolean;
+  user: User;
+  treasure: Treasure;
+}
+
 // ==================== DTOs ====================
 
 export interface UserDTO {
@@ -152,6 +162,7 @@ export interface TreasureDTO {
   commentsCount: number;
   isLiked: boolean;
   isFavorited: boolean;
+  isCollected?: boolean;
   createdAt: string;
   user: UserDTO;
 }
@@ -173,6 +184,20 @@ export interface CommentDTO {
 
 export interface CommentsResponse {
   comments: CommentDTO[];
+  total: number;
+  totalPages: number;
+}
+
+export interface CollectDTO {
+  id: string;
+  treasureId: string;
+  createdAt: string;
+  isLocked: boolean;
+  treasure: TreasureDTO;
+}
+
+export interface CollectsResponse {
+  collects: CollectDTO[];
   total: number;
   totalPages: number;
 }
