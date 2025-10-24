@@ -660,3 +660,115 @@ export const toggleFavorite = async (
       return;
   }
 };
+
+/**
+ * @swagger
+ * /api/treasures/collect:
+ *   post:
+ *     summary: Collect a treasure
+ *     tags: [Treasures]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - treasureId
+ *             properties:
+ *               treasureId:
+ *                 type: string
+ *                 description: ID of the treasure to collect
+ *     responses:
+ *       200:
+ *         description: Treasure collected successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         isCollected:
+ *                           type: boolean
+ *       400:
+ *         description: Treasure cannot be collected
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Treasure not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
+export const collectTreasure = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { treasureId } = req.body;
+    const userId = req.user!.id;
+
+    if (!treasureId) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_TREASURE_ID',
+          message: '缺少寶藏 ID'
+        }
+      });
+      return;
+    }
+
+    const result = await treasureService.collectTreasure(treasureId, userId);
+
+    if (!result.success) {
+      if (result.error === 'Treasure not found') {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'TREASURE_NOT_FOUND',
+            message: '寶藏不存在'
+          }
+        });
+        return;
+      }
+      if (result.error === 'This treasure cannot be collected') {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'TREASURE_NOT_COLLECTABLE',
+            message: '此寶藏無法收集'
+          }
+        });
+        return;
+      }
+      res.status(400).json({
+        success: false,
+        message: result.error || 'Failed to collect treasure'
+      });
+      return;
+    }
+
+    const response = {
+      success: true,
+      data: result.data,
+      message: result.data?.isCollected ? '寶藏已收集' : '取消收集寶藏'
+    };
+
+    res.json(response);
+    return;
+  } catch (error) {
+    next(error);
+    return;
+  }
+};

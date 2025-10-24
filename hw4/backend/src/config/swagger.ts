@@ -187,6 +187,10 @@ const options = {
               type: 'boolean',
               description: 'Whether current user has favorited this treasure'
             },
+            isCollected: {
+              type: 'boolean',
+              description: 'Whether current user has collected this treasure'
+            },
             createdAt: {
               type: 'string',
               format: 'date-time',
@@ -196,7 +200,7 @@ const options = {
               $ref: '#/components/schemas/User'
             }
           },
-          required: ['id', 'title', 'content', 'type', 'latitude', 'longitude', 'isLiveLocation', 'tags', 'likesCount', 'commentsCount', 'isLiked', 'isFavorited', 'createdAt', 'user']
+          required: ['id', 'title', 'content', 'type', 'latitude', 'longitude', 'isLiveLocation', 'tags', 'likesCount', 'commentsCount', 'isLiked', 'isFavorited', 'isCollected', 'createdAt', 'user']
         },
         Comment: {
           type: 'object',
@@ -255,6 +259,34 @@ const options = {
             }
           },
           required: ['content']
+        },
+        CollectDTO: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              pattern: '^c[a-z0-9]{24,}$',
+              description: 'Unique collect identifier (CUID format)'
+            },
+            treasureId: {
+              type: 'string',
+              pattern: '^c[a-z0-9]{24,}$',
+              description: 'ID of the collected treasure'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Collection timestamp (ISO string)'
+            },
+            isLocked: {
+              type: 'boolean',
+              description: 'Whether the collected treasure is locked'
+            },
+            treasure: {
+              $ref: '#/components/schemas/TreasureDTO'
+            }
+          },
+          required: ['id', 'treasureId', 'createdAt', 'isLocked', 'treasure']
         },
         CreateTreasure: {
           type: 'object',

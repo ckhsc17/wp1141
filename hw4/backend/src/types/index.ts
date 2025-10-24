@@ -124,6 +124,7 @@ export interface TreasureDTO {
   commentsCount: number;
   isLiked: boolean;
   isFavorited: boolean;
+  isCollected: boolean;
   createdAt: string;
   user: UserDTO;
 }

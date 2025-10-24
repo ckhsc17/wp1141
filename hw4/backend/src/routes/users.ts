@@ -4,6 +4,7 @@ import {
   getCurrentUserStats,
   getCurrentUserTreasures,
   getCurrentUserFavorites,
+  getUserCollects,
   updateCurrentUserProfile,
   getPublicUserProfile,
   getPublicUserTreasures
@@ -67,6 +68,14 @@ router.get('/treasures', authenticate, getCurrentUserTreasures);
  * Query parameters: page, limit
  */
 router.get('/favorites', authenticate, getCurrentUserFavorites);
+
+/**
+ * 獲取當前用戶的收集寶藏
+ * GET /api/users/collects
+ * 需要 JWT 認證
+ * Query parameters: page, limit
+ */
+router.get('/collects', authenticate, getUserCollects);
 
 // ==================== 公開路由 ====================
 

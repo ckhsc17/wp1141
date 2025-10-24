@@ -9,10 +9,10 @@ import {
 const prisma = new PrismaClient();
 
 interface UserStats {
-  uploadedTreasures: number;
+  uploadedTreasures: number; // isHidden !== null
   favoritedTreasures: number;
-  totalLikes: number;
-  totalComments: number;
+  uploadedFragments: number; // isPublic !== null
+  collectedTreasures: number; // from collects table
 }
 
 export class UserService {
@@ -65,12 +65,13 @@ export class UserService {
   async getUserStats(userId: string): Promise<ServiceResult<UserStats>> {
     try {
       // 並行查詢所有統計數據
-      const [uploadedTreasures, favoritedTreasures, totalLikes, totalComments] = await Promise.all([
-        // 上傳的寶藏數量
+      const [uploadedTreasures, favoritedTreasures, uploadedFragments, collectedTreasures] = await Promise.all([
+        // 上傳的寶藏數量 (isHidden !== null)
         prisma.treasure.count({
           where: {
             userId,
-            deletedAt: null
+            deletedAt: null,
+            isHidden: { not: null }
           }
         }),
         
@@ -79,30 +80,26 @@ export class UserService {
           where: { userId }
         }),
         
-        // 獲得的總讚數（自己的寶藏被按讚的數量）
-        prisma.like.count({
+        // 上傳的碎片數量 (isPublic !== null)
+        prisma.treasure.count({
           where: {
-            treasure: {
-              userId,
-              deletedAt: null
-            }
+            userId,
+            deletedAt: null,
+            isPublic: { not: null }
           }
         }),
         
-        // 發表的留言數量
-        prisma.comment.count({
-          where: {
-            userId,
-            deletedAt: null
-          }
+        // 收集的寶藏數量
+        prisma.collect.count({
+          where: { userId }
         })
       ]);
 
       const stats: UserStats = {
         uploadedTreasures,
         favoritedTreasures,
-        totalLikes,
-        totalComments
+        uploadedFragments,
+        collectedTreasures
       };
 
       return {
@@ -174,6 +171,10 @@ export class UserService {
             favorites: requestingUserId ? {
               where: { userId: requestingUserId },
               select: { id: true }
+            } : false,
+            collects: requestingUserId ? {
+              where: { userId: requestingUserId },
+              select: { id: true }
             } : false
           },
           orderBy: { createdAt: 'desc' },
@@ -200,6 +201,7 @@ export class UserService {
         commentsCount: treasure._count.comments,
         isLiked: treasure.likes.length > 0,
         isFavorited: treasure.favorites.length > 0,
+        isCollected: treasure.collects.length > 0,
         createdAt: treasure.createdAt.toISOString(),
         user: treasure.user
       }));
@@ -302,6 +304,7 @@ export class UserService {
           commentsCount: favorite.treasure._count.comments,
           isLiked: favorite.treasure.likes.length > 0,
           isFavorited: favorite.treasure.favorites.length > 0,
+          isCollected: false, //為了滿足 treasureDTO 的格式，這裡設為 false；未來可能會把表拆開
           createdAt: favorite.treasure.createdAt.toISOString(),
           user: favorite.treasure.user
         }));
@@ -363,6 +366,99 @@ export class UserService {
       return {
         success: false,
         error: 'Failed to update user profile'
+      };
+    }
+  }
+
+  /**
+   * Get user's collected treasures
+   */
+  async getUserCollects(
+    userId: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<ServiceResult<{ collects: any[], total: number, totalPages: number }>> {
+    try {
+      const skip = (page - 1) * limit;
+
+      // Get total count
+      const total = await prisma.collect.count({
+        where: { userId }
+      });
+
+      // Get collected treasures
+      const collects = await prisma.collect.findMany({
+        where: { userId },
+        include: {
+          treasure: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  name: true,
+                  avatar: true
+                }
+              },
+              _count: {
+                select: {
+                  likes: true,
+                  comments: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      });
+
+      const transformedCollects = collects.map(collect => ({
+        id: collect.id,
+        treasureId: collect.treasureId,
+        createdAt: collect.createdAt.toISOString(),
+        isLocked: collect.isLocked,
+        treasure: {
+          id: collect.treasure.id,
+          title: collect.treasure.title,
+          content: collect.treasure.content,
+          type: collect.treasure.type,
+          latitude: collect.treasure.latitude,
+          longitude: collect.treasure.longitude,
+          address: collect.treasure.address,
+          amount: collect.treasure.amount,
+          isPublic: collect.treasure.isPublic,
+          isHidden: collect.treasure.isHidden,
+          mediaUrl: collect.treasure.mediaUrl,
+          linkUrl: collect.treasure.linkUrl,
+          isLiveLocation: collect.treasure.isLiveLocation,
+          tags: collect.treasure.tags,
+          likesCount: collect.treasure._count?.likes || 0,
+          commentsCount: collect.treasure._count?.comments || 0,
+          isLiked: false, // Not needed for collected treasures list
+          isFavorited: false, // Not needed for collected treasures list
+          isCollected: true, // Always true for collected treasures
+          createdAt: collect.treasure.createdAt.toISOString(),
+          user: collect.treasure.user
+        }
+      }));
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        success: true,
+        data: {
+          collects: transformedCollects,
+          total,
+          totalPages
+        }
+      };
+    } catch (error) {
+      console.error('Get user collects error:', error);
+      return {
+        success: false,
+        error: 'Failed to get user collects'
       };
     }
   }

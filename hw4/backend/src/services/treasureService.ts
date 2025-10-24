@@ -38,6 +38,8 @@ export class TreasureService {
         treasure.likes?.some((like: any) => like.userId === currentUserId) || false : false,
       isFavorited: currentUserId ? 
         treasure.favorites?.some((fav: any) => fav.userId === currentUserId) || false : false,
+      isCollected: currentUserId ? 
+        treasure.collects?.some((collect: any) => collect.userId === currentUserId) || false : false,
       createdAt: treasure.createdAt.toISOString(),
       user: {
         id: treasure.user.id,
@@ -127,6 +129,10 @@ export class TreasureService {
               select: { userId: true }
             },
             favorites: {
+              where: { userId: currentUserId },
+              select: { userId: true }
+            },
+            collects: {
               where: { userId: currentUserId },
               select: { userId: true }
             }
@@ -256,6 +262,10 @@ export class TreasureService {
               select: { userId: true }
             },
             favorites: {
+              where: { userId: currentUserId },
+              select: { userId: true }
+            },
+            collects: {
               where: { userId: currentUserId },
               select: { userId: true }
             }
@@ -406,6 +416,10 @@ export class TreasureService {
             select: { userId: true }
           },
           favorites: {
+            where: { userId },
+            select: { userId: true }
+          },
+          collects: {
             where: { userId },
             select: { userId: true }
           }
@@ -637,6 +651,88 @@ export class TreasureService {
       return {
         success: false,
         error: 'Failed to toggle favorite'
+      };
+    }
+  }
+
+  /**
+   * Collect a treasure
+   */
+  async collectTreasure(
+    treasureId: string, 
+    userId: string
+  ): Promise<ServiceResult<{ isCollected: boolean }>> {
+    try {
+      // Check if treasure exists and is collectable (isHidden !== null)
+      const treasure = await prisma.treasure.findUnique({
+        where: { 
+          id: treasureId,
+          deletedAt: null // Only get non-deleted treasures
+        },
+        select: { 
+          id: true,
+          isHidden: true
+        }
+      });
+
+      if (!treasure) {
+        return {
+          success: false,
+          error: 'Treasure not found'
+        };
+      }
+
+      if (treasure.isHidden === null) {
+        return {
+          success: false,
+          error: 'This treasure cannot be collected'
+        };
+      }
+
+      // Check if already collected
+      const existingCollect = await prisma.collect.findUnique({
+        where: {
+          userId_treasureId: {
+            userId,
+            treasureId
+          }
+        }
+      });
+
+      if (existingCollect) {
+        // Remove collect
+        await prisma.collect.delete({
+          where: {
+            userId_treasureId: {
+              userId,
+              treasureId
+            }
+          }
+        });
+
+        return {
+          success: true,
+          data: { isCollected: false }
+        };
+      } else {
+        // Add collect
+        await prisma.collect.create({
+          data: {
+            userId,
+            treasureId,
+            isLocked: false // Default to unlocked when collected
+          }
+        });
+
+        return {
+          success: true,
+          data: { isCollected: true }
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Failed to collect treasure'
       };
     }
   }

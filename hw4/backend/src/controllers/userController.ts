@@ -473,3 +473,93 @@ export const getPublicUserTreasures = async (
     next(error);
   }
 };
+
+/**
+ * @swagger
+ * /api/users/collects:
+ *   get:
+ *     summary: Get current user's collected treasures
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: User collects retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         collects:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/CollectDTO'
+ *                         total:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
+export const getUserCollects = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
+      });
+      return;
+    }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+
+    const result = await userService.getUserCollects(userId, page, limit);
+
+    if (!result.success) {
+      res.status(404).json({
+        success: false,
+        error: result.error,
+        message: result.error
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: result.data,
+      message: 'User collects retrieved successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
