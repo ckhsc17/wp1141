@@ -44,7 +44,15 @@ import { useTreasures } from '@/hooks/useTreasures';
 import { useLocationTracking } from '@/hooks/useLocationTracking';
 import { MapLocation, TreasureMarker, TreasureType, CreateTreasureRequest, TreasureDTO } from '@/types';
 import { COLORS } from '@/utils/constants';
-import { placesService, PlaceSearchResult } from '@/services/placesService';
+// 移除 placesService 引用，改用 Google Places API
+
+interface PlaceSearchResult {
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  placeId: string;
+}
 
 interface LocationTrackingSettings {
   updateInterval: number;
@@ -206,12 +214,14 @@ export default function HomePage() {
 
   // 處理搜尋查詢變化
   const handleSearchQueryChange = useCallback((value: string) => {
+    console.log('handleSearchQueryChange called');
     setSearchQuery(value);
     setShowSearchHistory(value === '');
   }, []);
 
   // 處理搜尋提交
   const handleSearchSubmit = useCallback(async (query: string) => {
+    console.log('handleSearchSubmit called');
     if (!query.trim()) return;
     
     setIsSearching(true);
@@ -220,33 +230,55 @@ export default function HomePage() {
     try {
       console.log('搜尋查詢:', query);
       
-      // 同時進行 Places API 搜尋和寶藏搜尋
+      // 同時進行 Google Places API 搜尋和寶藏搜尋
       const [placesResults, treasureResults] = await Promise.all([
-        // Places API 搜尋地點
-        placesService.searchPlaces(
-          query,
-          currentLocation ? { lat: currentLocation.lat, lng: currentLocation.lng } : undefined,
-          50000 // 50km 半徑
-        ).catch(error => {
-          console.error('Places API 搜尋失敗:', error);
-          return [];
+        // Google Places API 搜尋地點
+        new Promise<PlaceSearchResult[]>((resolve) => {
+          if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+            console.warn('Google Places API 未載入');
+            resolve([]);
+            return;
+          }
+          
+          const service = new google.maps.places.PlacesService(document.createElement('div'));
+          const request: google.maps.places.TextSearchRequest = {
+            query: query,
+            // 限制搜尋結果數量
+            // maxResults: 10,
+          };
+          
+          // 如果有當前位置，添加位置偏差
+          if (currentLocation) {
+            request.location = new google.maps.LatLng(currentLocation.lat, currentLocation.lng);
+            request.radius = 50000; // 50km 半徑
+          }
+          
+          service.textSearch(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              const places: PlaceSearchResult[] = results.map(place => ({
+                name: place.name || '',
+                address: place.formatted_address || '',
+                latitude: place.geometry?.location?.lat() || 0,
+                longitude: place.geometry?.location?.lng() || 0,
+                placeId: place.place_id || '',
+              }));
+              resolve(places);
+            } else {
+              console.error('Places API 搜尋失敗:', status);
+              resolve([]);
+            }
+          });
         }),
         
-        // 寶藏搜尋 - 使用 useTreasures hook 的搜尋功能
+        // 寶藏搜尋 - 直接對已載入的寶藏進行前端過濾（避免重新 API 呼叫）
         new Promise<TreasureDTO[]>((resolve) => {
-          // 這裡我們需要重新獲取寶藏數據，使用搜尋查詢
-          refetchTreasures().then(() => {
-            // 過濾寶藏以匹配搜尋查詢
-            const filteredTreasures = treasures.filter(treasure =>
-              treasure.title.toLowerCase().includes(query.toLowerCase()) ||
-              treasure.content.toLowerCase().includes(query.toLowerCase()) ||
-              treasure.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
-            );
-            resolve(filteredTreasures);
-          }).catch(error => {
-            console.error('寶藏搜尋失敗:', error);
-            resolve([]);
-          });
+          // 直接過濾已載入的寶藏，避免重新 API 呼叫
+          const filteredTreasures = treasures.filter(treasure =>
+            treasure.title.toLowerCase().includes(query.toLowerCase()) ||
+            treasure.content.toLowerCase().includes(query.toLowerCase()) ||
+            treasure.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+          ).slice(0, 10); // 限制寶藏搜尋結果數量為 10 筆
+          resolve(filteredTreasures);
         })
       ]);
       
@@ -454,12 +486,21 @@ export default function HomePage() {
         }}
       >
         {/* 搜尋欄 */}
-        <Autocomplete
+        <TextInput
           placeholder="搜尋寶藏或地點..."
+          style={{ width: '60%', maxWidth: '500px' }}
           value={searchQuery}
-          onChange={handleSearchQueryChange}
-          onOptionSubmit={handleSearchHistoryClick}
-          data={showSearchHistory ? searchHistory : []}
+          onChange={(event) => {
+            console.log('TextInput onChange called');
+            handleSearchQueryChange(event.currentTarget.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              console.log('Enter key pressed, calling handleSearchSubmit');
+              handleSearchSubmit(searchQuery);
+            }
+          }}
           leftSection={<IconSearch size={16} />}
           rightSection={
             searchQuery ? (
@@ -475,7 +516,6 @@ export default function HomePage() {
               </ActionIcon>
             ) : null
           }
-          style={{ width: 300 }}
           radius="md"
         />
         

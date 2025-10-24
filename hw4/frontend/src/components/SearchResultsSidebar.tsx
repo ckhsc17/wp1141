@@ -76,12 +76,16 @@ export default function SearchResultsSidebar({
           </ActionIcon>
         </Group>
       }
-      size="lg"
+      size="md"
       position="left"
       styles={{
         header: {
           borderBottom: '1px solid #e9ecef',
-          paddingBottom: '1rem'
+          paddingBottom: '1rem',
+          marginTop: '80px' // 為上方按鈕預留空間
+        },
+        body: {
+          paddingTop: '1rem'
         }
       }}
     >

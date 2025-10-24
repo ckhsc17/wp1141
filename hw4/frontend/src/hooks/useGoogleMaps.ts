@@ -53,7 +53,6 @@ export const useGoogleMaps = ({
 
       try {
         console.log('開始載入 Google Maps API...');
-        console.log('API Key:', process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? '已設置' : '未設置');
 
         const loader = new Loader({
           apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',

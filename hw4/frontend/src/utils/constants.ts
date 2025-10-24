@@ -84,9 +84,6 @@ export const API_ENDPOINTS = {
   // 地理位置
   GEOCODING: {
     REVERSE: '/api/geocoding/reverse'
-  },
-  PLACES: {
-    SEARCH: '/api/places/search'
   }
 };
 
