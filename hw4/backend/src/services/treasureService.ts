@@ -65,6 +65,7 @@ export class TreasureService {
         type,
         tags,
         userId,
+        search,
         page = 1,
         limit = 20
       } = query;
@@ -103,6 +104,30 @@ export class TreasureService {
         where.tags = {
           hasSome: tagArray
         };
+      }
+
+      // Add search functionality
+      if (search) {
+        where.OR = [
+          ...(where.OR || []),
+          {
+            title: {
+              contains: search,
+              mode: 'insensitive'
+            }
+          },
+          {
+            content: {
+              contains: search,
+              mode: 'insensitive'
+            }
+          },
+          {
+            tags: {
+              hasSome: [search]
+            }
+          }
+        ];
       }
 
       // Get treasures with relations

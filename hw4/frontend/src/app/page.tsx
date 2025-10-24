@@ -12,7 +12,9 @@ import {
   Text,
   Avatar,
   Menu,
-  Modal
+  Modal,
+  TextInput,
+  Autocomplete
 } from '@mantine/core';
 import {
   IconPlus,
@@ -24,7 +26,9 @@ import {
   IconList,
   IconMapPin,
   IconRefresh,
-  IconHeart
+  IconHeart,
+  IconSearch,
+  IconX
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import GoogleMapComponent from '@/components/GoogleMapComponent';
@@ -34,11 +38,13 @@ import TreasuresPage from '@/components/TreasuresPage';
 import ProfileModal from '@/components/ProfileModal';
 import LoginPage from '@/components/LoginPage';
 import LocationSettingsModal from '@/components/LocationSettingsModal';
+import SearchResultsSidebar from '@/components/SearchResultsSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTreasures } from '@/hooks/useTreasures';
 import { useLocationTracking } from '@/hooks/useLocationTracking';
 import { MapLocation, TreasureMarker, TreasureType, CreateTreasureRequest, TreasureDTO } from '@/types';
 import { COLORS } from '@/utils/constants';
+import { placesService, PlaceSearchResult } from '@/services/placesService';
 
 interface LocationTrackingSettings {
   updateInterval: number;
@@ -63,6 +69,14 @@ export default function HomePage() {
   
   // 寶藏創建模式
   const [treasureCreationMode, setTreasureCreationMode] = useState<'treasure' | 'life_moment'>('treasure');
+  
+  // 搜尋相關狀態
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<(PlaceSearchResult | TreasureDTO)[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
+  const [searchSidebarOpened, setSearchSidebarOpened] = useState(false);
   
   // 預設地圖中心（台北101）
   const [mapCenter, setMapCenter] = useState<MapLocation>({
@@ -135,6 +149,18 @@ export default function HomePage() {
     forceUpdate
   } = useLocationTracking(locationTrackingOptions, handleLocationUpdate);
 
+  // 讀取搜尋歷史記錄
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('searchHistory');
+    if (savedHistory) {
+      try {
+        setSearchHistory(JSON.parse(savedHistory));
+      } catch (error) {
+        console.error('讀取搜尋歷史記錄失敗:', error);
+      }
+    }
+  }, []);
+
   // 自動開始位置追蹤
   useEffect(() => {
     if (isAuthenticated && !isTracking) {
@@ -168,6 +194,105 @@ export default function HomePage() {
       }, 1000);
     }
   }, [isTracking]); // 移除 stopTracking 和 startTracking 依賴
+
+  // 處理搜尋歷史記錄保存
+  const saveSearchHistory = useCallback((query: string) => {
+    if (!query.trim()) return;
+    
+    const newHistory = [query, ...searchHistory.filter(item => item !== query)].slice(0, 10); // 限制最多10條記錄
+    setSearchHistory(newHistory);
+    localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+  }, [searchHistory]);
+
+  // 處理搜尋查詢變化
+  const handleSearchQueryChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setShowSearchHistory(value === '');
+  }, []);
+
+  // 處理搜尋提交
+  const handleSearchSubmit = useCallback(async (query: string) => {
+    if (!query.trim()) return;
+    
+    setIsSearching(true);
+    saveSearchHistory(query);
+    
+    try {
+      console.log('搜尋查詢:', query);
+      
+      // 同時進行 Places API 搜尋和寶藏搜尋
+      const [placesResults, treasureResults] = await Promise.all([
+        // Places API 搜尋地點
+        placesService.searchPlaces(
+          query,
+          currentLocation ? { lat: currentLocation.lat, lng: currentLocation.lng } : undefined,
+          50000 // 50km 半徑
+        ).catch(error => {
+          console.error('Places API 搜尋失敗:', error);
+          return [];
+        }),
+        
+        // 寶藏搜尋 - 使用 useTreasures hook 的搜尋功能
+        new Promise<TreasureDTO[]>((resolve) => {
+          // 這裡我們需要重新獲取寶藏數據，使用搜尋查詢
+          refetchTreasures().then(() => {
+            // 過濾寶藏以匹配搜尋查詢
+            const filteredTreasures = treasures.filter(treasure =>
+              treasure.title.toLowerCase().includes(query.toLowerCase()) ||
+              treasure.content.toLowerCase().includes(query.toLowerCase()) ||
+              treasure.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+            );
+            resolve(filteredTreasures);
+          }).catch(error => {
+            console.error('寶藏搜尋失敗:', error);
+            resolve([]);
+          });
+        })
+      ]);
+      
+      console.log('地點搜尋結果:', placesResults);
+      console.log('寶藏搜尋結果:', treasureResults);
+      
+      // 合併搜尋結果
+      const combinedResults = [...placesResults, ...treasureResults];
+      setSearchResults(combinedResults);
+      
+      // 打開搜尋結果側邊欄
+      setSearchSidebarOpened(true);
+      
+    } catch (error) {
+      console.error('搜尋失敗:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [saveSearchHistory, currentLocation, refetchTreasures, treasures]);
+
+  // 處理搜尋歷史記錄點擊
+  const handleSearchHistoryClick = useCallback((query: string) => {
+    setSearchQuery(query);
+    setShowSearchHistory(false);
+    handleSearchSubmit(query);
+  }, [handleSearchSubmit]);
+
+  // 處理地點搜尋結果點擊
+  const handlePlaceClick = useCallback((place: PlaceSearchResult) => {
+    console.log('地點點擊:', place);
+    // 將地圖中心移動到該地點
+    setMapCenter({ lat: place.latitude, lng: place.longitude });
+    // 關閉搜尋側邊欄
+    setSearchSidebarOpened(false);
+  }, []);
+
+  // 處理寶藏搜尋結果點擊
+  const handleTreasureClick = useCallback((treasure: TreasureDTO) => {
+    console.log('寶藏點擊:', treasure);
+    // 將地圖中心移動到該寶藏
+    setMapCenter({ lat: treasure.latitude, lng: treasure.longitude });
+    // 關閉搜尋側邊欄
+    setSearchSidebarOpened(false);
+    // TODO: 自動開啟該寶藏的 InfoWindow
+  }, []);
 
   // 統一處理開啟創建表單的函數
   const handleOpenCreateForm = (
@@ -328,6 +453,32 @@ export default function HomePage() {
           gap: 'md',
         }}
       >
+        {/* 搜尋欄 */}
+        <Autocomplete
+          placeholder="搜尋寶藏或地點..."
+          value={searchQuery}
+          onChange={handleSearchQueryChange}
+          onOptionSubmit={handleSearchHistoryClick}
+          data={showSearchHistory ? searchHistory : []}
+          leftSection={<IconSearch size={16} />}
+          rightSection={
+            searchQuery ? (
+              <ActionIcon
+                variant="subtle"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchHistory(true);
+                }}
+              >
+                <IconX size={14} />
+              </ActionIcon>
+            ) : null
+          }
+          style={{ width: 300 }}
+          radius="md"
+        />
+        
         <Button
           leftSection={<IconPlus size={16} />}
           onClick={() => handleOpenCreateForm('treasure')}
@@ -470,6 +621,20 @@ export default function HomePage() {
           </Menu.Dropdown>
         </Menu>
       </Group>
+
+      {/* 搜尋結果側邊欄 */}
+      <SearchResultsSidebar
+        opened={searchSidebarOpened}
+        onClose={() => setSearchSidebarOpened(false)}
+        searchQuery={searchQuery}
+        searchResults={searchResults}
+        isLoading={isSearching}
+        onPlaceClick={handlePlaceClick}
+        onTreasureClick={handleTreasureClick}
+        onLike={handleLike}
+        onFavorite={handleFavorite}
+        onComment={handleComment}
+      />
 
       <Drawer
         opened={sidebarOpened}

@@ -90,6 +90,7 @@ const LocationSettingsModal: React.FC<LocationSettingsModalProps> = ({
           
           <Switch
             label="啟用定時更新"
+            style={{ color: COLORS.TEXT.SECONDARY }}
             description="定期自動更新位置"
             checked={localSettings.enablePeriodicUpdate}
             onChange={(event) =>
@@ -103,6 +104,7 @@ const LocationSettingsModal: React.FC<LocationSettingsModalProps> = ({
           {localSettings.enablePeriodicUpdate && (
             <NumberInput
               label="更新間隔（秒）"
+              style={{ color: COLORS.TEXT.SECONDARY }}
               description="每隔多少秒自動更新一次位置"
               value={localSettings.updateInterval / 1000}
               onChange={(value) =>
@@ -128,6 +130,7 @@ const LocationSettingsModal: React.FC<LocationSettingsModalProps> = ({
           
           <Switch
             label="啟用距離檢測"
+            style={{ color: COLORS.TEXT.SECONDARY }}
             description="當移動超過設定距離時自動更新"
             checked={localSettings.enableDistanceTracking}
             onChange={(event) =>
@@ -141,6 +144,7 @@ const LocationSettingsModal: React.FC<LocationSettingsModalProps> = ({
           {localSettings.enableDistanceTracking && (
             <NumberInput
               label="距離閾值（米）"
+              style={{ color: COLORS.TEXT.SECONDARY }}
               description="移動超過多少米時觸發更新"
               value={localSettings.minDistanceThreshold}
               onChange={(value) =>
@@ -166,6 +170,7 @@ const LocationSettingsModal: React.FC<LocationSettingsModalProps> = ({
           
           <Switch
             label="高精度定位"
+            style={{ color: COLORS.TEXT.SECONDARY }}
             description="使用 GPS 提供更精確的位置（耗電量較高）"
             checked={localSettings.enableHighAccuracy}
             onChange={(event) =>

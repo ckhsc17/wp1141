@@ -59,6 +59,11 @@ const treasureService = new TreasureService();
  *             type: string
  *         description: Filter by tags
  *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search treasures by title, content, or tags
+ *       - in: query
  *         name: userId
  *         schema:
  *           type: string
@@ -107,6 +112,7 @@ export const getTreasures = async (
       type,
       tags,
       userId,
+      search,
       page = 1,
       limit = 20
     }: TreasureQuery = req.query as any;
@@ -121,6 +127,7 @@ export const getTreasures = async (
         type: type as TreasureType | undefined,
         tags: Array.isArray(tags) ? tags : tags ? [tags] : undefined,
         userId: userId as string,
+        search: search as string,
         page: parseInt(String(page)) || 1,
         limit: Math.min(parseInt(String(limit)) || 20, 100)
       },

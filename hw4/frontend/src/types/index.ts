@@ -139,6 +139,7 @@ export interface TreasureQuery {
   type?: TreasureType;
   tags?: string[];
   userId?: string;
+  search?: string; // 模糊搜尋寶藏/碎片名稱
   page?: number;
   limit?: number;
 }

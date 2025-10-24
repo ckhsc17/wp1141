@@ -541,6 +541,34 @@ const options = {
             }
           },
           required: ['success', 'data', 'pagination']
+        },
+        PlaceSearchResult: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              description: 'Place name'
+            },
+            address: {
+              type: 'string',
+              description: 'Formatted address'
+            },
+            latitude: {
+              type: 'number',
+              format: 'double',
+              description: 'Place latitude'
+            },
+            longitude: {
+              type: 'number',
+              format: 'double',
+              description: 'Place longitude'
+            },
+            placeId: {
+              type: 'string',
+              description: 'Google Places ID'
+            }
+          },
+          required: ['name', 'address', 'latitude', 'longitude', 'placeId']
         }
       }
     },
