@@ -57,9 +57,10 @@ const TreasureInfoWindow: React.FC<{
       <div 
         style={getInfoWindowContainerStyle()}
         onClick={(e) => {
-          // 只有當點擊的不是輸入元素時才阻止冒泡
           const target = e.target as HTMLElement;
-          if (!target.closest('textarea') && !target.closest('input') && !target.closest('button')) {
+          // 只有當點擊的目標不是 textarea, input, button，或者它們的子元素時，才阻止冒泡
+          // 這樣可以確保 InfoWindow 內的交互元素能正常工作
+          if (!target.closest('textarea') && !target.closest('input') && !target.closest('button') && !target.closest('.mantine-ActionIcon-root') && !target.closest('.mantine-Button-root')) {
             e.stopPropagation();
           }
         }}
@@ -369,6 +370,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLngLiteral | null>(null);
   const [isLocationInfoOpen, setIsLocationInfoOpen] = useState(false);
   const { address, loading: addressLoading, error: addressError, getAddress, clearResult } = useReverseGeocoding();
+  const [isApiLoaded, setIsApiLoaded] = useState(false); // 新增狀態來追蹤 API 載入狀態
 
   console.log('GoogleMapComponent 渲染中...', { 
     center, 
@@ -451,7 +453,10 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
         libraries={['places', 'geometry']}
         region="TW" // 設置台灣地區
         language="zh-TW" // 設置繁體中文
-        onLoad={() => console.log('Google Maps API 已載入')}
+        onLoad={() => {
+          console.log('Google Maps API 已載入');
+          setIsApiLoaded(true); // API 載入完成，設定狀態
+        }}
       >
         <Map
           defaultZoom={zoom}
@@ -462,6 +467,13 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
           style={{ height: '100%', width: '100%' }}
           gestureHandling={'greedy'}
           disableDefaultUI={false}
+          fullscreenControl={true}
+          fullscreenControlOptions={isApiLoaded ? { position: google.maps.ControlPosition.BOTTOM_RIGHT } : undefined}
+          mapTypeControl={true}
+          mapTypeControlOptions={isApiLoaded ? { position: google.maps.ControlPosition.BOTTOM_RIGHT } : undefined}
+          streetViewControl={false}
+          zoomControl={true}
+          zoomControlOptions={isApiLoaded ? { position: google.maps.ControlPosition.RIGHT_BOTTOM } : undefined}
         >
           <TreasureMarkers 
             markers={markers} 

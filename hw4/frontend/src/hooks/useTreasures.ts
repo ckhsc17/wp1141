@@ -87,7 +87,8 @@ export const useTreasures = (query?: TreasureQuery): UseTreasuresResult => {
       
       const response: PaginatedResponse<TreasureDTO> = await treasureService.getTreasures({
         ...stableQuery,
-        page: currentPage
+        page: currentPage,
+        limit: 1000, // 設定一個足夠大的限制來獲取所有寶藏
       });
 
       if (reset) {

@@ -289,8 +289,8 @@ export const validateTreasureQuery = (req: Request, res: Response, next: NextFun
     
     if (limit !== undefined) {
       const l = parseInt(limit as string);
-      if (isNaN(l) || l < 1 || l > 100) {
-        throw createError.badRequest('Limit must be between 1 and 100');
+      if (isNaN(l) || l < 1 || l > 1000) {
+        throw createError.badRequest('Limit must be between 1 and 1000');
       }
     }
     

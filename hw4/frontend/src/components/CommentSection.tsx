@@ -20,8 +20,6 @@ import {
   IconDots,
   IconEdit,
   IconTrash,
-  IconChevronDown,
-  IconChevronUp,
   IconAlertCircle
 } from '@tabler/icons-react';
 import { commentService } from '@/services/commentService';
@@ -186,16 +184,15 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 backgroundColor: 'white'
               }}
               onMouseDown={(e) => {
-                e.stopPropagation();
                 if (editTextareaRef.current) {
                   editTextareaRef.current.focus();
                 }
               }}
               onClick={(e) => {
-                e.stopPropagation();
               }}
               onKeyDown={(e) => {
-                e.stopPropagation();
+              }}
+              onFocus={(e) => {
               }}
             />
             <Group gap="xs">
@@ -408,16 +405,19 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                   backgroundColor: 'white'
                 }}
                 onMouseDown={(e) => {
-                  e.stopPropagation();
+                  // 移除 e.stopPropagation()，讓事件冒泡到父級
                   if (textareaRef.current) {
                     textareaRef.current.focus();
                   }
                 }}
                 onClick={(e) => {
-                  e.stopPropagation();
+                  // 移除 e.stopPropagation()，讓事件冒泡到父級
                 }}
                 onKeyDown={(e) => {
-                  e.stopPropagation();
+                  // 移除 e.stopPropagation()，讓事件冒泡到父級
+                }}
+                onFocus={(e) => {
+                  // 移除 e.stopPropagation()，讓事件冒泡到父級
                 }}
               />
               <Group justify="flex-end">
