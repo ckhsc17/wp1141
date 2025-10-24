@@ -230,19 +230,34 @@ const TreasureMarkers: React.FC<{
     }
   }, [markers, selectedTreasure]);
 
-  // 當 selectedTreasureId 變化時，自動選中對應的寶藏
+  // 當 selectedTreasureId 變化時，自動選中對應的寶藏並移動地圖視圖
   useEffect(() => {
-    if (selectedTreasureId) {
+    if (selectedTreasureId && map) {
       const treasure = markers.find(marker => marker.id === selectedTreasureId);
       if (treasure) {
         setSelectedTreasure(treasure);
         // 關閉位置信息窗口
         onCloseLocationInfo?.();
+        
+        // 移動地圖到寶藏位置並縮放
+        const treasurePosition = {
+          lat: treasure.position.lat,
+          lng: treasure.position.lng
+        };
+        
+        // 使用 panTo 平滑移動到寶藏位置
+        map.panTo(treasurePosition);
+        
+        // 設置合適的縮放級別（如果當前縮放級別太小）
+        const currentZoom = map.getZoom();
+        if (currentZoom && currentZoom < 16) {
+          map.setZoom(16);
+        }
       }
     } else {
       setSelectedTreasure(null);
     }
-  }, [selectedTreasureId, markers, onCloseLocationInfo]);
+  }, [selectedTreasureId, markers, onCloseLocationInfo, map]);
 
   // 初始化 MarkerClusterer
   useEffect(() => {

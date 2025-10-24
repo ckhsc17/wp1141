@@ -365,9 +365,7 @@ export default function HomePage() {
   // 處理寶藏搜尋結果點擊
   const handleTreasureClick = useCallback((treasure: TreasureDTO) => {
     console.log('寶藏點擊:', treasure);
-    // 將地圖中心移動到該寶藏
-    setMapCenter({ lat: treasure.latitude, lng: treasure.longitude });
-    // 設置選中的寶藏，這會自動打開 InfoWindow
+    // 設置選中的寶藏，這會自動打開 InfoWindow 並移動地圖視圖
     setSelectedTreasureId(treasure.id);
     // 關閉搜尋側邊欄
     setSearchSidebarOpened(false);
