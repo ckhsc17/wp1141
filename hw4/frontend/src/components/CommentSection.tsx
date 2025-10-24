@@ -184,15 +184,24 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 backgroundColor: 'white'
               }}
               onMouseDown={(e) => {
-                if (editTextareaRef.current) {
-                  editTextareaRef.current.focus();
-                }
+                e.stopPropagation();
+                e.preventDefault();
+                // 延遲聚焦，確保瀏覽器有足夠時間處理事件
+                setTimeout(() => {
+                  if (editTextareaRef.current) {
+                    editTextareaRef.current.focus();
+                  }
+                }, 0);
               }}
               onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
               }}
               onKeyDown={(e) => {
+                e.stopPropagation();
               }}
               onFocus={(e) => {
+                e.stopPropagation();
               }}
             />
             <Group gap="xs">
@@ -405,19 +414,24 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                   backgroundColor: 'white'
                 }}
                 onMouseDown={(e) => {
-                  // 移除 e.stopPropagation()，讓事件冒泡到父級
-                  if (textareaRef.current) {
-                    textareaRef.current.focus();
-                  }
+                  e.stopPropagation();
+                  e.preventDefault();
+                  // 延遲聚焦，確保瀏覽器有足夠時間處理事件
+                  setTimeout(() => {
+                    if (textareaRef.current) {
+                      textareaRef.current.focus();
+                    }
+                  }, 0);
                 }}
                 onClick={(e) => {
-                  // 移除 e.stopPropagation()，讓事件冒泡到父級
+                  e.stopPropagation();
+                  e.preventDefault();
                 }}
                 onKeyDown={(e) => {
-                  // 移除 e.stopPropagation()，讓事件冒泡到父級
+                  e.stopPropagation();
                 }}
                 onFocus={(e) => {
-                  // 移除 e.stopPropagation()，讓事件冒泡到父級
+                  e.stopPropagation();
                 }}
               />
               <Group justify="flex-end">
