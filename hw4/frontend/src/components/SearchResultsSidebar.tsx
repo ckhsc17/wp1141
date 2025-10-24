@@ -86,11 +86,23 @@ export default function SearchResultsSidebar({
         }
       }}
     >
-      <Stack gap="md" style={{ paddingTop: '80px' }}>
+      <Stack gap="md" style={{ paddingTop: '120px' }}>
         {/* 搜尋查詢顯示 */}
         <Text size="sm" style={{ color: COLORS.TEXT.MUTED }}>
-          搜尋「{searchQuery}」的結果
+          {searchQuery.includes('我的內容') ? searchQuery : `搜尋「${searchQuery}」的結果`}
         </Text>
+        
+        {/* 統計信息 */}
+        {searchQuery.includes('我的內容') && searchResults.length > 0 && (
+          <Group gap="md">
+            <Badge size="sm" variant="light" color="blue">
+              寶藏: {searchResults.filter(r => 'isHidden' in r && r.isHidden !== null).length}
+            </Badge>
+            <Badge size="sm" variant="light" color="green">
+              碎片: {searchResults.filter(r => 'isPublic' in r && r.isPublic !== null).length}
+            </Badge>
+          </Group>
+        )}
 
         {/* 載入狀態 */}
         {isLoading && (
@@ -107,7 +119,7 @@ export default function SearchResultsSidebar({
         )}
 
         {!isLoading && searchResults.length > 0 && (
-          <ScrollArea.Autosize mah={600}>
+          <ScrollArea.Autosize mah={730}>
             <Stack gap="md">
               {searchResults.map((result, index) => {
                 if (isPlaceResult(result)) {

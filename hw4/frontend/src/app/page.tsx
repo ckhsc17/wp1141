@@ -14,7 +14,8 @@ import {
   Menu,
   Modal,
   TextInput,
-  Autocomplete
+  Autocomplete,
+  Select
 } from '@mantine/core';
 import {
   IconPlus,
@@ -43,7 +44,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTreasures } from '@/hooks/useTreasures';
 import { useLocationTracking } from '@/hooks/useLocationTracking';
 import { MapLocation, TreasureMarker, TreasureType, CreateTreasureRequest, TreasureDTO } from '@/types';
-import { COLORS } from '@/utils/constants';
+import { COLORS, TREASURE_TYPE_CONFIG } from '@/utils/constants';
 // 移除 placesService 引用，改用 Google Places API
 
 interface PlaceSearchResult {
@@ -85,6 +86,24 @@ export default function HomePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchHistory, setShowSearchHistory] = useState(false);
   const [searchSidebarOpened, setSearchSidebarOpened] = useState(false);
+  
+  // 地圖標記過濾狀態
+  const [filteredTreasures, setFilteredTreasures] = useState<TreasureDTO[] | null>(null);
+  
+  // 類型過濾狀態
+  const [selectedType, setSelectedType] = useState<TreasureType | null>(null);
+  
+  // 選中的寶藏狀態（用於程式化打開 InfoWindow）
+  const [selectedTreasureId, setSelectedTreasureId] = useState<string | null>(null);
+  
+  // 類型過濾選項
+  const typeFilterOptions = [
+    { value: '', label: '全部類型' },
+    ...Object.entries(TREASURE_TYPE_CONFIG).map(([type, config]) => ({
+      value: type,
+      label: `${config.icon} ${config.label}`
+    }))
+  ];
   
   // 預設地圖中心（台北101）
   const [mapCenter, setMapCenter] = useState<MapLocation>({
@@ -289,6 +308,10 @@ export default function HomePage() {
       const combinedResults = [...placesResults, ...treasureResults];
       setSearchResults(combinedResults);
       
+      // 清除地圖標記過濾和類型過濾（搜尋結果可能包含其他用戶的寶藏）
+      setFilteredTreasures(null);
+      setSelectedType(null);
+      
       // 打開搜尋結果側邊欄
       setSearchSidebarOpened(true);
       
@@ -307,6 +330,29 @@ export default function HomePage() {
     handleSearchSubmit(query);
   }, [handleSearchSubmit]);
 
+  // 處理類型過濾變化
+  const handleTypeFilterChange = useCallback((value: string | null) => {
+    const type = value as TreasureType | null;
+    setSelectedType(type);
+    
+    // 如果選擇了特定類型，過濾並顯示結果
+    if (type) {
+      const filteredByType = treasures.filter(treasure => treasure.type === type);
+      const typeConfig = TREASURE_TYPE_CONFIG[type];
+      
+      setSearchResults(filteredByType);
+      setFilteredTreasures(filteredByType);
+      setSearchSidebarOpened(true);
+      setSearchQuery(`${typeConfig.icon} ${typeConfig.label} (${filteredByType.length} 個)`);
+    } else {
+      // 清除過濾
+      setSearchResults([]);
+      setFilteredTreasures(null);
+      setSearchSidebarOpened(false);
+      setSearchQuery('');
+    }
+  }, [treasures]);
+
   // 處理地點搜尋結果點擊
   const handlePlaceClick = useCallback((place: PlaceSearchResult) => {
     console.log('地點點擊:', place);
@@ -321,9 +367,10 @@ export default function HomePage() {
     console.log('寶藏點擊:', treasure);
     // 將地圖中心移動到該寶藏
     setMapCenter({ lat: treasure.latitude, lng: treasure.longitude });
+    // 設置選中的寶藏，這會自動打開 InfoWindow
+    setSelectedTreasureId(treasure.id);
     // 關閉搜尋側邊欄
     setSearchSidebarOpened(false);
-    // TODO: 自動開啟該寶藏的 InfoWindow
   }, []);
 
   // 統一處理開啟創建表單的函數
@@ -336,8 +383,15 @@ export default function HomePage() {
     openTreasureForm();
   };
 
-  // 將寶藏資料轉換為地圖標記格式
-  const treasureMarkersForMap: TreasureMarker[] = treasures.map(treasure => ({
+  // 將寶藏資料轉換為地圖標記格式（使用過濾後的寶藏或全部寶藏）
+  let treasuresToShow = filteredTreasures || treasures;
+  
+  // 如果有類型過濾，進一步過濾寶藏
+  if (selectedType) {
+    treasuresToShow = treasuresToShow.filter(treasure => treasure.type === selectedType);
+  }
+  
+  const treasureMarkersForMap: TreasureMarker[] = treasuresToShow.map(treasure => ({
     id: treasure.id,
     position: { lat: treasure.latitude, lng: treasure.longitude },
     type: treasure.type,
@@ -347,6 +401,8 @@ export default function HomePage() {
 
   const handleMapClick = (location: MapLocation) => {
     console.log('地圖點擊:', location);
+    // 清除選中的寶藏
+    setSelectedTreasureId(null);
   };
 
   // 處理在指定位置新增寶藏
@@ -511,6 +567,8 @@ export default function HomePage() {
                   setSearchQuery('');
                   setShowSearchHistory(true);
                   setSearchResults([]);
+                  setFilteredTreasures(null); // 清除地圖標記過濾
+                  setSelectedType(null); // 清除類型過濾
                   setSearchSidebarOpened(false);
                 }}
               >
@@ -536,6 +594,39 @@ export default function HomePage() {
         >
           紀錄生活
         </Button>
+        
+        {/* 我的按鈕 - 過濾顯示自己上傳的寶藏/碎片 */}
+        <Button
+          leftSection={<IconUser size={16} />}
+          onClick={() => {
+            // 過濾出當前用戶上傳的寶藏/碎片
+            const myTreasures = treasures.filter(treasure => treasure.user.id === user?.id);
+            const treasureCount = myTreasures.filter(t => t.isHidden !== null).length;
+            const fragmentCount = myTreasures.filter(t => t.isPublic !== null).length;
+            
+            // 同時更新搜尋結果和地圖標記
+            setSearchResults(myTreasures);
+            setFilteredTreasures(myTreasures); // 更新地圖標記過濾
+            setSelectedType(null); // 清除類型過濾
+            setSearchSidebarOpened(true);
+            setSearchQuery(`我的內容 (寶藏: ${treasureCount}, 碎片: ${fragmentCount})`);
+          }}
+          size="sm"
+          variant="outline"
+        >
+          我的
+        </Button>
+        
+        {/* 類型過濾下拉選單 */}
+        <Select
+          placeholder="類型"
+          data={typeFilterOptions}
+          value={selectedType || ''}
+          onChange={handleTypeFilterChange}
+          size="sm"
+          style={{ width: 120 }}
+          clearable
+        />
         
         {/* 位置追蹤狀態和控制
         {isAuthenticated && (
@@ -596,6 +687,7 @@ export default function HomePage() {
           markers={treasureMarkersForMap}
           currentLocation={currentLocation}
           showCurrentLocation={!!currentLocation}
+          selectedTreasureId={selectedTreasureId}
           onMapClick={handleMapClick}
           onMarkerClick={handleMarkerClick}
           onLike={handleLike}

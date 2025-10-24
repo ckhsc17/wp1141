@@ -25,6 +25,7 @@ interface GoogleMapComponentProps {
   markers?: TreasureMarker[];
   currentLocation?: google.maps.LatLngLiteral | null;
   showCurrentLocation?: boolean;
+  selectedTreasureId?: string | null; // 新增：程式化設置選中的寶藏
   onMarkerClick?: (position: google.maps.LatLngLiteral) => void;
   onMapClick?: (position: google.maps.LatLngLiteral) => void;
   onLike?: (treasureId: string) => void;
@@ -195,6 +196,7 @@ const getTreasureIcon = (treasure: TreasureMarker) => {
 // 寶藏標記組件
 const TreasureMarkers: React.FC<{ 
   markers: TreasureMarker[];
+  selectedTreasureId?: string | null;
   onMarkerClick?: (position: google.maps.LatLngLiteral) => void;
   onLike?: (treasureId: string) => void;
   onFavorite?: (treasureId: string) => void;
@@ -204,6 +206,7 @@ const TreasureMarkers: React.FC<{
   onCloseLocationInfo?: () => void;
 }> = ({ 
   markers, 
+  selectedTreasureId,
   onMarkerClick,
   onLike,
   onFavorite,
@@ -226,6 +229,20 @@ const TreasureMarkers: React.FC<{
       }
     }
   }, [markers, selectedTreasure]);
+
+  // 當 selectedTreasureId 變化時，自動選中對應的寶藏
+  useEffect(() => {
+    if (selectedTreasureId) {
+      const treasure = markers.find(marker => marker.id === selectedTreasureId);
+      if (treasure) {
+        setSelectedTreasure(treasure);
+        // 關閉位置信息窗口
+        onCloseLocationInfo?.();
+      }
+    } else {
+      setSelectedTreasure(null);
+    }
+  }, [selectedTreasureId, markers, onCloseLocationInfo]);
 
   // 初始化 MarkerClusterer
   useEffect(() => {
@@ -355,6 +372,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   markers = [],
   currentLocation = null,
   showCurrentLocation = false,
+  selectedTreasureId = null,
   onMarkerClick,
   onMapClick,
   onLike,
@@ -477,6 +495,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
         >
           <TreasureMarkers 
             markers={markers} 
+            selectedTreasureId={selectedTreasureId}
             onMarkerClick={onMarkerClick}
             onLike={onLike}
             onFavorite={onFavorite}
