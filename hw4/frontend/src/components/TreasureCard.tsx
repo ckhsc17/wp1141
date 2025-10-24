@@ -8,6 +8,7 @@ import {
   ActionIcon,
   Avatar,
   Menu,
+  Tooltip,
   rem
 } from '@mantine/core';
 import {
@@ -19,8 +20,9 @@ import {
   IconDots,
   IconEdit,
   IconTrash,
-  IconExternalLink
+  IconExternalLink,
 } from '@tabler/icons-react';
+import { GiOpenChest, GiChest } from 'react-icons/gi';
 import { TreasureCardProps, TreasureDTO } from '@/types';
 import { TREASURE_TYPE_CONFIG, COLORS } from '@/utils/constants';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +34,7 @@ interface TreasureCardContentProps {
   onLike?: (treasureId: string) => void;
   onFavorite?: (treasureId: string) => void;
   onComment?: (treasureId: string) => void;
+  onCollect?: (treasureId: string) => void;
   onEdit?: (treasure: TreasureDTO) => void;
   onDelete?: (treasureId: string) => void;
   onCommentsCountChange?: (treasureId: string, newCount: number) => void;
@@ -45,6 +48,7 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   onLike,
   onFavorite,
   onComment,
+  onCollect,
   onEdit,
   onDelete,
   onCommentsCountChange,
@@ -69,6 +73,11 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
     // 切換留言區展開狀態
     setIsCommentsExpanded(!isCommentsExpanded);
     onComment?.(treasure.id);
+  };
+
+  const handleCollect = () => {
+    console.log("更新 handleCollect 狀態")
+    onCollect?.(treasure.id);
   };
 
   const handleEdit = () => {
@@ -282,6 +291,30 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
             <Text size="xs" style={{ color: COLORS.TEXT.SECONDARY }}>
               {treasure.commentsCount}
             </Text>
+
+            {/* 收集寶藏按鈕 - 只在寶藏可收集時顯示 */}
+            {treasure.isHidden !== null && treasure.isHidden !== undefined && (
+              <Tooltip label={treasure.isCollected ? '取消收集寶藏' : '收集寶藏'} withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                onClick={handleCollect}
+                size="sm"
+              >
+                {treasure.isCollected ? (
+                  <GiChest
+                    size={compact ? 14 : 16} 
+                    color="#f59e0b" // amber color for collected
+                  />
+                ) : (
+                  <GiOpenChest 
+                    size={compact ? 14 : 16} 
+                    color={COLORS.ICON.DEFAULT}
+                  />
+                )}
+              </ActionIcon>
+              </Tooltip>
+            )}
           </Group>
         </Group>
       </Stack>

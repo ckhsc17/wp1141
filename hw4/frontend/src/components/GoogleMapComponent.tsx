@@ -30,6 +30,7 @@ interface GoogleMapComponentProps {
   onLike?: (treasureId: string) => void;
   onFavorite?: (treasureId: string) => void;
   onComment?: (treasureId: string) => void;
+  onCollect?: (treasureId: string) => void;
   onCommentsCountChange?: (treasureId: string, newCount: number) => void;
   onAddTreasureAtLocation?: (position: google.maps.LatLngLiteral, address?: string, mode?: 'treasure' | 'life_moment') => void;
   height?: string;
@@ -44,8 +45,9 @@ const TreasureInfoWindow: React.FC<{
   onLike?: (treasureId: string) => void;
   onFavorite?: (treasureId: string) => void;
   onComment?: (treasureId: string) => void;
+  onCollect?: (treasureId: string) => void;
   onCommentsCountChange?: (treasureId: string, newCount: number) => void;
-}> = ({ treasure, position, onClose, onLike, onFavorite, onComment, onCommentsCountChange }) => {
+}> = ({ treasure, position, onClose, onLike, onFavorite, onComment, onCollect, onCommentsCountChange }) => {
   return (
     <AdvancedMarker
       position={position}
@@ -97,6 +99,7 @@ const TreasureInfoWindow: React.FC<{
             onLike={onLike}
             onFavorite={onFavorite}
             onComment={onComment}
+            onCollect={onCollect}
             onCommentsCountChange={onCommentsCountChange}
             showOwnerMenu={false} // InfoWindow 中不顯示編輯/刪除選單
             compact={true} // 使用緊湊模式
@@ -195,6 +198,7 @@ const TreasureMarkers: React.FC<{
   onLike?: (treasureId: string) => void;
   onFavorite?: (treasureId: string) => void;
   onComment?: (treasureId: string) => void;
+  onCollect?: (treasureId: string) => void;
   onCommentsCountChange?: (treasureId: string, newCount: number) => void;
   onCloseLocationInfo?: () => void;
 }> = ({ 
@@ -203,6 +207,7 @@ const TreasureMarkers: React.FC<{
   onLike,
   onFavorite,
   onComment,
+  onCollect,
   onCommentsCountChange,
   onCloseLocationInfo
 }) => {
@@ -334,6 +339,7 @@ const TreasureMarkers: React.FC<{
           onLike={onLike}
           onFavorite={onFavorite}
           onComment={onComment}
+          onCollect={onCollect}
           onCommentsCountChange={onCommentsCountChange}
         />
       )}
@@ -353,6 +359,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   onLike,
   onFavorite,
   onComment,
+  onCollect,
   onCommentsCountChange,
   onAddTreasureAtLocation,
   height = '400px',
@@ -462,6 +469,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
             onLike={onLike}
             onFavorite={onFavorite}
             onComment={onComment}
+            onCollect={onCollect}
             onCommentsCountChange={onCommentsCountChange}
             onCloseLocationInfo={handleCloseLocationInfo}
           />

@@ -30,6 +30,7 @@ export interface UseTreasuresResult {
   deleteTreasure: (id: string) => Promise<void>;
   likeTreasure: (id: string) => Promise<void>;
   favoriteTreasure: (id: string) => Promise<void>;
+  collectTreasure: (id: string) => Promise<void>;
 }
 
 export const useTreasures = (query?: TreasureQuery): UseTreasuresResult => {
@@ -209,6 +210,27 @@ export const useTreasures = (query?: TreasureQuery): UseTreasuresResult => {
     }
   }, []);
 
+  const collectTreasure = useCallback(async (id: string): Promise<void> => {
+    try {
+      console.log('收集寶藏:', id);
+      const result = await treasureService.collectTreasure(id);
+      console.log('收集結果:', result);
+      setTreasures(prev => {
+        const updated = prev.map(treasure => 
+          treasure.id === id 
+            ? { ...treasure, isCollected: result.isCollected }
+            : treasure
+        );
+        console.log('更新後的寶藏列表:', updated.find(t => t.id === id));
+        return updated;
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '收集失敗';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  }, []);
+
   // 初始載入 - 使用 stableQuery 來避免不必要的重新呼叫
   useEffect(() => {
     console.log('useTreasures useEffect 觸發:', stableQuery);
@@ -226,7 +248,8 @@ export const useTreasures = (query?: TreasureQuery): UseTreasuresResult => {
     updateTreasure,
     deleteTreasure,
     likeTreasure,
-    favoriteTreasure
+    favoriteTreasure,
+    collectTreasure
   };
 };
 

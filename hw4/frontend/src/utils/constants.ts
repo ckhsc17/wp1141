@@ -55,7 +55,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/treasures/${id}`,
     DELETE: (id: string) => `/api/treasures/${id}`,
     LIKE: (id: string) => `/api/treasures/${id}/like`,
-    FAVORITE: (id: string) => `/api/treasures/${id}/favorite`
+    FAVORITE: (id: string) => `/api/treasures/${id}/favorite`,
+    COLLECT: '/api/treasures/collect'
   },
   // 用戶相關
   USERS: {
@@ -63,6 +64,7 @@ export const API_ENDPOINTS = {
     STATS: '/api/users/stats',
     TREASURES: '/api/users/treasures',
     FAVORITES: '/api/users/favorites',
+    COLLECTS: '/api/users/collects',
     UPDATE_PROFILE: '/api/users/profile',
     UPLOAD_AVATAR: '/api/users/avatar',
     DELETE_ACCOUNT: '/api/users/profile',

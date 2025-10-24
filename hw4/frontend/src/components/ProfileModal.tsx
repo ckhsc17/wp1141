@@ -50,7 +50,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
   
   // UserTreasuresModal 狀態
   const [treasuresModalOpened, setTreasuresModalOpened] = useState(false);
-  const [treasuresModalMode, setTreasuresModalMode] = useState<'treasures' | 'favorites'>('treasures');
+  const [treasuresModalMode, setTreasuresModalMode] = useState<'treasures' | 'favorites' | 'fragments' | 'collects'>('treasures');
 
   // 獲取用戶統計資料
   const fetchUserStats = async () => {
@@ -70,8 +70,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
       setStats({
         uploadedTreasures: 12,
         favoritedTreasures: 25,
-        totalLikes: 148,
-        totalComments: 67
+        uploadedFragments: 8,
+        collectedTreasures: 15
       });
     } finally {
       setIsLoadingStats(false);
@@ -161,6 +161,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
             </Center>
           ) : stats ? (
             <Grid>
+              {/* 左上: 已上傳寶藏 */}
               <Grid.Col span={6}>
                 <Card 
                   withBorder 
@@ -182,6 +183,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                 </Card>
               </Grid.Col>
               
+              {/* 右上: 已收藏寶藏 */}
               <Grid.Col span={6}>
                 <Card 
                   withBorder 
@@ -203,11 +205,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                 </Card>
               </Grid.Col>
               
+              {/* 左下: 已上傳碎片 */}
               <Grid.Col span={6}>
-                <Card withBorder p="md" ta="center">
+                <Card 
+                  withBorder 
+                  p="md" 
+                  ta="center"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setTreasuresModalMode('fragments');
+                    setTreasuresModalOpened(true);
+                  }}
+                >
                   <FaPuzzlePiece size={32} color="#228be6" style={{ margin: '0 auto 8px' }} />
                   <Text size="xl" fw={700} c="blue">
-                    {stats.totalLikes}
+                    {stats.uploadedFragments}
                   </Text>
                   <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
                     已上傳碎片
@@ -215,11 +227,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
                 </Card>
               </Grid.Col>
               
+              {/* 右下: 已獲得寶藏 */}
               <Grid.Col span={6}>
-                <Card withBorder p="md" ta="center">
+                <Card 
+                  withBorder 
+                  p="md" 
+                  ta="center"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setTreasuresModalMode('collects');
+                    setTreasuresModalOpened(true);
+                  }}
+                >
                   <IconTrophy size={32} color="#f1c40f" style={{ margin: '0 auto 8px' }} />
                   <Text size="xl" fw={700} c="gold">
-                    {stats.totalComments}
+                    {stats.collectedTreasures}
                   </Text>
                   <Text size="sm" style={{ color: COLORS.TEXT.SECONDARY }}>
                     已獲得寶藏

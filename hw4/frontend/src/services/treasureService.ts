@@ -187,6 +187,16 @@ class TreasureService extends ApiService {
   async deleteComment(id: string): Promise<void> {
     await this.delete(API_ENDPOINTS.COMMENTS.DELETE(id));
   }
+
+  // 收集寶藏
+  async collectTreasure(treasureId: string): Promise<{ isCollected: boolean }> {
+    console.log("collect treasure called")
+    const response = await this.post<ApiResponse<{ isCollected: boolean }>>(
+      API_ENDPOINTS.TREASURES.COLLECT,
+      { treasureId }
+    );
+    return response.data;
+  }
 }
 
 export const treasureService = new TreasureService();

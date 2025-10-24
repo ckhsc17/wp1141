@@ -2,10 +2,10 @@ import { apiService } from './apiService';
 import { API_ENDPOINTS } from '@/utils/constants';
 
 export interface UserStats {
-  uploadedTreasures: number;
+  uploadedTreasures: number; // isHidden !== null
   favoritedTreasures: number;
-  totalLikes: number;
-  totalComments: number;
+  uploadedFragments: number; // isPublic !== null
+  collectedTreasures: number; // from /api/users/collects
 }
 
 export interface UserProfile {
@@ -35,6 +35,14 @@ export interface UserTreasure {
   isLiked: boolean;
   isFavorited: boolean;
   createdAt: string;
+}
+
+export interface UserCollect {
+  id: string;
+  treasureId: string;
+  createdAt: string;
+  isLocked: boolean;
+  treasure: UserTreasure;
 }
 
 class UserService {
@@ -154,6 +162,36 @@ class UserService {
     } catch (error) {
       console.error('上傳頭像失敗:', error);
       throw new Error('無法上傳頭像');
+    }
+  }
+
+  /**
+   * 獲取用戶的收集寶藏列表
+   */
+  async getUserCollects(page: number = 1, limit: number = 10): Promise<{
+    collects: UserCollect[];
+    total: number;
+    hasMore: boolean;
+  }> {
+    try {
+      const response = await apiService.get<{
+        success: boolean;
+        data: {
+          collects: UserCollect[];
+          total: number;
+          totalPages: number;
+        };
+      }>(`${API_ENDPOINTS.USERS.COLLECTS}?page=${page}&limit=${limit}`);
+
+      const { collects, total, totalPages } = response.data;
+      return {
+        collects,
+        total,
+        hasMore: page < totalPages
+      };
+    } catch (error) {
+      console.error('獲取收集寶藏失敗:', error);
+      throw new Error('無法獲取收集寶藏列表');
     }
   }
 

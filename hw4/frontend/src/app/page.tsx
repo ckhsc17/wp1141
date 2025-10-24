@@ -76,6 +76,7 @@ export default function HomePage() {
     createTreasure,
     likeTreasure,
     favoriteTreasure,
+    collectTreasure,
     deleteTreasure,
     refetch: refetchTreasures
   } = useTreasures({});
@@ -242,6 +243,17 @@ export default function HomePage() {
       await favoriteTreasure(treasureId);
     } catch (error) {
       console.error('收藏失敗:', error);
+    }
+  };
+
+  // 處理收集寶藏
+  const handleCollect = async (treasureId: string) => {
+    console.log("handleCollect called")
+    try {
+      console.log('收集寶藏:', treasureId);
+      await collectTreasure(treasureId);
+    } catch (error) {
+      console.error('收集寶藏失敗:', error);
     }
   };
 
@@ -416,6 +428,7 @@ export default function HomePage() {
           onLike={handleLike}
           onFavorite={handleFavorite}
           onComment={handleComment}
+          onCollect={handleCollect}
           onCommentsCountChange={handleCommentsCountChange}
           onAddTreasureAtLocation={handleAddTreasureAtLocation}
           height="calc(100vh - 60px)"

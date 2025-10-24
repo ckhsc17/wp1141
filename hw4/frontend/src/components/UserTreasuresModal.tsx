@@ -27,7 +27,7 @@ import {
   IconTrash,
   IconAlertCircle
 } from '@tabler/icons-react';
-import { userService, UserTreasure } from '@/services/userService';
+import { userService, UserTreasure, UserCollect } from '@/services/userService';
 import { treasureService } from '@/services/treasureService';
 import TreasureForm from './TreasureForm';
 import { CreateTreasureRequest, UpdateTreasureRequest } from '@/types';
@@ -36,11 +36,12 @@ import { COLORS } from '@/utils/constants';
 interface UserTreasuresModalProps {
   opened: boolean;
   onClose: () => void;
-  mode: 'treasures' | 'favorites';
+  mode: 'treasures' | 'favorites' | 'fragments' | 'collects';
 }
 
 const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose, mode }) => {
   const [treasures, setTreasures] = useState<UserTreasure[]>([]);
+  const [collects, setCollects] = useState<UserCollect[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,7 +53,15 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
   const [editingTreasure, setEditingTreasure] = useState<UserTreasure | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const title = mode === 'treasures' ? '我的寶藏' : '我的收藏';
+  const getTitle = () => {
+    switch (mode) {
+      case 'treasures': return '我的寶藏';
+      case 'favorites': return '我的收藏';
+      case 'fragments': return '我的碎片';
+      case 'collects': return '我的收集';
+      default: return '我的寶藏';
+    }
+  };
   const pageSize = 6;
 
   // 獲取寶藏資料
@@ -64,13 +73,26 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
       let result;
       if (mode === 'treasures') {
         result = await userService.getUserTreasures(page, pageSize);
-      } else {
+        setTreasures(result.treasures);
+      } else if (mode === 'favorites') {
         result = await userService.getUserFavorites(page, pageSize);
+        setTreasures(result.treasures);
+      } else if (mode === 'fragments') {
+        // For fragments, we'll filter treasures where isPublic !== null
+        result = await userService.getUserTreasures(page, pageSize);
+        setTreasures(result.treasures.filter(t => t.isPublic !== null && t.isPublic !== undefined));
+      } else if (mode === 'collects') {
+        const collectsResult = await userService.getUserCollects(page, pageSize);
+        setCollects(collectsResult.collects);
+        setTotal(collectsResult.total);
+        setTotalPages(Math.ceil(collectsResult.total / pageSize));
+        return; // Early return for collects mode
       }
 
-      setTreasures(result.treasures);
-      setTotal(result.total);
-      setTotalPages(Math.ceil(result.total / pageSize));
+      // if (mode !== 'collects' && result) {
+      //   setTotal(result.total);
+      //   setTotalPages(Math.ceil(result.total / pageSize));
+      // }
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入失敗');
       console.error('獲取寶藏失敗:', err);
@@ -221,7 +243,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
     <Modal
       opened={opened}
       onClose={onClose}
-      title={title}
+      title={getTitle()}
       style={{ color: COLORS.TEXT.SECONDARY }}
       size="xl"
       padding="lg"
@@ -256,7 +278,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
         )}
 
         {/* 寶藏列表 */}
-        {!isLoading && treasures.length > 0 && (
+        {!isLoading && mode !== 'collects' && treasures.length > 0 && (
           <>
             <Grid>
               {treasures.map((treasure) => (
@@ -380,18 +402,101 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
           </>
         )}
 
+        {/* 收集列表 */}
+        {!isLoading && mode === 'collects' && collects.length > 0 && (
+          <>
+            <Grid>
+              {collects.map((collect) => (
+                <Grid.Col span={{ base: 12, sm: 6 }} key={collect.id}>
+                  <Card shadow="sm" padding="md" radius="md" withBorder>
+                    <Stack gap="sm">
+                      {/* 標題和類型 */}
+                      <Group justify="space-between" align="flex-start">
+                        <Box style={{ flex: 1 }}>
+                          <Text fw={600} size="sm" lineClamp={2}>
+                            {collect.treasure.title}
+                          </Text>
+                          <Badge 
+                            color={getTypeColor(collect.treasure.type)} 
+                            size="xs" 
+                            mt={4}
+                          >
+                            {getTypeName(collect.treasure.type)}
+                          </Badge>
+                          {collect.isLocked && (
+                            <Badge color="red" size="xs" mt={4} ml={4}>
+                              🔒 鎖定
+                            </Badge>
+                          )}
+                        </Box>
+                      </Group>
+
+                      {/* 內容預覽 */}
+                      <Text size="xs" style={{ color: COLORS.TEXT.SECONDARY }} lineClamp={2}>
+                        {collect.treasure.content}
+                      </Text>
+
+                      {/* 統計資訊 */}
+                      <Group gap="md" mt="xs">
+                        <Group gap={4}>
+                          <IconHeart size={14} color="#e03131" />
+                          <Text size="xs" style={{ color: COLORS.TEXT.SECONDARY }}>
+                            {collect.treasure.likesCount}
+                          </Text>
+                        </Group>
+                        <Group gap={4}>
+                          <IconMessage size={14} color="#1971c2" />
+                          <Text size="xs" style={{ color: COLORS.TEXT.SECONDARY }}>
+                            {collect.treasure.commentsCount}
+                          </Text>
+                        </Group>
+                        <Group gap={4}>
+                          <IconMapPin size={14} color="#2f9e44" />
+                          <Text size="xs" style={{ color: COLORS.TEXT.SECONDARY }}>
+                            {collect.treasure.address || '未知位置'}
+                          </Text>
+                        </Group>
+                      </Group>
+
+                      {/* 收集時間 */}
+                      <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>
+                        收集於 {formatDate(collect.createdAt)}
+                      </Text>
+                    </Stack>
+                  </Card>
+                </Grid.Col>
+              ))}
+            </Grid>
+
+            {/* 分頁 */}
+            {totalPages > 1 && (
+              <Center mt="lg">
+                <Pagination
+                  value={currentPage}
+                  onChange={handlePageChange}
+                  total={totalPages}
+                  size="sm"
+                />
+              </Center>
+            )}
+          </>
+        )}
+
         {/* 空狀態 */}
-        {!isLoading && treasures.length === 0 && !error && (
+        {!isLoading && ((mode !== 'collects' && treasures.length === 0) || (mode === 'collects' && collects.length === 0)) && !error && (
           <Center py="xl">
             <Stack align="center" gap="md">
               <Text size="lg" style={{ color: COLORS.TEXT.SECONDARY }}>
-                {mode === 'treasures' ? '還沒有上傳任何寶藏' : '還沒有收藏任何寶藏'}
+                {mode === 'treasures' && '還沒有上傳任何寶藏'}
+                {mode === 'favorites' && '還沒有收藏任何寶藏'}
+                {mode === 'fragments' && '還沒有上傳任何碎片'}
+                {mode === 'collects' && '還沒有收集任何寶藏'}
               </Text>
               <Text size="sm" style={{ color: COLORS.TEXT.MUTED }}>
-                {mode === 'treasures' 
-                  ? '開始探索並上傳你的第一個寶藏吧！' 
-                  : '去探索其他人的寶藏並加入收藏吧！'
-                }
+                {mode === 'treasures' && '開始探索並上傳你的第一個寶藏吧！'}
+                {mode === 'favorites' && '去探索其他人的寶藏並加入收藏吧！'}
+                {mode === 'fragments' && '開始分享你的生活碎片吧！'}
+                {mode === 'collects' && '去尋找並收集隱藏的寶藏吧！'}
               </Text>
             </Stack>
           </Center>
