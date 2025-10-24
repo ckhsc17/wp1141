@@ -21,7 +21,14 @@ import {
   IconThumbUp,
   IconThumbUpFilled
 } from '@tabler/icons-react';
-import { PlaceSearchResult } from '@/services/placesService';
+// PlaceSearchResult 現在定義在 page.tsx 中
+interface PlaceSearchResult {
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  placeId: string;
+}
 import { TreasureDTO } from '@/types';
 import { COLORS } from '@/utils/constants';
 
@@ -62,34 +69,24 @@ export default function SearchResultsSidebar({
     <Drawer
       opened={opened}
       onClose={onClose}
-      title={
-        <Group justify="space-between" style={{ width: '100%' }}>
-          <Text fw={600} style={{ color: COLORS.TEXT.SECONDARY }}>
-            搜尋結果
-          </Text>
-          <ActionIcon
-            variant="subtle"
-            size="sm"
-            onClick={onClose}
-          >
-            <IconX size={16} />
-          </ActionIcon>
-        </Group>
-      }
+      withCloseButton={false}
       size="md"
       position="left"
       styles={{
         header: {
           borderBottom: '1px solid #e9ecef',
           paddingBottom: '1rem',
-          marginTop: '80px' // 為上方按鈕預留空間
+          marginTop: '80px !important' // 為上方按鈕預留空間，使用 !important 確保樣式生效
         },
         body: {
           paddingTop: '1rem'
+        },
+        content: {
+          marginTop: '80px !important' // 同時設定 content 的 marginTop
         }
       }}
     >
-      <Stack gap="md">
+      <Stack gap="md" style={{ paddingTop: '80px' }}>
         {/* 搜尋查詢顯示 */}
         <Text size="sm" style={{ color: COLORS.TEXT.MUTED }}>
           搜尋「{searchQuery}」的結果

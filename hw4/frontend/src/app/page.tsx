@@ -488,7 +488,7 @@ export default function HomePage() {
         {/* 搜尋欄 */}
         <TextInput
           placeholder="搜尋寶藏或地點..."
-          style={{ width: '60%', maxWidth: '500px' }}
+          style={{ width: 410 }}
           value={searchQuery}
           onChange={(event) => {
             console.log('TextInput onChange called');
@@ -510,6 +510,8 @@ export default function HomePage() {
                 onClick={() => {
                   setSearchQuery('');
                   setShowSearchHistory(true);
+                  setSearchResults([]);
+                  setSearchSidebarOpened(false);
                 }}
               >
                 <IconX size={14} />
@@ -535,7 +537,7 @@ export default function HomePage() {
           紀錄生活
         </Button>
         
-        {/* 位置追蹤狀態和控制 */}
+        {/* 位置追蹤狀態和控制
         {isAuthenticated && (
           <Group gap="xs">
             <ActionIcon
@@ -584,7 +586,7 @@ export default function HomePage() {
           title="寶藏管理"
         >
           <IconFilter size={18} />
-        </ActionIcon>
+        </ActionIcon> */}
       </Group>
 
       <AppShell.Main>
