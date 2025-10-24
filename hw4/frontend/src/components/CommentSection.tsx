@@ -187,7 +187,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
               }}
               onMouseDown={(e) => {
                 e.stopPropagation();
-                // 立即聚焦，不使用 setTimeout
                 if (editTextareaRef.current) {
                   editTextareaRef.current.focus();
                 }
@@ -196,7 +195,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 e.stopPropagation();
               }}
               onKeyDown={(e) => {
-                // 防止空白鍵和 Enter 鍵的事件冒泡
                 e.stopPropagation();
               }}
             />
@@ -282,11 +280,19 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   };
 
   // 當展開狀態變為 true 時自動載入留言
-  React.useEffect(() => {
-    if (isExpanded && !hasLoadedComments) {
+  useEffect(() => {
+    if (isExpanded && (!hasLoadedComments || comments.length === 0)) {
       loadComments();
     }
-  }, [isExpanded, hasLoadedComments]);
+  }, [isExpanded, hasLoadedComments, treasureId]);
+
+  // 當 treasureId 改變時，重置 loaded 狀態以強制重新載入留言
+  useEffect(() => {
+    setHasLoadedComments(false);
+    setComments([]); // 清空舊留言
+    setNewComment(''); // 清空輸入框
+    setError(null); // 清空錯誤信息
+  }, [treasureId]);
 
   // 防止焦點丟失的 useEffect - 移除全局監聽器，改用更精確的事件處理
 
@@ -358,140 +364,140 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   };
 
   return (
-    <div onClick={(e) => e.stopPropagation()}>
-      <Stack gap="xs">
-        {/* <Divider /> */}
+    <Stack gap="xs">
+      {/* <Divider /> */}
 
-        {/* 展開的留言區域 - 直接顯示，不需要按鈕控制 */}
-        <Collapse in={isExpanded}>
-        <Stack gap="md">
-          {/* 新增留言 */}
-          {isAuthenticated && (
-            <Group align="flex-start" gap="sm">
-              <Avatar
-                src={user?.avatar}
-                alt={user?.name}
-                size={compact ? "sm" : "md"}
-                radius="xl"
-              >
-                {user?.name?.charAt(0).toUpperCase()}
-              </Avatar>
-              
-              <Stack gap="xs" style={{ flex: 1 }}>
-                <textarea
-                  ref={textareaRef}
-                  placeholder="寫下你的留言..."
-                  value={newComment}
-                  onChange={(e) => {
-                    setNewComment(e.target.value);
-                  }}
-                  rows={2}
-                  style={{ 
-                    width: '100%',
-                    minHeight: '60px',
-                    padding: '8px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    fontSize: compact ? '12px' : '14px',
-                    fontFamily: 'inherit',
-                    resize: 'vertical',
-                    position: 'relative',
-                    zIndex: 10,
-                    pointerEvents: 'auto',
-                    userSelect: 'text',
-                    outline: 'none',
-                    backgroundColor: 'white'
-                  }}
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  onKeyDown={(e) => {
-                    // 防止空白鍵和 Enter 鍵的事件冒泡
-                    e.stopPropagation();
-                  }}
-                />
-                <Group justify="flex-end">
-                  <Button
-                    size="xs"
-                    leftSection={<IconSend size={12} />}
-                    onClick={handleSubmitComment}
-                    loading={isSubmitting}
-                    disabled={!newComment.trim()}
+      {/* 展開的留言區域 - 直接顯示，不需要按鈕控制 */}
+      <Collapse in={isExpanded}>
+      <Stack gap="md">
+        {/* 新增留言 */}
+        {isAuthenticated && (
+          <Group align="flex-start" gap="sm">
+            <Avatar
+              src={user?.avatar}
+              alt={user?.name}
+              size={compact ? "sm" : "md"}
+              radius="xl"
+            >
+              {user?.name?.charAt(0).toUpperCase()}
+            </Avatar>
+            
+            <Stack gap="xs" style={{ flex: 1 }}>
+              <textarea
+                ref={textareaRef}
+                placeholder="寫下你的留言..."
+                value={newComment}
+                onChange={(e) => {
+                  setNewComment(e.target.value);
+                }}
+                rows={2}
+                style={{ 
+                  width: '100%',
+                  minHeight: '60px',
+                  padding: '8px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: compact ? '12px' : '14px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  position: 'relative',
+                  zIndex: 10,
+                  pointerEvents: 'auto',
+                  userSelect: 'text',
+                  outline: 'none',
+                  backgroundColor: 'white'
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  if (textareaRef.current) {
+                    textareaRef.current.focus();
+                  }
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                }}
+              />
+              <Group justify="flex-end">
+                <Button
+                  size="xs"
+                  leftSection={<IconSend size={12} />}
+                  onClick={handleSubmitComment}
+                  loading={isSubmitting}
+                  disabled={!newComment.trim()}
+                >
+                  發送
+                </Button>
+              </Group>
+            </Stack>
+          </Group>
+        )}
+
+        {!isAuthenticated && (
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            color="blue"
+            variant="light"
+          >
+            請登入後才能留言
+          </Alert>
+        )}
+
+        {/* 錯誤提示 */}
+        {error && (
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            color="red"
+            variant="light"
+            onClose={() => setError(null)}
+            withCloseButton
+          >
+            {error}
+          </Alert>
+        )}
+
+        {/* 留言列表 */}
+        {isLoading ? (
+          <Group justify="center" p="md">
+            <Loader size="sm" />
+            <Text size="sm" style={{ color: COLORS.TEXT.MUTED }}>
+              載入留言中...
+            </Text>
+          </Group>
+        ) : (
+          <ScrollArea.Autosize mah={compact ? 200 : 300}>
+            <Stack gap="md">
+              {comments && comments.length > 0 ? (
+                comments.map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    onEdit={handleEditComment}
+                    onDelete={handleDeleteComment}
+                    currentUserId={user?.id}
+                    compact={compact}
+                  />
+                ))
+              ) : (
+                hasLoadedComments && (
+                  <Text 
+                    size="sm" 
+                    ta="center" 
+                    style={{ color: COLORS.TEXT.MUTED }}
+                    p="md"
                   >
-                    發送
-                  </Button>
-                </Group>
-              </Stack>
-            </Group>
-          )}
-
-          {!isAuthenticated && (
-            <Alert
-              icon={<IconAlertCircle size={16} />}
-              color="blue"
-              variant="light"
-            >
-              請登入後才能留言
-            </Alert>
-          )}
-
-          {/* 錯誤提示 */}
-          {error && (
-            <Alert
-              icon={<IconAlertCircle size={16} />}
-              color="red"
-              variant="light"
-              onClose={() => setError(null)}
-              withCloseButton
-            >
-              {error}
-            </Alert>
-          )}
-
-          {/* 留言列表 */}
-          {isLoading ? (
-            <Group justify="center" p="md">
-              <Loader size="sm" />
-              <Text size="sm" style={{ color: COLORS.TEXT.MUTED }}>
-                載入留言中...
-              </Text>
-            </Group>
-          ) : (
-            <ScrollArea.Autosize mah={compact ? 200 : 300}>
-              <Stack gap="md">
-                {comments && comments.length > 0 ? (
-                  comments.map((comment) => (
-                    <CommentItem
-                      key={comment.id}
-                      comment={comment}
-                      onEdit={handleEditComment}
-                      onDelete={handleDeleteComment}
-                      currentUserId={user?.id}
-                      compact={compact}
-                    />
-                  ))
-                ) : (
-                  hasLoadedComments && (
-                    <Text 
-                      size="sm" 
-                      ta="center" 
-                      style={{ color: COLORS.TEXT.MUTED }}
-                      p="md"
-                    >
-                      還沒有留言，成為第一個留言的人吧！
-                    </Text>
-                  )
-                )}
-              </Stack>
-            </ScrollArea.Autosize>
-          )}
-        </Stack>
-      </Collapse>
+                    還沒有留言，成為第一個留言的人吧！
+                  </Text>
+                )
+              )}
+            </Stack>
+          </ScrollArea.Autosize>
+        )}
+      </Stack>
+    </Collapse>
     </Stack>
-    </div>
   );
 };
 

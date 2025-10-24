@@ -35,9 +35,9 @@ const DEFAULT_OPTIONS: Required<LocationTrackingOptions> = {
   minDistanceThreshold: 50, // 50米
   enablePeriodicUpdate: true,
   enableDistanceTracking: true,
-  enableHighAccuracy: true,
-  timeout: 10000,
-  maximumAge: 5000
+  enableHighAccuracy: false, // 改為 false 以提高成功率
+  timeout: 20000, // 增加到 20 秒
+  maximumAge: 60000 // 增加到 60 秒，允許使用較舊的位置資料
 };
 
 // 計算兩點間距離（米）
@@ -122,15 +122,16 @@ export const useLocationTracking = (
               errorMessage = '位置資訊不可用';
               break;
             case error.TIMEOUT:
-              errorMessage = '位置請求超時';
+              errorMessage = '位置請求超時，請檢查 GPS 信號';
               break;
             default:
               errorMessage = '獲取位置時發生未知錯誤';
               break;
           }
           
-          console.error('獲取位置失敗:', errorMessage);
-          setError(errorMessage);
+          console.warn('獲取位置失敗:', errorMessage, '- 將使用上次已知位置');
+          // 不設置 error 狀態，避免一直顯示錯誤訊息
+          // setError(errorMessage);
           setLoading(false);
           resolve(null);
         },
@@ -253,7 +254,8 @@ export const useLocationTracking = (
           }
         },
         (error) => {
-          console.error('位置監聽錯誤:', error);
+          console.warn('位置監聽錯誤:', error.message, '- 將繼續使用定時更新');
+          // 不設置 error 狀態，避免影響用戶體驗
         },
         {
           enableHighAccuracy: opts.enableHighAccuracy,

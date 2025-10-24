@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Text,
@@ -60,6 +60,11 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   const typeConfig = TREASURE_TYPE_CONFIG[treasure.type];
   const isOwner = user?.id === treasure.user.id;
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
+
+  // 當 treasure.id 改變時，重置留言區展開狀態
+  useEffect(() => {
+    setIsCommentsExpanded(false);
+  }, [treasure.id]);
 
   const handleLike = () => {
     onLike?.(treasure.id);

@@ -83,13 +83,13 @@ export default function HomePage() {
 
   // 位置追蹤設定狀態
   const [locationTrackingOptions, setLocationTrackingOptions] = useState({
-    updateInterval: 30000, // 30秒定時更新
-    minDistanceThreshold: 100, // 移動100米觸發更新
+    updateInterval: 60000, // 60秒定時更新（減少頻率）
+    minDistanceThreshold: 200, // 移動200米觸發更新（增加閾值）
     enablePeriodicUpdate: true,
     enableDistanceTracking: true,
-    enableHighAccuracy: true,
-    timeout: 15000,
-    maximumAge: 10000
+    enableHighAccuracy: false, // 關閉高精度以提高成功率
+    timeout: 25000, // 增加超時時間
+    maximumAge: 120000 // 允許使用2分鐘內的位置資料
   });
 
   // 位置更新回調（帶防抖優化）
@@ -315,7 +315,7 @@ export default function HomePage() {
                 onClick={openTreasureForm}
                 size="sm"
               >
-                新增寶藏
+                埋藏寶藏
               </Button>
               
               {/* 位置追蹤狀態和控制 */}
