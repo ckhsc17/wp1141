@@ -40,7 +40,7 @@ steps:
       - '--concurrency'
       - '80'
       - '--port'
-      - '8080'
+      - '8000'
 
 # Substitutions for dynamic values
 substitutions:

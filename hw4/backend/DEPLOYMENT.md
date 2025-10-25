@@ -65,7 +65,7 @@ gcloud sql databases create treasure_map \
 ### 2.3 建立資料庫使用者
 
 ```bash
-gcloud sql users create db_user \
+gcloud sql users create treasure_user \
   --instance=treasure-map-db \
   --password=DB_USER_PASSWORD
 ```
