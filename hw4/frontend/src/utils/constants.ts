@@ -31,6 +31,12 @@ export const TREASURE_TYPE_CONFIG: TreasureTypeConfig = {
     icon: '📍',
     color: '#FFCC28',
     description: '記錄當下此刻的美好'
+  },
+  [TreasureType.IMAGE]: {
+    label: '圖片',
+    icon: '🖼️',
+    color: '#9B59B6',
+    description: '分享圖片和照片'
   }
 };
 
@@ -70,6 +76,11 @@ export const API_ENDPOINTS = {
     DELETE_ACCOUNT: '/api/users/profile',
     PUBLIC_PROFILE: (userId: string) => `/api/users/${userId}/profile`,
     PUBLIC_TREASURES: (userId: string) => `/api/users/${userId}/treasures`
+  },
+  // 媒體上傳相關
+  MEDIA: {
+    UPLOAD_IMAGE: '/api/media/upload/image',
+    UPLOAD_AUDIO: '/api/media/upload/audio'
   },
   // 留言相關
   COMMENTS: {
@@ -196,6 +207,15 @@ export const MAP_CONFIG = {
         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
           <circle cx="16" cy="16" r="14" fill="${TREASURE_TYPE_CONFIG[TreasureType.LIVE_MOMENT].color}" stroke="white" stroke-width="2"/>
           <text x="16" y="22" text-anchor="middle" font-size="16">${TREASURE_TYPE_CONFIG[TreasureType.LIVE_MOMENT].icon}</text>
+        </svg>
+      `),
+      scaledSize: { width: 32, height: 32 }
+    },
+    [TreasureType.IMAGE]: {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="14" fill="${TREASURE_TYPE_CONFIG[TreasureType.IMAGE].color}" stroke="white" stroke-width="2"/>
+          <text x="16" y="22" text-anchor="middle" font-size="16">${TREASURE_TYPE_CONFIG[TreasureType.IMAGE].icon}</text>
         </svg>
       `),
       scaledSize: { width: 32, height: 32 }

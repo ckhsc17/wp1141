@@ -106,6 +106,7 @@ class TreasureService extends ApiService {
         isPublic: data.isPublic,
         isHidden: data.isHidden,
         linkUrl: data.linkUrl || null,
+        mediaUrl: data.mediaUrl || null,
         isLiveLocation: data.isLiveLocation || false,
         tags: data.tags
       };

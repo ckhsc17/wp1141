@@ -5,7 +5,8 @@ export enum TreasureType {
   AUDIO = 'audio', 
   TEXT = 'text',
   LINK = 'link',
-  LIVE_MOMENT = 'live_moment'
+  LIVE_MOMENT = 'live_moment',
+  IMAGE = 'image'
 }
 
 export interface User {
@@ -117,6 +118,7 @@ export interface CreateTreasureRequest {
   isPublic?: boolean;
   isHidden?: boolean;
   mediaFile?: File;
+  mediaUrl?: string;
   linkUrl?: string;
   tags: string[];
   isLiveLocation?: boolean;

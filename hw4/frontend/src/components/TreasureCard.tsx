@@ -9,7 +9,11 @@ import {
   Avatar,
   Menu,
   Tooltip,
-  rem
+  rem,
+  Image,
+  Modal,
+  Flex,
+  Box
 } from '@mantine/core';
 import {
   IconHeart,
@@ -21,6 +25,9 @@ import {
   IconEdit,
   IconTrash,
   IconExternalLink,
+  IconMusic,
+  IconPhoto,
+  IconX
 } from '@tabler/icons-react';
 import { GiOpenChest, GiChest } from 'react-icons/gi';
 import { TreasureCardProps, TreasureDTO } from '@/types';
@@ -60,6 +67,8 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
   const typeConfig = TREASURE_TYPE_CONFIG[treasure.type];
   const isOwner = user?.id === treasure.user.id;
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
+  const [imageModalOpened, setImageModalOpened] = useState(false);
+  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
 
   // 當 treasure.id 改變時，重置留言區展開狀態
   useEffect(() => {
@@ -182,22 +191,41 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
 
         {treasure.mediaUrl && (
           <div>
-            {treasure.type === 'music' || treasure.type === 'audio' ? (
-              <audio controls style={{ width: '100%', height: compact ? '28px' : 'auto' }}>
-                <source src={treasure.mediaUrl} type="audio/mpeg" />
-                您的瀏覽器不支援音頻播放
-              </audio>
+            {(treasure.type === 'music' || treasure.type === 'audio') ? (
+              <Group gap="xs" align="center">
+                <IconMusic size={16} color={COLORS.TEXT.SECONDARY} />
+                <audio 
+                  controls 
+                  style={{ width: '100%', height: compact ? '28px' : 'auto' }}
+                  ref={setAudioRef}
+                >
+                  <source src={treasure.mediaUrl} type="audio/mpeg" />
+                  <source src={treasure.mediaUrl} type="audio/wav" />
+                  您的瀏覽器不支援音頻播放
+                </audio>
+              </Group>
+            ) : (treasure.type === 'image' || treasure.type === 'live_moment') ? (
+              <Box>
+                <Image
+                  src={treasure.mediaUrl}
+                  alt={treasure.title}
+                  height={compact ? 120 : 200}
+                  fit="cover"
+                  radius="sm"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setImageModalOpened(true)}
+                />
+                <Group gap="xs" mt="xs" align="center">
+                  <IconPhoto size={14} color={COLORS.TEXT.SECONDARY} />
+                  <Text size="xs" c="dimmed">
+                    點擊放大
+                  </Text>
+                </Group>
+              </Box>
             ) : (
-              <img 
-                src={treasure.mediaUrl} 
-                alt={treasure.title}
-                style={{ 
-                  maxWidth: '100%', 
-                  maxHeight: compact ? '100px' : 'auto',
-                  borderRadius: '4px',
-                  objectFit: 'cover'
-                }}
-              />
+              <Text size="sm" c="dimmed">
+                媒體檔案
+              </Text>
             )}
           </div>
         )}
@@ -335,6 +363,29 @@ export const TreasureCardContent: React.FC<TreasureCardContentProps> = ({
           onToggleExpanded={() => setIsCommentsExpanded(!isCommentsExpanded)}
         />
       )}
+
+      {/* 圖片放大 Modal */}
+      <Modal
+        opened={imageModalOpened}
+        onClose={() => setImageModalOpened(false)}
+        title={treasure.title}
+        size="lg"
+        centered
+        styles={{
+          header: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }
+        }}
+      >
+        <Image
+          src={treasure.mediaUrl!}
+          alt={treasure.title}
+          fit="contain"
+          style={{ maxHeight: '70vh' }}
+        />
+      </Modal>
     </>
   );
 };

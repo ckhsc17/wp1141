@@ -14,14 +14,19 @@ import {
   rem,
   ActionIcon,
   Tooltip,
-  Center
+  Center,
+  Image,
+  Text,
+  Progress,
+  Card
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconUpload, IconInfoCircle, IconWorld, IconLock } from '@tabler/icons-react';
+import { IconUpload, IconInfoCircle, IconWorld, IconLock, IconX, IconMusic } from '@tabler/icons-react';
 import { GiOpenChest, GiChest } from 'react-icons/gi';
 import { TreasureFormProps, TreasureType } from '@/types';
 import { TREASURE_TYPE_CONFIG, VALIDATION_RULES, APP_CONFIG } from '@/utils/constants';
 import { COLORS } from '@/utils/constants';
+import { mediaService, MediaUploadResult } from '@/services/mediaService';
 
 const TreasureForm: React.FC<TreasureFormProps> = ({
   mode,
@@ -43,6 +48,13 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
     creationMode === 'treasure' ? false : true // treasure: false=hidden, life_moment: true=public
   );
 
+  // 媒體上傳相關狀態
+  const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string | null>(initialData?.mediaUrl || null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadedMediaInfo, setUploadedMediaInfo] = useState<MediaUploadResult | null>(null);
+
   const form = useForm({
     initialValues: {
       title: initialData?.title || '',
@@ -55,6 +67,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
       isPublic: initialData?.isPublic,
       isHidden: initialData?.isHidden,
       mediaFile: null as File | null,
+      mediaUrl: initialData?.mediaUrl || '',
       linkUrl: initialData?.linkUrl || '',
       tags: initialData?.tags || [],
       isLiveLocation: initialData?.isLiveLocation || false
@@ -120,6 +133,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
         isPublic: initialData.isPublic,
         isHidden: initialData.isHidden,
         mediaFile: null,
+        mediaUrl: initialData.mediaUrl || '',
         linkUrl: initialData.linkUrl || '',
         tags: initialData.tags || [],
         isLiveLocation: initialData.isLiveLocation || false
@@ -143,15 +157,112 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
     }
   };
 
+  // 處理圖片上傳
+  const handleImageUpload = async (file: File | null) => {
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadProgress(0);
+
+    try {
+      // 模擬上傳進度
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
+
+      const result = await mediaService.uploadImage(file);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
+      setUploadedMediaUrl(result.url);
+      setUploadedMediaInfo(result);
+      form.setFieldValue('mediaUrl', result.url);
+      
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 500);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : '圖片上傳失敗');
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // 處理音檔上傳
+  const handleAudioUpload = async (file: File | null) => {
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadProgress(0);
+
+    try {
+      // 模擬上傳進度
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
+
+      const result = await mediaService.uploadAudio(file);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
+      setUploadedMediaUrl(result.url);
+      setUploadedMediaInfo(result);
+      form.setFieldValue('mediaUrl', result.url);
+      
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 500);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : '音檔上傳失敗');
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // 清除已上傳的媒體
+  const clearUploadedMedia = () => {
+    setUploadedMediaUrl(null);
+    setUploadedMediaInfo(null);
+    setUploadError(null);
+    form.setFieldValue('mediaUrl', '');
+  };
+
 
   const handleSubmit = (values: typeof form.values) => {
+    // Debug: Log media URL
+    console.log('=== TreasureForm handleSubmit Debug ===');
+    console.log('uploadedMediaUrl:', uploadedMediaUrl);
+    console.log('form.values.mediaUrl:', values.mediaUrl);
+    console.log('=====================================');
+
     // Apply mode-based visibility logic
     const submitData = {
       ...values,
       type: selectedType!,
       tags: Array.isArray(values.tags) ? values.tags : [],
-      mediaFile: values.mediaFile || undefined
+      mediaFile: values.mediaFile || undefined,
+      mediaUrl: uploadedMediaUrl || undefined
     };
+
+    console.log('submitData:', JSON.stringify(submitData, null, 2));
 
     if (creationMode === 'treasure') {
       // For treasure mode: set isHidden based on toggle, keep isPublic null
@@ -355,6 +466,192 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
             searchable
             {...form.getInputProps('tags')}
           />
+
+          {/* 媒體上傳區域 */}
+          {selectedType === TreasureType.IMAGE && (
+            <Stack gap="sm">
+              <Text size="sm" fw={500} style={{ color: COLORS.TEXT.SECONDARY }}>
+                上傳圖片
+              </Text>
+              
+              {!uploadedMediaUrl ? (
+                <FileInput
+                  placeholder="選擇圖片檔案"
+                  accept=".jpg,.jpeg,.png"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                  leftSection={<IconUpload size={16} />}
+                />
+              ) : (
+                <Card withBorder p="sm">
+                  <Group justify="space-between">
+                    <Group gap="sm">
+                      <Image
+                        src={uploadedMediaUrl}
+                        alt="上傳的圖片"
+                        width={60}
+                        height={60}
+                        fit="cover"
+                        radius="sm"
+                      />
+                      <div>
+                        <Text size="sm" fw={500}>
+                          圖片已上傳
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {uploadedMediaInfo && `${uploadedMediaInfo.width}×${uploadedMediaInfo.height}`}
+                        </Text>
+                      </div>
+                    </Group>
+                    <ActionIcon
+                      variant="subtle"
+                      color="red"
+                      onClick={clearUploadedMedia}
+                      disabled={isUploading}
+                    >
+                      <IconX size={16} />
+                    </ActionIcon>
+                  </Group>
+                </Card>
+              )}
+
+              {isUploading && (
+                <Stack gap="xs">
+                  <Progress value={uploadProgress} size="sm" />
+                  <Text size="xs" c="dimmed" ta="center">
+                    上傳中... {uploadProgress}%
+                  </Text>
+                </Stack>
+              )}
+
+              {uploadError && (
+                <Alert color="red" variant="light">
+                  {uploadError}
+                </Alert>
+              )}
+            </Stack>
+          )}
+
+          {selectedType === TreasureType.AUDIO && (
+            <Stack gap="sm">
+              <Text size="sm" fw={500} style={{ color: COLORS.TEXT.SECONDARY }}>
+                上傳音檔
+              </Text>
+              
+              {!uploadedMediaUrl ? (
+                <FileInput
+                  placeholder="選擇音檔檔案"
+                  accept=".mp3,.wav"
+                  onChange={handleAudioUpload}
+                  disabled={isUploading}
+                  leftSection={<IconMusic size={16} />}
+                />
+              ) : (
+                <Card withBorder p="sm">
+                  <Group justify="space-between">
+                    <Group gap="sm">
+                      <IconMusic size={24} color={COLORS.TEXT.SECONDARY} />
+                      <div>
+                        <Text size="sm" fw={500}>
+                          音檔已上傳
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {uploadedMediaInfo && mediaService.formatFileSize(uploadedMediaInfo.bytes)}
+                        </Text>
+                      </div>
+                    </Group>
+                    <ActionIcon
+                      variant="subtle"
+                      color="red"
+                      onClick={clearUploadedMedia}
+                      disabled={isUploading}
+                    >
+                      <IconX size={16} />
+                    </ActionIcon>
+                  </Group>
+                </Card>
+              )}
+
+              {isUploading && (
+                <Stack gap="xs">
+                  <Progress value={uploadProgress} size="sm" />
+                  <Text size="xs" c="dimmed" ta="center">
+                    上傳中... {uploadProgress}%
+                  </Text>
+                </Stack>
+              )}
+
+              {uploadError && (
+                <Alert color="red" variant="light">
+                  {uploadError}
+                </Alert>
+              )}
+            </Stack>
+          )}
+
+          {selectedType === TreasureType.LIVE_MOMENT && (
+            <Stack gap="sm">
+              <Text size="sm" fw={500} style={{ color: COLORS.TEXT.SECONDARY }}>
+                上傳圖片（可選）
+              </Text>
+              
+              {!uploadedMediaUrl ? (
+                <FileInput
+                  placeholder="選擇圖片檔案（可選）"
+                  accept=".jpg,.jpeg,.png"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                  leftSection={<IconUpload size={16} />}
+                />
+              ) : (
+                <Card withBorder p="sm">
+                  <Group justify="space-between">
+                    <Group gap="sm">
+                      <Image
+                        src={uploadedMediaUrl}
+                        alt="上傳的圖片"
+                        width={60}
+                        height={60}
+                        fit="cover"
+                        radius="sm"
+                      />
+                      <div>
+                        <Text size="sm" fw={500}>
+                          圖片已上傳
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {uploadedMediaInfo && `${uploadedMediaInfo.width}×${uploadedMediaInfo.height}`}
+                        </Text>
+                      </div>
+                    </Group>
+                    <ActionIcon
+                      variant="subtle"
+                      color="red"
+                      onClick={clearUploadedMedia}
+                      disabled={isUploading}
+                    >
+                      <IconX size={16} />
+                    </ActionIcon>
+                  </Group>
+                </Card>
+              )}
+
+              {isUploading && (
+                <Stack gap="xs">
+                  <Progress value={uploadProgress} size="sm" />
+                  <Text size="xs" c="dimmed" ta="center">
+                    上傳中... {uploadProgress}%
+                  </Text>
+                </Stack>
+              )}
+
+              {uploadError && (
+                <Alert color="red" variant="light">
+                  {uploadError}
+                </Alert>
+              )}
+            </Stack>
+          )}
 
           <TextInput
             label="地址"
