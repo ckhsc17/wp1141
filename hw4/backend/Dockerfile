@@ -17,13 +17,10 @@ WORKDIR /app
 RUN apk add --no-cache dumb-init
 RUN addgroup -S nodejs && adduser -S nodejs -G nodejs
 
-# 帶入所有建置產物與相依
-COPY --from=builder /app /app
-
-# 直接複製產生物到 dist，確保 require('../generated/prisma') 能找到
-RUN mkdir -p /app/dist \
- && cp -a /app/src/generated /app/dist/generated \
- && chown -R nodejs:nodejs /app
+# Copy production dependencies and built files
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
 
 USER nodejs
 EXPOSE 8080
