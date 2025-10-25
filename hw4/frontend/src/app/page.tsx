@@ -371,15 +371,53 @@ export default function HomePage() {
     setSearchSidebarOpened(false);
   }, []);
 
+  // 獲取地址的函數
+  const getAddressFromCoordinates = useCallback(async (lat: number, lng: number): Promise<string> => {
+    try {
+      if (!window.google?.maps?.Geocoder) {
+        return '當前位置';
+      }
+
+      const geocoder = new window.google.maps.Geocoder();
+      const latlng = new window.google.maps.LatLng(lat, lng);
+      
+      return new Promise((resolve) => {
+        geocoder.geocode({ location: latlng }, (results, status) => {
+          if (status === 'OK' && results && results[0]) {
+            resolve(results[0].formatted_address);
+          } else {
+            resolve('當前位置');
+          }
+        });
+      });
+    } catch (error) {
+      console.warn('獲取地址失敗:', error);
+      return '當前位置';
+    }
+  }, []);
+
   // 統一處理開啟創建表單的函數
-  const handleOpenCreateForm = (
+  const handleOpenCreateForm = useCallback(async (
     mode: 'treasure' | 'life_moment',
     initialPosData?: { latitude: number; longitude: number; address?: string } // 將 address 改為可選
   ) => {
     setTreasureCreationMode(mode);
-    setTreasureFormInitialData(initialPosData);
+    
+    // 如果沒有提供位置資料，使用當前位置
+    if (!initialPosData && currentLocation) {
+      const address = await getAddressFromCoordinates(currentLocation.lat, currentLocation.lng);
+      const posData = {
+        latitude: currentLocation.lat,
+        longitude: currentLocation.lng,
+        address: address
+      };
+      setTreasureFormInitialData(posData);
+    } else {
+      setTreasureFormInitialData(initialPosData);
+    }
+    
     openTreasureForm();
-  };
+  }, [currentLocation, getAddressFromCoordinates, openTreasureForm]);
 
   // 將寶藏資料轉換為地圖標記格式（使用過濾後的寶藏或全部寶藏）
   let treasuresToShow = filteredTreasures || treasures;
@@ -693,7 +731,7 @@ export default function HomePage() {
           onComment={handleComment}
           onCollect={handleCollect}
           onCommentsCountChange={handleCommentsCountChange}
-          onAddTreasureAtLocation={(position, address) => handleOpenCreateForm('treasure', { latitude: position.lat, longitude: position.lng, address })}
+          onAddTreasureAtLocation={(position, address, mode) => handleOpenCreateForm(mode || 'treasure', { latitude: position.lat, longitude: position.lng, address })}
           height="100vh" // 調整為全高
           width="100%"
         />
