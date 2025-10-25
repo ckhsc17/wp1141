@@ -35,7 +35,8 @@ RUN chown -R nodejs:nodejs /app
 
 # Create symlink so dist code can find generated prisma
 USER nodejs
-RUN ln -s /app/src/generated /app/generated
+#RUN ln -s /app/src/generated /app/generated
+RUN ln -sfn /app/src/generated /app/dist/generated
 
 EXPOSE 8080
 
