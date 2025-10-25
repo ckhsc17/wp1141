@@ -37,9 +37,10 @@ interface UserTreasuresModalProps {
   opened: boolean;
   onClose: () => void;
   mode: 'treasures' | 'favorites' | 'fragments' | 'collects';
+  onTreasureClick?: (treasure: UserTreasure) => void;
 }
 
-const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose, mode }) => {
+const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose, mode, onTreasureClick }) => {
   const [treasures, setTreasures] = useState<UserTreasure[]>([]);
   const [collects, setCollects] = useState<UserCollect[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -311,7 +312,19 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
             <Grid>
               {treasures.map((treasure) => (
                 <Grid.Col span={{ base: 12, sm: 6 }} key={treasure.id}>
-                  <Card shadow="sm" padding="md" radius="md" withBorder>
+                  <Card 
+                    shadow="sm" 
+                    padding="md" 
+                    radius="md" 
+                    withBorder
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      if (onTreasureClick) {
+                        onTreasureClick(treasure);
+                        onClose(); // 關閉 UserTreasuresModal
+                      }
+                    }}
+                  >
                     <Stack gap="sm">
                       {/* 標題和類型 */}
                       <Group justify="space-between" align="flex-start">
@@ -375,7 +388,17 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
 
                         <Group gap="xs">
                           <Tooltip label="查看詳情">
-                            <ActionIcon size="sm" variant="light">
+                            <ActionIcon 
+                              size="sm" 
+                              variant="light"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onTreasureClick) {
+                                  onTreasureClick(treasure);
+                                  onClose(); // 關閉 UserTreasuresModal
+                                }
+                              }}
+                            >
                               <IconEye size={14} />
                             </ActionIcon>
                           </Tooltip>
@@ -386,7 +409,10 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
                                   size="sm" 
                                   variant="light" 
                                   color="blue"
-                                  onClick={() => handleEditTreasure(treasure)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditTreasure(treasure);
+                                  }}
                                 >
                                   <IconEdit size={14} />
                                 </ActionIcon>
@@ -396,7 +422,10 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
                                   size="sm" 
                                   variant="light" 
                                   color="red"
-                                  onClick={() => handleDeleteTreasure(treasure)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteTreasure(treasure);
+                                  }}
                                 >
                                   <IconTrash size={14} />
                                 </ActionIcon>

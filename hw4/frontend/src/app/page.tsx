@@ -409,6 +409,23 @@ export default function HomePage() {
     setSearchSidebarOpened(false);
   }, []);
 
+  // 處理個人資料中的寶藏點擊
+  const handleProfileTreasureClick = useCallback((treasure: { id: string; latitude: number; longitude: number }) => {
+    console.log('個人資料寶藏點擊:', treasure);
+    // 先清除地點選中狀態，避免衝突（在同一個更新批次中執行）
+    setSelectedLocation(null);
+    setSelectedTreasureId(null);
+    // 使用 setTimeout 確保狀態更新順序正確
+    setTimeout(() => {
+      // 設置選中的寶藏，這會自動打開 InfoWindow
+      setSelectedTreasureId(treasure.id);
+      // 設置選中的地點，這會觸發地圖視圖移動
+      setSelectedPlace({ lat: treasure.latitude, lng: treasure.longitude });
+    }, 0);
+    // 關閉個人資料 Modal（已在 ProfileModal 內部處理）
+    closeProfileModal();
+  }, [closeProfileModal]);
+
   // 處理選中地點的變化，移動地圖視圖
   useEffect(() => {
     if (selectedPlace) {
@@ -964,6 +981,7 @@ export default function HomePage() {
       <ProfileModal
         opened={profileModalOpened}
         onClose={closeProfileModal}
+        onTreasureClick={handleProfileTreasureClick}
       />
 
       {/* 寶藏表單 Modal */}
@@ -993,12 +1011,6 @@ export default function HomePage() {
       >
         <TreasuresPage />
       </Modal>
-
-      {/* 個人檔案 Modal */}
-      <ProfileModal
-        opened={profileModalOpened}
-        onClose={closeProfileModal}
-      />
 
       {/* 位置追蹤設定 Modal */}
       <LocationSettingsModal

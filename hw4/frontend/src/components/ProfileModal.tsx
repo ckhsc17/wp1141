@@ -40,9 +40,10 @@ import { COLORS } from '@/utils/constants';
 interface ProfileModalProps {
   opened: boolean;
   onClose: () => void;
+  onTreasureClick?: (treasure: { id: string; latitude: number; longitude: number }) => void;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose, onTreasureClick }) => {
   const { user, logout, refreshUser } = useAuth();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
@@ -280,6 +281,18 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ opened, onClose }) => {
         opened={treasuresModalOpened}
         onClose={() => setTreasuresModalOpened(false)}
         mode={treasuresModalMode}
+        onTreasureClick={(treasure) => {
+          // 關閉 ProfileModal
+          onClose();
+          // 如果父組件提供了 onTreasureClick，調用它
+          if (onTreasureClick) {
+            onTreasureClick({
+              id: treasure.id,
+              latitude: treasure.latitude,
+              longitude: treasure.longitude
+            });
+          }
+        }}
       />
     </>
   );
