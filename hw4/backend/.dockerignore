@@ -1,0 +1,18 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+dist
+coverage
+.vscode
+.idea
+*.log
+.DS_Store
+Prisma Studio
+yarn.lock
+.pnpm-debug.log
