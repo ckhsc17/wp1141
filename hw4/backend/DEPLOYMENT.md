@@ -102,7 +102,7 @@ CLOUDINARY_API_KEY="your-api-key"
 CLOUDINARY_API_SECRET="your-api-secret"
 
 # 伺服器配置
-PORT=8080
+PORT=8000
 NODE_ENV=production
 ```
 
