@@ -791,9 +791,10 @@ export default function HomePage() {
           data={typeFilterOptions}
           value={selectedType || ''}
           onChange={handleTypeFilterChange}
+          withCheckIcon={false}
           size="sm"
           style={{ width: 120 }}
-          clearable
+          clearable={false}
           styles={{
             input: {
               backgroundColor: 'var(--mantine-color-blue-6)',
@@ -803,7 +804,27 @@ export default function HomePage() {
                 color: 'rgba(255, 255, 255, 0.7)'
               }
             },
-            option: { color: COLORS.TEXT.SECONDARY }
+            option: {
+              color: COLORS.TEXT.SECONDARY,
+              '&[dataChecked="true"]': {
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                color: COLORS.TEXT.SECONDARY,
+                opacity: 0.7,
+                '&::before': {
+                  display: 'none'
+                }
+              },
+              // '&[data-selected="true"]': {
+              //   backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              //   opacity: 0.7,
+              //   '&::before': {
+              //     display: 'none'
+              //   }
+              // },
+              '&::before': {
+                display: 'none'
+              }
+            }
           }}
         />
         
