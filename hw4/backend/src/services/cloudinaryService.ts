@@ -73,6 +73,10 @@ export class CloudinaryService {
    */
   static async uploadAudio(file: Buffer, folder: string = 'treasures'): Promise<CloudinaryUploadResult> {
     return new Promise((resolve, reject) => {
+      console.log('=== Cloudinary uploadAudio Debug ===');
+      console.log('file buffer size:', file.length);
+      console.log('folder:', folder);
+      
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: folder,
@@ -84,8 +88,15 @@ export class CloudinaryService {
         (error, result) => {
           if (error) {
             console.error('Cloudinary upload error:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
             reject(new Error(`音檔上傳失敗: ${error.message}`));
           } else if (result) {
+            console.log('Cloudinary upload success:', {
+              url: result.secure_url,
+              publicId: result.public_id,
+              format: result.format,
+              bytes: result.bytes
+            });
             resolve({
               url: result.secure_url,
               publicId: result.public_id,
@@ -93,6 +104,7 @@ export class CloudinaryService {
               bytes: result.bytes
             });
           } else {
+            console.error('Cloudinary upload: unknown error');
             reject(new Error('音檔上傳失敗：未知錯誤'));
           }
         }
@@ -103,6 +115,8 @@ export class CloudinaryService {
       stream.push(file);
       stream.push(null);
       stream.pipe(uploadStream);
+      
+      console.log('=====================================');
     });
   }
 

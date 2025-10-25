@@ -92,12 +92,11 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
         return null;
       },
       mediaFile: (value, values) => {
-        if ((values.type === TreasureType.MUSIC || values.type === TreasureType.AUDIO) && mode === 'create' && !value) {
-          return '請上傳音頻檔案';
-        }
+        // 檔案大小驗證
         if (value && value.size > APP_CONFIG.MAX_FILE_SIZE) {
           return '檔案大小不能超過 10MB';
         }
+        // 注意：音樂/錄音檔的上傳檢查在 handleSubmit 中處理
         return null;
       },
       linkUrl: (value, values) => {
@@ -243,8 +242,9 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
       setTimeout(() => {
         setIsUploading(false);
         setUploadProgress(0);
-      }, 500);
+      }, 1000);
     } catch (error) {
+      console.error('音檔上傳失敗:', error);
       setUploadError(error instanceof Error ? error.message : '音檔上傳失敗');
       setIsUploading(false);
       setUploadProgress(0);
@@ -290,14 +290,30 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
     console.log('=== TreasureForm handleSubmit Debug ===');
     console.log('uploadedMediaUrl:', uploadedMediaUrl);
     console.log('form.values.mediaUrl:', values.mediaUrl);
+    console.log('selectedType:', selectedType);
+    console.log('mode:', mode);
     console.log('=====================================');
 
+    // 對於音樂/錄音檔類型，檢查是否已上傳
+    if ((selectedType === TreasureType.MUSIC || selectedType === TreasureType.AUDIO) && mode === 'create') {
+      if (!uploadedMediaUrl) {
+        console.error('音樂/錄音檔尚未上傳');
+        form.setFieldError('mediaFile', '請上傳音頻檔案');
+        return;
+      }
+    }
+
     // Apply mode-based visibility logic
+    // 對於音樂/錄音檔類型，已經通過 mediaService.uploadAudio 上傳到 Cloudinary
+    // 所以只需要傳 mediaUrl，不需要傳 mediaFile
+    const isMusicOrAudio = selectedType === TreasureType.MUSIC || selectedType === TreasureType.AUDIO;
     const submitData = {
       ...values,
       type: selectedType!,
       tags: Array.isArray(values.tags) ? values.tags : [],
-      mediaFile: values.mediaFile || undefined,
+      // 對於音樂/錄音檔類型，使用 mediaUrl（已上傳到 Cloudinary）
+      // 對於圖片類型，使用 mediaFile（需要通過後端上傳）
+      mediaFile: (isMusicOrAudio ? undefined : (values.mediaFile || undefined)),
       mediaUrl: uploadedMediaUrl || undefined
     };
 
@@ -502,18 +518,6 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
             required
           />
 
-          {showMediaUpload && (
-            <FileInput
-              label="音頻檔案"
-              style={{ color: COLORS.TEXT.SECONDARY }}
-              placeholder="選擇音頻檔案"
-              accept="audio/*"
-              leftSection={<IconUpload size={rem(14)} />}
-              {...form.getInputProps('mediaFile')}
-              required={mode === 'create'}
-            />
-          )}
-
           {showLinkInput && (
             <TextInput
               label="連結網址"
@@ -620,6 +624,63 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
                       <div>
                         <Text size="sm" fw={500}>
                           音檔已上傳
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {uploadedMediaInfo && mediaService.formatFileSize(uploadedMediaInfo.bytes)}
+                        </Text>
+                      </div>
+                    </Group>
+                    <ActionIcon
+                      variant="subtle"
+                      color="red"
+                      onClick={clearUploadedMedia}
+                      disabled={isUploading}
+                    >
+                      <IconX size={16} />
+                    </ActionIcon>
+                  </Group>
+                </Card>
+              )}
+
+              {isUploading && (
+                <Stack gap="xs">
+                  <Progress value={uploadProgress} size="sm" />
+                  <Text size="xs" c="dimmed" ta="center">
+                    上傳中... {uploadProgress}%
+                  </Text>
+                </Stack>
+              )}
+
+              {uploadError && (
+                <Alert color="red" variant="light">
+                  {uploadError}
+                </Alert>
+              )}
+            </Stack>
+          )}
+
+          {selectedType === TreasureType.MUSIC && (
+            <Stack gap="sm">
+              <Text size="sm" fw={500} style={{ color: COLORS.TEXT.SECONDARY }}>
+                上傳音樂
+              </Text>
+              
+              {!uploadedMediaUrl ? (
+                <FileInput
+                  placeholder="選擇音樂檔案"
+                  accept=".mp3,.wav"
+                  onChange={handleAudioUpload}
+                  disabled={isUploading}
+                  leftSection={<IconMusic size={16} />}
+                />
+              ) : (
+                <Card withBorder p="sm">
+                  <Group justify="space-between">
+                    <Group gap="sm">
+                      <IconMusic size={24} color={COLORS.TEXT.SECONDARY} />
+                      <div>
+                        <Text size="sm" fw={500}>
+                          音樂已上傳
                         </Text>
                         <Text size="xs" c="dimmed">
                           {uploadedMediaInfo && mediaService.formatFileSize(uploadedMediaInfo.bytes)}

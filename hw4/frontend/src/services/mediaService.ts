@@ -48,8 +48,15 @@ class MediaService {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
+          timeout: 30000, // 增加 timeout 到 30 秒
         }
       );
+
+      console.log('=== mediaService uploadImage response ===');
+      console.log('response:', response);
+      console.log('response.success:', response.success);
+      console.log('response.data:', response.data);
+      console.log('==========================================');
 
       if (!response.success) {
         throw new Error(response.message || '圖片上傳失敗');
@@ -96,8 +103,15 @@ class MediaService {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
+          timeout: 30000, // 增加 timeout 到 30 秒
         }
       );
+
+      console.log('=== mediaService uploadAudio response ===');
+      console.log('response:', response);
+      console.log('response.success:', response.success);
+      console.log('response.data:', response.data);
+      console.log('==========================================');
 
       if (!response.success) {
         throw new Error(response.message || '音檔上傳失敗');

@@ -191,6 +191,8 @@ export const uploadAudio = async (
       return;
     }
 
+    console.log('req.file.buffer:', req.file.buffer);
+
     // 上傳到 Cloudinary
     const result = await CloudinaryService.uploadAudio(req.file.buffer, 'treasures');
 

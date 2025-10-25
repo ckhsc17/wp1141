@@ -530,6 +530,7 @@ export default function HomePage() {
   // 處理寶藏表單提交
   const handleTreasureSubmit = async (data: CreateTreasureRequest) => {
     try {
+      console.log('=== handleTreasureSubmit called ===');
       console.log('新增寶藏:', data);
       await createTreasure(data);
       await refetchTreasures();

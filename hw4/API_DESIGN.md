@@ -97,6 +97,19 @@ interface Favorite {
 }
 ```
 
+### 6. Collect (收集)
+```typescript
+interface Collect {
+  id: string
+  userId: string
+  treasureId: string
+  createdAt: Date
+  isLocked: boolean // 是否鎖定（無法查看）
+  user: User
+  treasure: Treasure
+}
+```
+
 ## DTO 設計
 
 ### Auth DTOs
@@ -175,6 +188,7 @@ interface TreasureDTO {
   commentsCount: number
   isLiked: boolean // 當前使用者是否已按讚
   isFavorited: boolean // 當前使用者是否已收藏
+  isCollected?: boolean // 當前使用者是否已收集（僅對寶藏類型有效）
   createdAt: string
   user: UserDTO
 }
@@ -201,6 +215,23 @@ interface CommentDTO {
 }
 ```
 
+### Collect DTOs
+```typescript
+// 收集寶藏請求
+interface CollectTreasureRequest {
+  treasureId: string
+}
+
+// 收集 DTO
+interface CollectDTO {
+  id: string
+  treasureId: string
+  createdAt: string
+  isLocked: boolean
+  treasure: TreasureDTO
+}
+```
+
 ## API 端點設計
 
 ### 認證相關
@@ -220,6 +251,7 @@ PUT    /api/treasures/:id       # 更新寶藏
 DELETE /api/treasures/:id       # 刪除寶藏
 POST   /api/treasures/:id/like  # 按讚/取消按讚
 POST   /api/treasures/:id/favorite # 收藏/取消收藏
+POST   /api/treasures/collect   # 收集寶藏/取消收集
 ```
 
 ### 留言相關
@@ -230,6 +262,16 @@ PUT    /api/comments/:id              # 更新留言
 DELETE /api/comments/:id              # 刪除留言
 ```
 
+### 用戶相關
+```
+GET    /api/users/profile             # 取得當前用戶資料
+PUT    /api/users/profile             # 更新用戶資料
+GET    /api/users/stats               # 取得用戶統計資料
+GET    /api/users/treasures           # 取得用戶的寶藏列表
+GET    /api/users/favorites           # 取得用戶的收藏列表
+GET    /api/users/collects            # 取得用戶的收集寶藏列表
+```
+
 ### 檔案上傳
 ```
 POST   /api/upload                    # 上傳媒體檔案
@@ -238,7 +280,26 @@ POST   /api/upload                    # 上傳媒體檔案
 ### 地理位置相關
 ```
 GET    /api/geocoding/reverse         # 反向地理編碼（經緯度轉地址）
-GET    /api/places/search             # 地點搜尋
+```
+
+### 前端 Google Places API 整合
+
+搜尋功能直接使用前端的 Google Places API，無需後端代理。
+
+**實現方式：**
+- 前端直接呼叫 `google.maps.places.PlacesService.textSearch()`
+- 支援地點名稱搜尋和位置偏差
+- 搜尋結果與寶藏搜尋結果合併顯示
+
+**PlaceSearchResult 介面：**
+```typescript
+interface PlaceSearchResult {
+  name: string;           // 地點名稱
+  address: string;        // 格式化地址
+  latitude: number;       // 緯度
+  longitude: number;      // 經度
+  placeId: string;        // Google Places ID
+}
 ```
 
 ## 回應格式
@@ -303,6 +364,97 @@ interface PaginatedResponse<T> {
 3. **檔案上傳**: 限制檔案類型和大小
 4. **位置驗證**: 「活在當下」類型需驗證使用者實際位置
 5. **速率限制**: API 呼叫頻率限制
+
+## 媒體上傳功能
+
+### 支援的媒體類型
+
+1. **圖片類型**:
+   - 支援格式: JPG, PNG
+   - 最大檔案大小: 10MB
+   - 適用於: `IMAGE` 和 `LIVE_MOMENT` 寶藏類型
+
+2. **音檔類型**:
+   - 支援格式: MP3, WAV
+   - 最大檔案大小: 10MB
+   - 適用於: `AUDIO` 寶藏類型
+
+### 媒體上傳 API
+
+#### 1. 上傳圖片
+```
+POST /api/media/upload/image
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+
+Body:
+- image: File (JPG/PNG, max 10MB)
+
+Response:
+{
+  "success": true,
+  "data": {
+    "url": "https://res.cloudinary.com/da1mls4nt/image/upload/v1234567890/treasures/abc123.jpg",
+    "publicId": "treasures/abc123",
+    "width": 1920,
+    "height": 1080,
+    "format": "jpg",
+    "bytes": 1024000
+  },
+  "message": "圖片上傳成功"
+}
+```
+
+#### 2. 上傳音檔
+```
+POST /api/media/upload/audio
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+
+Body:
+- audio: File (MP3/WAV, max 10MB)
+
+Response:
+{
+  "success": true,
+  "data": {
+    "url": "https://res.cloudinary.com/da1mls4nt/video/upload/v1234567890/treasures/audio123.mp3",
+    "publicId": "treasures/audio123",
+    "format": "mp3",
+    "bytes": 2048000
+  },
+  "message": "音檔上傳成功"
+}
+```
+
+#### 3. 刪除媒體
+```
+DELETE /api/media/delete/{publicId}?resourceType=image
+Authorization: Bearer <token>
+
+Response:
+{
+  "success": true,
+  "message": "媒體刪除成功"
+}
+```
+
+### 前端整合
+
+1. **TreasureForm 組件**:
+   - 根據寶藏類型顯示對應的檔案上傳 UI
+   - 即時上傳並顯示預覽
+   - 支援檔案驗證和錯誤處理
+
+2. **TreasureCard 組件**:
+   - 圖片: 顯示縮圖，點擊放大查看
+   - 音檔: 內嵌 HTML5 audio 播放器
+   - 響應式佈局支援
+
+3. **Cloudinary 整合**:
+   - 自動圖片優化和格式轉換
+   - CDN 加速載入
+   - 安全檔案儲存
 
 ## 開發順序
 
