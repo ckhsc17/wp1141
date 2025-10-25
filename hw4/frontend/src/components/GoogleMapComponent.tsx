@@ -232,6 +232,9 @@ const TreasureMarkers: React.FC<{
     }
   }, [markers, selectedTreasure]);
 
+  // 使用 ref 來追蹤上一次的 selectedTreasureId
+  const prevSelectedTreasureIdRef = useRef<string | null>(null);
+
   // 當 selectedTreasureId 變化時，自動選中對應的寶藏並移動地圖視圖
   useEffect(() => {
     if (selectedTreasureId && map) {
@@ -256,8 +259,12 @@ const TreasureMarkers: React.FC<{
           map.setZoom(16);
         }
       }
-    } else {
+      prevSelectedTreasureIdRef.current = selectedTreasureId;
+    } else if (selectedTreasureId === null && prevSelectedTreasureIdRef.current !== null) {
+      // 只有當 selectedTreasureId 從非 null 變為 null 時才關閉 InfoWindow
+      // 這意味著是明確的清除操作，而不是初始狀態
       setSelectedTreasure(null);
+      prevSelectedTreasureIdRef.current = null;
     }
   }, [selectedTreasureId, markers, onCloseLocationInfo, map]);
 
