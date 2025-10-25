@@ -43,6 +43,7 @@ import SearchResultsSidebar from '@/components/SearchResultsSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTreasures } from '@/hooks/useTreasures';
 import { useLocationTracking } from '@/hooks/useLocationTracking';
+import { userService } from '@/services/userService';
 import { MapLocation, TreasureMarker, TreasureType, CreateTreasureRequest, TreasureDTO } from '@/types';
 import { COLORS, TREASURE_TYPE_CONFIG } from '@/utils/constants';
 // 移除 placesService 引用，改用 Google Places API
@@ -767,18 +768,41 @@ export default function HomePage() {
         {/* 我的按鈕 - 過濾顯示自己上傳的寶藏/碎片 */}
         <Button
           leftSection={<IconUser size={16} />}
-          onClick={() => {
-            // 過濾出當前用戶上傳的寶藏/碎片
-            const myTreasures = treasures.filter(treasure => treasure.user.id === user?.id);
-            const treasureCount = myTreasures.filter(t => t.isHidden !== null).length;
-            const fragmentCount = myTreasures.filter(t => t.isPublic !== null).length;
+          onClick={async () => {
+            if (!user) return;
             
-            // 同時更新搜尋結果和地圖標記
-            setSearchResults(myTreasures);
-            setFilteredTreasures(myTreasures); // 更新地圖標記過濾
-            setSelectedType(null); // 清除類型過濾
-            setSearchSidebarOpened(true);
-            setSearchQuery(`我的內容 (寶藏: ${treasureCount}, 碎片: ${fragmentCount})`);
+            try {
+              // 使用 getUserTreasures 獲取用戶的所有寶藏和碎片（包含私有和隱藏）
+              const treasuresResult = await userService.getUserTreasures(1, 1000, undefined, true);
+              const fragmentsResult = await userService.getUserTreasures(1, 1000, true, undefined);
+              
+              // 合併寶藏和碎片
+              const allMyContent = [...treasuresResult.treasures, ...fragmentsResult.treasures];
+              
+              // 轉換為 TreasureDTO 格式（添加 user 欄位）
+              const treasureDTOs: TreasureDTO[] = allMyContent.map(t => ({
+                ...t,
+                type: t.type as TreasureType,
+                user: {
+                  id: user.id,
+                  email: user.email,
+                  name: user.name,
+                  avatar: user.avatar
+                }
+              }));
+              
+              const treasureCount = treasuresResult.total;
+              const fragmentCount = fragmentsResult.total;
+              
+              // 同時更新搜尋結果和地圖標記
+              setSearchResults(treasureDTOs);
+              setFilteredTreasures(treasureDTOs);
+              setSelectedType(null);
+              setSearchSidebarOpened(true);
+              setSearchQuery(`我的內容 (寶藏: ${treasureCount}, 碎片: ${fragmentCount})`);
+            } catch (error) {
+              console.error('獲取我的內容失敗:', error);
+            }
           }}
           size="sm"
         >
