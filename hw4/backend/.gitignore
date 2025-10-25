@@ -1,5 +1,63 @@
+# Dependencies
 node_modules
-# Keep environment variables out of version control
-.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log
 
+# Environment variables - NEVER commit these!
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env*.local
+
+# Build outputs
+dist
+build
+*.tsbuildinfo
+
+# Generated files
+/src/generated
 /src/generated/prisma
+
+# Testing
+coverage
+.nyc_output
+*.lcov
+
+# IDE and editors
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+.dockerignore.bak
+
+# Misc
+.eslintcache
+.stylelintcache
