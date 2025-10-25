@@ -17,9 +17,7 @@ import {
   IconHeart,
   IconMessage,
   IconBookmark,
-  IconBookmarkFilled,
-  IconThumbUp,
-  IconThumbUpFilled
+  IconBookmarkFilled
 } from '@tabler/icons-react';
 // PlaceSearchResult 現在定義在 page.tsx 中
 interface PlaceSearchResult {
@@ -135,18 +133,20 @@ export default function SearchResultsSidebar({
                     >
                       <Group justify="space-between" align="flex-start">
                         <Stack gap="xs" style={{ flex: 1 }}>
-                          <Group gap="xs">
-                            <IconMapPin size={16} style={{ color: COLORS.ICON.DEFAULT }} />
-                            <Text fw={600} size="sm">
-                              {result.name}
-                            </Text>
+                          <Group justify="space-between" align="flex-start">
+                            <Group gap="xs">
+                              <IconMapPin size={16} style={{ color: COLORS.ICON.DEFAULT }} />
+                              <Text fw={600} size="sm" style={{ flex: 1 }}>
+                                {result.name}
+                              </Text>
+                            </Group>
+                            <Badge size="xs" variant="light" color="blue">
+                              地點
+                            </Badge>
                           </Group>
                           <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>
                             {result.address}
                           </Text>
-                          <Badge size="xs" variant="light" color="blue">
-                            地點
-                          </Badge>
                         </Stack>
                       </Group>
                     </Card>
@@ -189,9 +189,9 @@ export default function SearchResultsSidebar({
                             }}
                           >
                             {result.isLiked ? (
-                              <IconThumbUpFilled size={14} style={{ color: COLORS.ICON.HEART }} />
+                              <IconHeart size={14} style={{ color: COLORS.ICON.HEART, fill: COLORS.ICON.HEART }} />
                             ) : (
-                              <IconThumbUp size={14} style={{ color: COLORS.ICON.DEFAULT }} />
+                              <IconHeart size={14} style={{ color: COLORS.ICON.DEFAULT }} />
                             )}
                           </ActionIcon>
                           <Text size="xs" style={{ color: COLORS.TEXT.MUTED }}>

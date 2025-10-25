@@ -104,7 +104,7 @@ export default function HomePage() {
   
   // 類型過濾選項
   const typeFilterOptions = [
-    { value: '', label: '全部類型' },
+    { value: '', label: '全部' },
     ...Object.entries(TREASURE_TYPE_CONFIG).map(([type, config]) => ({
       value: type,
       label: `${config.icon} ${config.label}`
@@ -763,13 +763,12 @@ export default function HomePage() {
             setSearchQuery(`我的內容 (寶藏: ${treasureCount}, 碎片: ${fragmentCount})`);
           }}
           size="sm"
-          variant="outline"
         >
           我的
               </Button>
               
         {/* 類型過濾下拉選單 */}
-        <Select
+        <Select 
           placeholder="類型"
           data={typeFilterOptions}
           value={selectedType || ''}
@@ -777,6 +776,17 @@ export default function HomePage() {
           size="sm"
           style={{ width: 120 }}
           clearable
+          styles={{
+            input: {
+              backgroundColor: 'var(--mantine-color-blue-6)',
+              color: 'white',
+              border: 'none',
+              '&::placeholder': {
+                color: 'rgba(255, 255, 255, 0.7)'
+              }
+            },
+            option: { color: COLORS.TEXT.SECONDARY }
+          }}
         />
         
         {/* 位置追蹤狀態和控制

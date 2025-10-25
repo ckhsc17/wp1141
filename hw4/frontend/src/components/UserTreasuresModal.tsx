@@ -73,6 +73,14 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
       let result;
       if (mode === 'treasures') {
         result = await userService.getUserTreasures(page, pageSize, undefined, true); // 獲取 isHidden !== null 的寶藏
+        console.log('=== fetchTreasures Debug (treasures) ===');
+        console.log('result.treasures:', result.treasures);
+        if (result.treasures.length > 0) {
+          console.log('First treasure:', result.treasures[0]);
+          console.log('First treasure.isHidden:', result.treasures[0].isHidden);
+          console.log('First treasure.isPublic:', result.treasures[0].isPublic);
+        }
+        console.log('==========================================');
         setTreasures(result.treasures);
         setTotal(result.total);
         setTotalPages(Math.ceil(result.total / pageSize));
@@ -83,6 +91,14 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
         setTotalPages(Math.ceil(result.total / pageSize));
       } else if (mode === 'fragments') {
         result = await userService.getUserTreasures(page, pageSize, true, undefined); // 獲取 isPublic !== null 的碎片
+        console.log('=== fetchTreasures Debug (fragments) ===');
+        console.log('result.treasures:', result.treasures);
+        if (result.treasures.length > 0) {
+          console.log('First treasure:', result.treasures[0]);
+          console.log('First treasure.isHidden:', result.treasures[0].isHidden);
+          console.log('First treasure.isPublic:', result.treasures[0].isPublic);
+        }
+        console.log('==========================================');
         setTreasures(result.treasures);
         setTotal(result.total);
         setTotalPages(Math.ceil(result.total / pageSize));
@@ -123,6 +139,12 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
 
   // 處理編輯寶藏
   const handleEditTreasure = (treasure: UserTreasure) => {
+    console.log('=== handleEditTreasure Debug ===');
+    console.log('treasure:', treasure);
+    console.log('treasure.isHidden:', treasure.isHidden);
+    console.log('treasure.isPublic:', treasure.isPublic);
+    console.log('mode:', mode);
+    console.log('================================');
     setEditingTreasure(treasure);
     setEditFormOpened(true);
   };
@@ -357,7 +379,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
                               <IconEye size={14} />
                             </ActionIcon>
                           </Tooltip>
-                          {mode === 'treasures' && (
+                          {(mode === 'treasures' || mode === 'fragments') && (
                             <>
                               <Tooltip label="編輯">
                                 <ActionIcon 

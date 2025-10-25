@@ -145,8 +145,22 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
       if (initialData.type) {
         setSelectedType(initialData.type);
       }
+
+      // 更新 visibilityState 根據當前數據
+      if (mode === 'edit') {
+        // 在編輯模式下，根據 isHidden 或 isPublic 來設置 visibilityState
+        console.log('initialData.isHidden:', initialData.isHidden);
+        console.log('initialData.isPublic:', initialData.isPublic);
+        if (initialData.isHidden !== null && initialData.isHidden !== undefined) {
+          // 這是寶藏：isHidden 為 true 表示隱藏，false 表示公開
+          setVisibilityState(!initialData.isHidden); // 反轉，因為 visibilityState: true=公開
+        } else if (initialData.isPublic !== null && initialData.isPublic !== undefined) {
+          // 這是碎片：isPublic 直接對應 visibilityState
+          setVisibilityState(initialData.isPublic);
+        }
+      }
     }
-  }, [initialData]);
+  }, [initialData, mode]);
 
   const isValidUrl = (string: string) => {
     try {
@@ -245,6 +259,31 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
     form.setFieldValue('mediaUrl', '');
   };
 
+  // 處理 Modal 關閉
+  const handleClose = () => {
+    // 只在創建模式下清除表單狀態
+    if (mode === 'create') {
+      form.reset();
+      setSelectedType(null);
+      setVisibilityState(creationMode === 'treasure' ? false : true);
+      clearUploadedMedia();
+    }
+    onClose();
+  };
+
+  // 處理表單提交成功後的清理
+  const handleSubmitSuccess = (values: typeof form.values) => {
+    handleSubmit(values);
+    
+    // 提交成功後清除表單狀態（只在創建模式下）
+    if (mode === 'create') {
+      form.reset();
+      setSelectedType(null);
+      setVisibilityState(creationMode === 'treasure' ? false : true);
+      clearUploadedMedia();
+    }
+  };
+
 
   const handleSubmit = (values: typeof form.values) => {
     // Debug: Log media URL
@@ -264,14 +303,30 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
 
     console.log('submitData:', JSON.stringify(submitData, null, 2));
 
-    if (creationMode === 'treasure') {
-      // For treasure mode: set isHidden based on toggle, keep isPublic null
-      submitData.isHidden = !visibilityState; // false = hidden, true = public
-      submitData.isPublic = undefined;
+    if (mode === 'edit') {
+      // In edit mode, determine if it's a treasure or fragment based on initialData
+      const isTreasure = initialData?.isHidden !== null && initialData?.isHidden !== undefined;
+      
+      if (isTreasure) {
+        // For treasure: set isHidden based on toggle, keep isPublic null
+        submitData.isHidden = !visibilityState; // false = hidden, true = public
+        submitData.isPublic = undefined;
+      } else {
+        // For fragment: set isPublic based on toggle, keep isHidden null
+        submitData.isPublic = visibilityState; // true = public, false = private
+        submitData.isHidden = undefined;
+      }
     } else {
-      // For life_moment mode: set isPublic based on toggle, keep isHidden null
-      submitData.isPublic = visibilityState; // true = public, false = private
-      submitData.isHidden = undefined;
+      // Create mode: use creationMode to determine
+      if (creationMode === 'treasure') {
+        // For treasure mode: set isHidden based on toggle, keep isPublic null
+        submitData.isHidden = !visibilityState; // false = hidden, true = public
+        submitData.isPublic = undefined;
+      } else {
+        // For life_moment mode: set isPublic based on toggle, keep isHidden null
+        submitData.isPublic = visibilityState; // true = public, false = private
+        submitData.isHidden = undefined;
+      }
     }
 
     onSubmit(submitData);
@@ -291,21 +346,41 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
 
   // Get modal title based on mode
   const getModalTitle = () => {
-    if (mode === 'edit') return '編輯寶藏';
+    if (mode === 'edit') {
+      // In edit mode, determine if it's a treasure or fragment based on initialData
+      // Treasure: isHidden !== null (true or false)
+      // Fragment: isPublic !== null (true or false)
+      const isTreasure = initialData?.isHidden !== null && initialData?.isHidden !== undefined;
+      const isFragment = initialData?.isPublic !== null && initialData?.isPublic !== undefined;
+      return isTreasure ? '編輯寶藏' : (isFragment ? '編輯碎片' : '編輯');
+    }
     return creationMode === 'treasure' ? '創建新寶藏' : '紀錄生活';
   };
 
   // Get submit button text based on mode
   const getSubmitButtonText = () => {
-    if (mode === 'edit') return '更新寶藏';
+    if (mode === 'edit') {
+      // In edit mode, determine if it's a treasure or fragment based on initialData
+      // Treasure: isHidden !== null (true or false)
+      // Fragment: isPublic !== null (true or false)
+      const isTreasure = initialData?.isHidden !== null && initialData?.isHidden !== undefined;
+      const isFragment = initialData?.isPublic !== null && initialData?.isPublic !== undefined;
+      return isTreasure ? '更新寶藏' : (isFragment ? '更新碎片' : '更新');
+    }
     return creationMode === 'treasure' ? '創建寶藏' : '紀錄生活';
   };
 
   // Render visibility toggle buttons
   const renderVisibilityToggle = () => {
-    if (mode === 'edit') return null; // Don't show toggle in edit mode
+    // In edit mode, determine if it's a treasure or fragment based on initialData
+    // Treasure: isHidden !== null (true or false)
+    // Fragment: isPublic !== null (true or false)
+    const isTreasureMode = mode === 'edit' 
+      ? (initialData?.isHidden !== null && initialData?.isHidden !== undefined)
+      : creationMode === 'treasure';
 
-    if (creationMode === 'treasure') {
+    if (isTreasureMode) {
+      // Treasure mode: show hidden (GiChest) and public (GiOpenChest) options
       return (
         <Center>
           <Group gap="xs">
@@ -333,10 +408,11 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
         </Center>
       );
     } else {
+      // Fragment mode (isPublic): show public (IconWorld) and private (IconLock) options
       return (
         <Center>
           <Group gap="xs">
-            <Tooltip label="公開">
+            <Tooltip label="公開碎片">
               <ActionIcon
                 variant={visibilityState ? "filled" : "light"}
                 color="blue"
@@ -346,7 +422,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
                 <IconWorld size={20} />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="私人">
+            <Tooltip label="私人碎片">
               <ActionIcon
                 variant={!visibilityState ? "filled" : "light"}
                 color="gray"
@@ -365,7 +441,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
   return (
       <Modal
         opened={opened}
-        onClose={onClose}
+        onClose={handleClose}
         title={getModalTitle()}
         centered
         size="lg"
@@ -384,16 +460,6 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
         }}
       >
       <form onSubmit={form.onSubmit(handleSubmit)}>
-
-          {selectedType && (
-            <Alert 
-              icon={<IconInfoCircle size={16} />}
-              variant="light"
-              color="blue"
-            >
-              {TREASURE_TYPE_CONFIG[selectedType].description}
-            </Alert>
-          )}
 
           {/* Visibility Toggle Buttons */}
           {renderVisibilityToggle()}
@@ -689,7 +755,7 @@ const TreasureForm: React.FC<TreasureFormProps> = ({
           <Group justify="flex-end" gap="sm">
             <Button 
               variant="subtle" 
-              onClick={onCancel}
+              onClick={handleClose}
               disabled={isLoading}
             >
               取消
