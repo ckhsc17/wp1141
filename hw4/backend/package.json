@@ -20,7 +20,7 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "docker:build": "docker build -t treasure-map-backend .",
-    "docker:run": "docker run -p 8000:8000 --env-file .env treasure-map-backend",
+    "docker:run": "docker run -p 8080:8080 --env-file .env treasure-map-backend",
     "docker:build:gcp": "gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/treasure-map-backend",
     "deploy": "gcloud builds submit --config=cloudbuild.yaml"
   },

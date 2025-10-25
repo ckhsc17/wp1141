@@ -31,7 +31,7 @@ steps:
       - '--region'
       - 'asia-east1'
       - '--allow-unauthenticated'
-      - '--set-env-vars=NODE_ENV=production,PORT=8000'
+      - '--set-env-vars=NODE_ENV=production,PORT=8080'
       - '--memory'
       - '512Mi'
       - '--cpu'
@@ -41,7 +41,7 @@ steps:
       - '--concurrency'
       - '80'
       - '--port'
-      - '8000'
+      - '8080'
 
 # Substitutions for dynamic values
 substitutions:

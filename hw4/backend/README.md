@@ -74,14 +74,14 @@ npm run db:push
 npm run dev
 ```
 
-伺服器將在 http://localhost:8000 啟動
+伺服器將在 http://localhost:8080 啟動
 
 ## 📚 API 文件
 
 啟動伺服器後，可在以下位置查看 API 文件：
 
-- **Swagger UI**: http://localhost:8000/api-docs
-- **健康檢查**: http://localhost:8000/health
+- **Swagger UI**: http://localhost:8080/api-docs
+- **健康檢查**: http://localhost:8080/health
 
 ## 🗄️ 資料庫管理
 

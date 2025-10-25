@@ -5,7 +5,7 @@ import { PrismaClient } from './generated/prisma';
 // Load environment variables
 dotenv.config();
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8080;
 const prisma = new PrismaClient();
 
 // ==================== Database Connection ====================

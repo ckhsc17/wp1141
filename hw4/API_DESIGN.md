@@ -421,7 +421,7 @@ Response:
     "url": "https://res.cloudinary.com/da1mls4nt/video/upload/v1234567890/treasures/audio123.mp3",
     "publicId": "treasures/audio123",
     "format": "mp3",
-    "bytes": 2048000
+    "bytes": 2048080
   },
   "message": "音檔上傳成功"
 }
