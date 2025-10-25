@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Box, Loader } from '@mantine/core';
+import { Box, Center, Loader } from '@mantine/core';
 import { API_ENDPOINTS } from '@/utils/constants';
 
-export default function AuthSuccess() {
+function AuthSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -58,6 +58,14 @@ export default function AuthSuccess() {
 
   // 顯示一個極簡的載入畫面，用戶幾乎看不到就會跳轉
   return (
+    <Center>
+      <Loader size="md" />
+    </Center>
+  );
+}
+
+export default function AuthSuccess() {
+  return (
     <Box
       style={{
         minHeight: '100vh',
@@ -67,7 +75,13 @@ export default function AuthSuccess() {
         justifyContent: 'center'
       }}
     >
-      <Loader size="md" />
+      <Suspense fallback={
+        <Center>
+          <Loader size="md" />
+        </Center>
+      }>
+        <AuthSuccessContent />
+      </Suspense>
     </Box>
   );
 }

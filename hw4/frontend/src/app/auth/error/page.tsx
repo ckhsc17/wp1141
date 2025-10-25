@@ -1,12 +1,13 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Container, Title, Text, Button, Stack, Alert } from '@mantine/core';
+import { Container, Title, Text, Button, Stack, Alert, Loader, Center } from '@mantine/core';
 import { IconAlertCircle, IconHome } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/utils/constants';
 
-export default function AuthError() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const error = searchParams.get('error');
@@ -57,5 +58,19 @@ export default function AuthError() {
         </Stack>
       </Stack>
     </Container>
+  );
+}
+
+export default function AuthError() {
+  return (
+    <Suspense fallback={
+      <Container size="sm" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
+        <Center style={{ width: '100%' }}>
+          <Loader size="lg" />
+        </Center>
+      </Container>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   );
 }

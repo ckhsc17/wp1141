@@ -30,7 +30,7 @@ import {
 import { userService, UserTreasure, UserCollect } from '@/services/userService';
 import { treasureService } from '@/services/treasureService';
 import TreasureForm from './TreasureForm';
-import { CreateTreasureRequest, UpdateTreasureRequest } from '@/types';
+import { CreateTreasureRequest, UpdateTreasureRequest, TreasureType } from '@/types';
 import { COLORS } from '@/utils/constants';
 
 interface UserTreasuresModalProps {
@@ -572,7 +572,7 @@ const UserTreasuresModal: React.FC<UserTreasuresModalProps> = ({ opened, onClose
           initialData={{
             title: editingTreasure.title,
             content: editingTreasure.content,
-            type: editingTreasure.type as any,
+            type: editingTreasure.type as TreasureType,
             latitude: editingTreasure.latitude,
             longitude: editingTreasure.longitude,
             address: editingTreasure.address,

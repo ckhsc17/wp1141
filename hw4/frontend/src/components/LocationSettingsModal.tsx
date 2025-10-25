@@ -110,7 +110,7 @@ const LocationSettingsModal: React.FC<LocationSettingsModalProps> = ({
               onChange={(value) =>
                 setLocalSettings(prev => ({
                   ...prev,
-                  updateInterval: (value || 30) * 1000
+                  updateInterval: (Number(value) || 30) * 1000
                 }))
               }
               min={10}
@@ -150,7 +150,7 @@ const LocationSettingsModal: React.FC<LocationSettingsModalProps> = ({
               onChange={(value) =>
                 setLocalSettings(prev => ({
                   ...prev,
-                  minDistanceThreshold: value || 100
+                  minDistanceThreshold: Number(value) || 100
                 }))
               }
               min={10}

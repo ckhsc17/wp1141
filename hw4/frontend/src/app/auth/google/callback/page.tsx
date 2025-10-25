@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Box, Center, Loader, Text, Alert } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { API_ENDPOINTS } from '@/utils/constants';
 
-export default function GoogleCallback() {
+function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -64,6 +64,35 @@ export default function GoogleCallback() {
   }, [searchParams, router, login]);
 
   return (
+    <Center>
+      {error ? (
+        <Alert 
+          icon={<IconAlertCircle size={16} />} 
+          color="red" 
+          title="登入失敗"
+          variant="filled"
+          style={{
+            backgroundColor: 'rgba(255, 69, 58, 0.1)',
+            border: '1px solid rgba(255, 69, 58, 0.3)',
+            color: '#FF453A'
+          }}
+        >
+          {error}
+          <br />
+          <Text size="sm" mt="sm">3秒後將返回登入頁面...</Text>
+        </Alert>
+      ) : (
+        <Box ta="center">
+          <Loader size="lg" color="orange" mb="md" />
+          <Text size="lg">正在處理 Google 登入...</Text>
+        </Box>
+      )}
+    </Center>
+  );
+}
+
+export default function GoogleCallback() {
+  return (
     <Box
       style={{
         minHeight: '100vh',
@@ -74,30 +103,16 @@ export default function GoogleCallback() {
         justifyContent: 'center'
       }}
     >
-      <Center>
-        {error ? (
-          <Alert 
-            icon={<IconAlertCircle size={16} />} 
-            color="red" 
-            title="登入失敗"
-            variant="filled"
-            style={{
-              backgroundColor: 'rgba(255, 69, 58, 0.1)',
-              border: '1px solid rgba(255, 69, 58, 0.3)',
-              color: '#FF453A'
-            }}
-          >
-            {error}
-            <br />
-            <Text size="sm" mt="sm">3秒後將返回登入頁面...</Text>
-          </Alert>
-        ) : (
+      <Suspense fallback={
+        <Center>
           <Box ta="center">
             <Loader size="lg" color="orange" mb="md" />
-            <Text size="lg">正在處理 Google 登入...</Text>
+            <Text size="lg">正在載入...</Text>
           </Box>
-        )}
-      </Center>
+        </Center>
+      }>
+        <GoogleCallbackContent />
+      </Suspense>
     </Box>
   );
 }

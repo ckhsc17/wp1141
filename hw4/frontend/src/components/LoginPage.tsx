@@ -94,8 +94,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       } else {
         router.push('/');
       }
-    } catch (err: any) {
-      setError(err.message || '操作失敗，請稍後再試');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '操作失敗，請稍後再試';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
