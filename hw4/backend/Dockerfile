@@ -35,9 +35,12 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install production dependencies only
+# Install production dependencies (including prisma for client generation)
 RUN npm ci --only=production && \
     npm cache clean --force
+
+# Generate Prisma client
+RUN npx prisma generate
 
 # Copy built application from builder
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
