@@ -336,6 +336,13 @@ export class TreasureService {
     userId: string
   ): Promise<ServiceResult<TreasureDTO>> {
     try {
+      // Debug: Log received data
+      console.log('=== createTreasure Debug ===');
+      console.log('Received treasureData:', JSON.stringify(treasureData, null, 2));
+      console.log('userId:', userId);
+      console.log('mediaUrl in treasureData:', treasureData.mediaUrl);
+      console.log('============================');
+
       // Calculate location radius for live location treasures
       const locationRadius = treasureData.isLiveLocation ? 0.05 : 0; // 50m for live location
 
@@ -347,6 +354,8 @@ export class TreasureService {
         likesCount: 0,
         commentsCount: 0
       };
+
+      console.log('createData before Prisma create:', JSON.stringify(createData, null, 2));
 
       const treasure = await prisma.treasure.create({
         data: createData,

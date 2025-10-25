@@ -542,6 +542,37 @@ const options = {
           },
           required: ['success', 'data', 'pagination']
         },
+        MediaUploadResult: {
+          type: 'object',
+          properties: {
+            url: {
+              type: 'string',
+              format: 'uri',
+              description: 'Cloudinary URL of the uploaded media'
+            },
+            publicId: {
+              type: 'string',
+              description: 'Cloudinary public ID for the media'
+            },
+            width: {
+              type: 'number',
+              description: 'Width of the image (only for images)'
+            },
+            height: {
+              type: 'number',
+              description: 'Height of the image (only for images)'
+            },
+            format: {
+              type: 'string',
+              description: 'File format (jpg, png, mp3, wav, etc.)'
+            },
+            bytes: {
+              type: 'number',
+              description: 'File size in bytes'
+            }
+          },
+          required: ['url', 'publicId', 'format', 'bytes']
+        },
       }
     },
     security: [

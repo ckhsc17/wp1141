@@ -7,7 +7,8 @@ export enum TreasureType {
   AUDIO = 'audio',
   TEXT = 'text',
   LINK = 'link',
-  LIVE_MOMENT = 'live_moment'
+  LIVE_MOMENT = 'live_moment',
+  IMAGE = 'image'
 }
 
 // ==================== Database Types ====================
@@ -90,6 +91,7 @@ export interface CreateTreasureDTO {
   amount?: string;
   isPublic?: boolean;
   isHidden?: boolean;
+  mediaUrl?: string;
   linkUrl?: string;
   tags: string[];
   isLiveLocation?: boolean;
@@ -103,6 +105,7 @@ export interface UpdateTreasureDTO {
   amount?: string;
   isPublic?: boolean;
   isHidden?: boolean;
+  mediaUrl?: string;
 }
 
 export interface TreasureDTO {

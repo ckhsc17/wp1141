@@ -153,6 +153,7 @@ enum TreasureType {
   text
   link
   live_moment
+  image
 
   @@map("treasure_type")
 }

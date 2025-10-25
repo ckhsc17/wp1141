@@ -284,6 +284,13 @@ export const createTreasure = async (
 
     const treasureData: CreateTreasureDTO = req.body;
 
+    // Debug: Log received request data
+    console.log('=== createTreasure Controller Debug ===');
+    console.log('req.body:', JSON.stringify(req.body, null, 2));
+    console.log('treasureData after type assertion:', JSON.stringify(treasureData, null, 2));
+    console.log('mediaUrl in req.body:', req.body.mediaUrl);
+    console.log('=======================================');
+
     const result = await treasureService.createTreasure(treasureData, userId);
 
     if (!result.success || !result.data) {

@@ -15,6 +15,7 @@ import treasureRoutes from './routes/treasures';
 import userRoutes from './routes/users';
 import commentRoutes from './routes/comments';
 import uploadRoutes from './routes/uploads';
+import mediaRoutes from './routes/media';
 
 const app = express();
 
@@ -94,6 +95,7 @@ app.use('/api/treasures', treasureRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', commentRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/media', mediaRoutes);
 
 // ==================== Error Handling ====================
 
