@@ -96,6 +96,12 @@ export default function HomePage() {
   // 選中的寶藏狀態（用於程式化打開 InfoWindow）
   const [selectedTreasureId, setSelectedTreasureId] = useState<string | null>(null);
   
+  // 選中的地點狀態（用於程式化移動地圖視圖）
+  const [selectedPlace, setSelectedPlace] = useState<{ lat: number; lng: number } | null>(null);
+  
+  // 選中的地點狀態（用於顯示 LocationInfoWindow）
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  
   // 類型過濾選項
   const typeFilterOptions = [
     { value: '', label: '全部類型' },
@@ -110,6 +116,9 @@ export default function HomePage() {
     lat: 25.0330,
     lng: 121.5654
   });
+
+  // 地圖縮放級別
+  const [mapZoom, setMapZoom] = useState<number>(15);
 
   const {
     treasures,
@@ -188,6 +197,23 @@ export default function HomePage() {
     }
   }, []);
 
+  // 點擊外部區域關閉搜尋歷史
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showSearchHistory && !target.closest('[data-search-container]')) {
+        setShowSearchHistory(false);
+      }
+    };
+
+    if (showSearchHistory) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showSearchHistory]);
+
   // 自動開始位置追蹤
   useEffect(() => {
     if (isAuthenticated && !isTracking) {
@@ -235,7 +261,7 @@ export default function HomePage() {
   const handleSearchQueryChange = useCallback((value: string) => {
     console.log('handleSearchQueryChange called');
     setSearchQuery(value);
-    setShowSearchHistory(value === '');
+    setShowSearchHistory(false); // 輸入時隱藏搜尋歷史
   }, []);
 
   // 處理搜尋提交
@@ -256,9 +282,9 @@ export default function HomePage() {
           if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
             console.warn('Google Places API 未載入');
             resolve([]);
-            return;
-          }
-          
+      return;
+    }
+
           const service = new google.maps.places.PlacesService(document.createElement('div'));
           const request: google.maps.places.TextSearchRequest = {
             query: query,
@@ -356,8 +382,12 @@ export default function HomePage() {
   // 處理地點搜尋結果點擊
   const handlePlaceClick = useCallback((place: PlaceSearchResult) => {
     console.log('地點點擊:', place);
-    // 將地圖中心移動到該地點
-    setMapCenter({ lat: place.latitude, lng: place.longitude });
+    // 清除寶藏選中狀態，避免衝突
+    setSelectedTreasureId(null);
+    // 設置選中的地點，這會觸發地圖視圖移動
+    setSelectedPlace({ lat: place.latitude, lng: place.longitude });
+    // 設置選中的地點，這會顯示 LocationInfoWindow
+    setSelectedLocation({ lat: place.latitude, lng: place.longitude });
     // 關閉搜尋側邊欄
     setSearchSidebarOpened(false);
   }, []);
@@ -365,11 +395,34 @@ export default function HomePage() {
   // 處理寶藏搜尋結果點擊
   const handleTreasureClick = useCallback((treasure: TreasureDTO) => {
     console.log('寶藏點擊:', treasure);
-    // 設置選中的寶藏，這會自動打開 InfoWindow 並移動地圖視圖
-    setSelectedTreasureId(treasure.id);
+    // 先清除地點選中狀態，避免衝突（在同一個更新批次中執行）
+    setSelectedLocation(null);
+    setSelectedTreasureId(null);
+    // 使用 setTimeout 確保狀態更新順序正確
+    setTimeout(() => {
+      // 設置選中的寶藏，這會自動打開 InfoWindow
+      setSelectedTreasureId(treasure.id);
+      // 設置選中的地點，這會觸發地圖視圖移動
+      setSelectedPlace({ lat: treasure.latitude, lng: treasure.longitude });
+    }, 0);
     // 關閉搜尋側邊欄
     setSearchSidebarOpened(false);
   }, []);
+
+  // 處理選中地點的變化，移動地圖視圖
+  useEffect(() => {
+    if (selectedPlace) {
+      console.log('移動地圖到地點:', selectedPlace);
+      console.log('設置地圖中心:', selectedPlace);
+      console.log('設置地圖縮放: 16');
+      // 將地圖中心移動到該地點
+      setMapCenter(selectedPlace);
+      // 設置合適的縮放級別
+      setMapZoom(16);
+      // 清除選中狀態
+      setSelectedPlace(null);
+    }
+  }, [selectedPlace]);
 
   // 獲取地址的函數
   const getAddressFromCoordinates = useCallback(async (lat: number, lng: number): Promise<string> => {
@@ -437,8 +490,8 @@ export default function HomePage() {
 
   const handleMapClick = (location: MapLocation) => {
     console.log('地圖點擊:', location);
-    // 清除選中的寶藏
-    setSelectedTreasureId(null);
+    // 只在點擊空白區域時清除選中的寶藏，避免按讚/收藏時關閉 InfoWindow
+    // 這裡不自動清除，讓用戶手動關閉或點擊其他寶藏時才關閉
   };
 
   // 處理在指定位置新增寶藏
@@ -578,45 +631,107 @@ export default function HomePage() {
         }}
       >
         {/* 搜尋欄 */}
-        <TextInput
-          placeholder="搜尋寶藏或地點..."
-          style={{ width: 410 }}
-          value={searchQuery}
-          onChange={(event) => {
-            console.log('TextInput onChange called');
-            handleSearchQueryChange(event.currentTarget.value);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              console.log('Enter key pressed, calling handleSearchSubmit');
-              handleSearchSubmit(searchQuery);
+        <div style={{ position: 'relative', width: 410 }} data-search-container>
+          <TextInput
+            placeholder="搜尋寶藏或地點..."
+            style={{ width: '100%' }}
+            value={searchQuery}
+            onChange={(event) => {
+              console.log('TextInput onChange called');
+              handleSearchQueryChange(event.currentTarget.value);
+            }}
+            onFocus={() => {
+              if (searchHistory.length > 0 && !searchQuery) {
+                setShowSearchHistory(true);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                console.log('Enter key pressed, calling handleSearchSubmit');
+                setShowSearchHistory(false);
+                handleSearchSubmit(searchQuery);
+              }
+              if (event.key === 'Escape') {
+                setShowSearchHistory(false);
+              }
+            }}
+            leftSection={<IconSearch size={16} />}
+            rightSection={
+              searchQuery ? (
+                <ActionIcon
+                  variant="subtle"
+                  size="sm"
+                  onClick={() => {
+                    // 只清空搜尋相關狀態，不影響地圖位置
+                    setSearchQuery('');
+                    setShowSearchHistory(false);
+                    setSearchResults([]);
+                    setFilteredTreasures(null); // 清除地圖標記過濾
+                    setSelectedType(null); // 清除類型過濾
+                    setSearchSidebarOpened(false);
+                    // 清除選中狀態，避免觸發地圖移動
+                    setSelectedPlace(null);
+                    setSelectedLocation(null);
+                    setSelectedTreasureId(null);
+                  }}
+                >
+                  <IconX size={14} />
+                </ActionIcon>
+              ) : null
             }
-          }}
-          leftSection={<IconSearch size={16} />}
-          rightSection={
-            searchQuery ? (
-              <ActionIcon
-                variant="subtle"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery('');
-                  setShowSearchHistory(true);
-                  setSearchResults([]);
-                  setFilteredTreasures(null); // 清除地圖標記過濾
-                  setSelectedType(null); // 清除類型過濾
-                  setSearchSidebarOpened(false);
-                }}
-              >
-                <IconX size={14} />
-              </ActionIcon>
-            ) : null
-          }
-          radius="md"
-        />
+            radius="md"
+          />
+          
+          {/* 搜尋歷史下拉選單 */}
+          {showSearchHistory && searchHistory.length > 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '4px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                zIndex: 1000,
+                maxHeight: '200px',
+                overflowY: 'auto',
+                marginTop: '4px'
+              }}
+            >
+              {searchHistory.map((item, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    borderBottom: index < searchHistory.length - 1 ? '1px solid #f0f0f0' : 'none',
+                    fontSize: '14px',
+                    color: '#333'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }}
+                  onClick={() => {
+                    setSearchQuery(item);
+                    setShowSearchHistory(false);
+                    handleSearchSubmit(item);
+                  }}
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         
-        <Button
-          leftSection={<IconPlus size={16} />}
+              <Button
+                leftSection={<IconPlus size={16} />}
           onClick={() => handleOpenCreateForm('treasure')}
           size="sm"
         >
@@ -626,8 +741,8 @@ export default function HomePage() {
         <Button
           leftSection={<IconHeart size={16} />}
           onClick={() => handleOpenCreateForm('life_moment')}
-          size="sm"
-        >
+                size="sm"
+              >
           紀錄生活
         </Button>
         
@@ -651,8 +766,8 @@ export default function HomePage() {
           variant="outline"
         >
           我的
-        </Button>
-        
+              </Button>
+              
         {/* 類型過濾下拉選單 */}
         <Select
           placeholder="類型"
@@ -704,8 +819,8 @@ export default function HomePage() {
           title="寶藏列表"
         >
           <IconList size={18} />
-        </ActionIcon>
-        
+              </ActionIcon>
+
         <ActionIcon
           variant="outline"
           size="lg"
@@ -719,11 +834,12 @@ export default function HomePage() {
       <AppShell.Main>
         <GoogleMapComponent
           center={mapCenter}
-          zoom={15}
+          zoom={mapZoom}
           markers={treasureMarkersForMap}
           currentLocation={currentLocation}
           showCurrentLocation={!!currentLocation}
           selectedTreasureId={selectedTreasureId}
+          selectedLocation={selectedLocation}
           onMapClick={handleMapClick}
           onMarkerClick={handleMarkerClick}
           onLike={handleLike}
@@ -748,49 +864,49 @@ export default function HomePage() {
           // 移除 gap: 'md'
         }}
       >
-        {/* 用戶個人資料選單 */}
+              {/* 用戶個人資料選單 */}
         <Menu shadow="md" width={200} position="bottom-end"> {/* 調整菜單位置 */}
-          <Menu.Target>
-            <ActionIcon
-              variant="light"
+                <Menu.Target>
+                  <ActionIcon
+                    variant="light"
               size="lg" // 恢復到放大前的大小
-              radius="50%"
-            >
-              <Avatar
-                src={user?.avatar}
+                    radius="50%"
+                  >
+                    <Avatar
+                      src={user?.avatar}
                 size="sm" // 恢復到放大前的大小
-                radius="50%"
-              >
+                      radius="50%"
+                    >
                 <IconUser size={16} /> {/* 恢復到放大前的大小 */}
-              </Avatar>
-            </ActionIcon>
-          </Menu.Target>
+                    </Avatar>
+                  </ActionIcon>
+                </Menu.Target>
 
-          <Menu.Dropdown>
-            <Menu.Label>{user?.name}</Menu.Label>
-            <Menu.Item
-              leftSection={<IconUser size={14} />}
-              onClick={openProfileModal}
-            >
-              個人資料
-            </Menu.Item>
-            <Menu.Item
+                <Menu.Dropdown>
+                  <Menu.Label>{user?.name}</Menu.Label>
+                  <Menu.Item
+                    leftSection={<IconUser size={14} />}
+                    onClick={openProfileModal}
+                  >
+                    個人資料
+                  </Menu.Item>
+                  <Menu.Item
               leftSection={<IconMapPin size={14} />}
               onClick={openLocationSettings}
-            >
+                  >
               位置追蹤設定
-            </Menu.Item>
-            <Menu.Divider />
-            <Menu.Item
-              leftSection={<IconLogout size={14} />}
-              color="red"
-              onClick={logout}
-            >
-              登出
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
-      </Group>
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconLogout size={14} />}
+                    color="red"
+                    onClick={logout}
+                  >
+                    登出
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </Group>
 
       {/* 搜尋結果側邊欄 */}
       <SearchResultsSidebar
@@ -817,19 +933,19 @@ export default function HomePage() {
           {treasuresLoading && <Text>載入中...</Text>}
           {treasuresError && <Text c="red">載入失敗: {treasuresError}</Text>}
           
-          <Text fw={600}>附近的寶藏 ({treasures.length})</Text>
-          {treasures.length === 0 && !treasuresLoading && (
+              <Text fw={600}>附近的寶藏 ({treasures.length})</Text>
+              {treasures.length === 0 && !treasuresLoading && (
             <Text style={{ color: COLORS.TEXT.SECONDARY }}>目前沒有寶藏，快來創建第一個吧！</Text>
-          )}
-          {treasures.map(treasure => (
-            <TreasureCard
-              key={treasure.id}
-              treasure={treasure}
-              onLike={handleLike}
-              onFavorite={handleFavorite}
-              onDelete={user?.id === treasure.user.id ? handleDelete : undefined}
-            />
-          ))}
+              )}
+              {treasures.map(treasure => (
+                <TreasureCard
+                  key={treasure.id}
+                  treasure={treasure}
+                  onLike={handleLike}
+                  onFavorite={handleFavorite}
+                  onDelete={user?.id === treasure.user.id ? handleDelete : undefined}
+                />
+              ))}
         </Stack>
       </Drawer>
 
@@ -840,21 +956,21 @@ export default function HomePage() {
       />
 
       {/* 寶藏表單 Modal */}
-        <TreasureForm
-          mode="create"
+      <TreasureForm
+        mode="create"
           creationMode={treasureCreationMode}
-          opened={treasureFormOpened}
+        opened={treasureFormOpened}
           onClose={() => {
             closeTreasureForm();
             setTreasureFormInitialData(undefined);
           }}
           initialData={treasureFormInitialData}
-          onSubmit={handleTreasureSubmit}
+        onSubmit={handleTreasureSubmit}
           onCancel={() => {
             closeTreasureForm();
             setTreasureFormInitialData(undefined);
           }}
-        />
+      />
 
       {/* 寶藏管理頁面 Modal */}
       <Modal

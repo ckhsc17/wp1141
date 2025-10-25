@@ -26,8 +26,10 @@ interface GoogleMapComponentProps {
   currentLocation?: google.maps.LatLngLiteral | null;
   showCurrentLocation?: boolean;
   selectedTreasureId?: string | null; // 新增：程式化設置選中的寶藏
+  selectedLocation?: google.maps.LatLngLiteral | null; // 新增：程式化設置選中的地點
   onMarkerClick?: (position: google.maps.LatLngLiteral) => void;
   onMapClick?: (position: google.maps.LatLngLiteral) => void;
+  onPlaceClick?: (position: google.maps.LatLngLiteral) => void; // 新增：地點點擊處理
   onLike?: (treasureId: string) => void;
   onFavorite?: (treasureId: string) => void;
   onComment?: (treasureId: string) => void;
@@ -388,8 +390,10 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   currentLocation = null,
   showCurrentLocation = false,
   selectedTreasureId = null,
+  selectedLocation: externalSelectedLocation = null,
   onMarkerClick,
   onMapClick,
+  onPlaceClick,
   onLike,
   onFavorite,
   onComment,
@@ -404,6 +408,10 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   const [isLocationInfoOpen, setIsLocationInfoOpen] = useState(false);
   const { address, loading: addressLoading, error: addressError, getAddress, clearResult } = useReverseGeocoding();
   const [isApiLoaded, setIsApiLoaded] = useState(false); // 新增狀態來追蹤 API 載入狀態
+  
+  // 使用 ref 來追蹤是否為程式化操作
+  const isProgrammaticChange = useRef(false);
+  const [isProgrammaticMode, setIsProgrammaticMode] = useState(false);
 
   console.log('GoogleMapComponent 渲染中...', { 
     center, 
@@ -411,8 +419,44 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
     markersCount: markers.length,
     currentLocation,
     showCurrentLocation,
-    selectedLocation
+    selectedLocation,
+    externalSelectedLocation
   });
+
+  // 同步外部 props 和內部狀態
+  useEffect(() => {
+    isProgrammaticChange.current = true;
+    setIsProgrammaticMode(true);
+    setTimeout(() => {
+      isProgrammaticChange.current = false;
+      setIsProgrammaticMode(false);
+    }, 100);
+  }, [zoom]);
+  
+  useEffect(() => {
+    isProgrammaticChange.current = true;
+    setIsProgrammaticMode(true);
+    setTimeout(() => {
+      isProgrammaticChange.current = false;
+      setIsProgrammaticMode(false);
+    }, 100);
+  }, [center]);
+
+  // 當外部 selectedLocation 變化時，顯示 LocationInfoWindow
+  useEffect(() => {
+    if (externalSelectedLocation) {
+      console.log('🔍 GoogleMapComponent: externalSelectedLocation 變化:', externalSelectedLocation);
+      setSelectedLocation(externalSelectedLocation);
+      setIsLocationInfoOpen(true);
+      getAddress(externalSelectedLocation.lat, externalSelectedLocation.lng);
+      console.log('🔍 GoogleMapComponent: 設置 selectedLocation 和 isLocationInfoOpen');
+    } else {
+      console.log('🔍 GoogleMapComponent: externalSelectedLocation 為 null，清除 LocationInfoWindow');
+      setSelectedLocation(null);
+      setIsLocationInfoOpen(false);
+      clearResult();
+    }
+  }, [externalSelectedLocation, getAddress, clearResult]);
 
   // 處理地圖點擊
   const handleMapClick = useCallback((ev: MapMouseEvent) => {
@@ -462,9 +506,10 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
 
   // 處理攝影機變更（使用節流避免過度觸發）
   const handleCameraChanged = useCallback((ev: MapCameraChangedEvent) => {
-    // 只在 zoom 變化時記錄，避免拖拽時的頻繁 log
-    if (ev.detail.zoom !== undefined) {
-      console.log('地圖縮放變更:', {
+    // 完全避免在 handleCameraChanged 中更新狀態，防止拖曳時的閃爍
+    // 只在需要時記錄日誌
+    if (ev.detail.zoom !== undefined && !isProgrammaticChange.current) {
+      console.log('用戶手動縮放變更:', {
         center: ev.detail.center,
         zoom: ev.detail.zoom
       });
@@ -492,8 +537,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
         }}
       >
         <Map
-          defaultZoom={zoom}
-          defaultCenter={center}
+          {...(isProgrammaticMode ? { zoom, center } : { defaultZoom: zoom, defaultCenter: center })}
           mapId="DEMO_MAP_ID"
           onClick={handleMapClick}
           onCameraChanged={handleCameraChanged}
@@ -525,14 +569,17 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
           
           {/* 顯示位置資訊窗口 */}
           {selectedLocation && isLocationInfoOpen && (
-            <LocationInfoWindow
-              position={selectedLocation}
-              address={address}
-              addressLoading={addressLoading}
-              addressError={addressError}
-              onClose={handleCloseLocationInfo}
-              onAddTreasureHere={handleAddTreasureAtLocation}
-            />
+            <>
+              {console.log('🔍 渲染 LocationInfoWindow:', { selectedLocation, isLocationInfoOpen, address })}
+              <LocationInfoWindow
+                position={selectedLocation}
+                address={address}
+                addressLoading={addressLoading}
+                addressError={addressError}
+                onClose={handleCloseLocationInfo}
+                onAddTreasureHere={handleAddTreasureAtLocation}
+              />
+            </>
           )}
         </Map>
       </APIProvider>
