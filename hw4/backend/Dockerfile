@@ -2,42 +2,30 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Copy dependency files first for caching
 COPY package*.json ./
 COPY prisma ./prisma/
-
-# Install all deps (dev + prod)
 RUN npm ci
 
-# Copy rest of code and build
 COPY . .
 RUN npx prisma generate && npm run build
-
-# Remove dev dependencies to keep only production deps
 RUN npm prune --production
-
 
 # === Runtime stage ===
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Install dumb-init
 RUN apk add --no-cache dumb-init
-
-# Create non-root user
 RUN addgroup -S nodejs && adduser -S nodejs -G nodejs
 
-# Copy only necessary files from builder
+# 帶入所有建置產物與相依
 COPY --from=builder /app /app
 
-# Adjust ownership
-RUN chown -R nodejs:nodejs /app
+# 直接複製產生物到 dist，確保 require('../generated/prisma') 能找到
+RUN mkdir -p /app/dist \
+ && cp -a /app/src/generated /app/dist/generated \
+ && chown -R nodejs:nodejs /app
 
-# Create symlink so dist code can find generated prisma
 USER nodejs
-#RUN ln -s /app/src/generated /app/generated
-RUN ln -sfn /app/src/generated /app/dist/generated
-
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
