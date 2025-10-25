@@ -1,61 +1,43 @@
-# Build stage
+# === Build stage ===
 FROM node:18-alpine AS builder
-
 WORKDIR /app
 
-# Copy package files
+# Copy dependency files first for caching
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
+# Install all deps (dev + prod)
 RUN npm ci
 
-# Copy application code
+# Copy rest of code and build
 COPY . .
+RUN npx prisma generate && npm run build
 
-# Generate Prisma client
-RUN npx prisma generate
+# Remove dev dependencies to keep only production deps
+RUN npm prune --production
 
-# Build TypeScript
-RUN npm run build
 
-# Production stage
+# === Runtime stage ===
 FROM node:18-alpine AS runner
-
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
+# Install dumb-init
 RUN apk add --no-cache dumb-init
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN addgroup -S nodejs && adduser -S nodejs -G nodejs
 
-# Copy package files
-COPY package*.json ./
-COPY prisma ./prisma/
+# Copy only necessary files from builder
+COPY --from=builder /app /app
 
-# Install production dependencies (including prisma for client generation)
-RUN npm ci --only=production && \
-    npm cache clean --force
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Copy built application from builder
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/src/generated ./src/generated
-
-# Switch to non-root user
+# Adjust ownership
+RUN chown -R nodejs:nodejs /app
 USER nodejs
 
-# Expose port
 EXPOSE 8080
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:8080/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD node -e "require('http').get('http://localhost:8080/health',(r)=>process.exit(r.statusCode===200?0:1))"
 
-# Start application
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/server.js"]
