@@ -300,7 +300,9 @@ npx prisma migrate reset
 
 ### 部署紀錄
 使用到的 GCP 服務：
-- Google Auth Platform ()
+- Google Auth Platform (設定 Client ID 和 redirect URI，完成 OAuth 登入功能)
 - Cloud SQL (在本地 docker 中執行 ```pg_dump -h localhost -p 5432 -U treasure_user -d treasure_map -n public > dump.sql``` 並 docker cp，將 schema 和 初始資料上傳至 Cloud SQL)
 - Cloud Build
-- Cloud Run
+- Cloud Run（設定好之後 connect to repo 他會自動創建 cloud build 的 trigger；記得在 Edit & deploy new devision 裡面設定環境變數；secret 的部分他可以直接引用 secret manager 設定過的 secret。最後非常重要的是，記得去 IAM 權限管理的地方設定這個 cloud run service account 擁有的權限（包含其他有使用到的所有服務），他才能順利存取像 secret、cloud SQL）
+- Secret Manager（用安全的方式儲存環境變數）
+- Google Maps API（Geolocation、Places API）

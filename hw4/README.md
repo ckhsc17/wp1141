@@ -9,10 +9,13 @@ Treasure 有兩種意思，一種是名詞代表寶藏，一種是動詞代表�
 
 By AI: 一個基於 React + Next.js + Express + PostgreSQL 的全端地圖應用，讓用戶可以在地圖上創建、分享和探索各種「寶藏」。
 
+線上版直接玩：https://treasure-map-frontend.vercel.app/
+後端 Swagger api 參考：https://treasure-map-backend-165328283115.asia-east1.run.app/api-docs/#/
+
 
 ## 📋 功能特色
 
-- 🗺️ **互動式地圖**：基於 Google Maps API 的地圖介面，支援任意座標的點擊進行創建
+- 🗺️ **互動式地圖**：基於 Google Maps API 的地圖介面，支援任意座標的點擊進行創建（Geolocation + Reverse Geocoding + Places API）
 - 📍 **寶藏管理**：創建、編輯、刪除和瀏覽項目，並且可以選擇「寶藏」、「日常碎片」、「膠囊」等模式；支援文字、圖片、聲音等格式，非格式化資料使用 cloudinary 管理
 - ❤️ **社交功能**：按讚、收藏、留言系統
 - 👤 **用戶系統**：Google OAuth 登入、個人資料管理
