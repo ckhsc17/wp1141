@@ -18,6 +18,7 @@ import uploadRoutes from './routes/uploads';
 import mediaRoutes from './routes/media';
 
 const app = express();
+app.set('trust proxy', 1); // Trust cloud run proxy
 
 // ==================== Security Middleware ====================
 
