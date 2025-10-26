@@ -43,8 +43,13 @@ cp .env.example .env
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_REFRESH_SECRET=your-super-secret-refresh-jwt-key-change-this-in-production
 
-# Google OAuth (需要申請)
-GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+# Google OAuth (For developers and reviewers only)
+GOOGLE_CLIENT_ID=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
+
+
+# Cloudinary (For developers and reviewers only)
+CLOUDINARY_API_KEY=169271565554128 #See Backend README
+CLOUDINARY_API_SECRET=2Yjvs1YeF2OSSNnogI8AEqPFRJM
 ```
 
 ### 3. 啟動資料庫
@@ -292,3 +297,10 @@ npx prisma migrate reset
 ## 📞 支援
 
 如有問題請聯繫開發團隊或建立 Issue。
+
+### 部署紀錄
+使用到的 GCP 服務：
+- Google Auth Platform ()
+- Cloud SQL (在本地 docker 中執行 ```pg_dump -h localhost -p 5432 -U treasure_user -d treasure_map -n public > dump.sql``` 並 docker cp，將 schema 和 初始資料上傳至 Cloud SQL)
+- Cloud Build
+- Cloud Run
