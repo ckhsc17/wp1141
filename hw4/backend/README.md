@@ -39,6 +39,7 @@ cp .env.example .env
 
 ```bash
 # 重要：請更改這些密鑰
+可以用 ```openssl rand -base64 32``` 產生
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_REFRESH_SECRET=your-super-secret-refresh-jwt-key-change-this-in-production
 
