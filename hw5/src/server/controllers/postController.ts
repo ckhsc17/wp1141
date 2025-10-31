@@ -1,0 +1,117 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { postService } from '../services/postService'
+import { createPostSchema, updatePostSchema, paginationSchema } from '@/schemas/post.schema'
+
+export class PostController {
+  async getPosts(request: NextRequest) {
+    try {
+      const searchParams = request.nextUrl.searchParams
+      const pagination = paginationSchema.parse({
+        page: searchParams.get('page'),
+        limit: searchParams.get('limit'),
+      })
+
+      const result = await postService.getPosts(pagination)
+      return NextResponse.json(result)
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 400 }
+      )
+    }
+  }
+
+  async createPost(request: NextRequest, userId: string) {
+    try {
+      const body = await request.json()
+      const data = createPostSchema.parse(body)
+
+      const post = await postService.createPost(data, userId)
+      return NextResponse.json({ post }, { status: 201 })
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('validation')) {
+        return NextResponse.json({ error: error.message }, { status: 400 })
+      }
+      return NextResponse.json(
+        { error: 'Failed to create post' },
+        { status: 500 }
+      )
+    }
+  }
+
+  async getPost(postId: string) {
+    try {
+      const post = await postService.getPostById(postId)
+      return NextResponse.json({ post })
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Post not found' },
+        { status: 404 }
+      )
+    }
+  }
+
+  async updatePost(postId: string, request: NextRequest, userId: string) {
+    try {
+      const body = await request.json()
+      const data = updatePostSchema.parse(body)
+
+      const post = await postService.updatePost(postId, data, userId)
+      return NextResponse.json({ post })
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'Unauthorized') {
+          return NextResponse.json({ error: error.message }, { status: 403 })
+        }
+        if (error.message === 'Post not found') {
+          return NextResponse.json({ error: error.message }, { status: 404 })
+        }
+      }
+      return NextResponse.json(
+        { error: 'Failed to update post' },
+        { status: 500 }
+      )
+    }
+  }
+
+  async deletePost(postId: string, userId: string) {
+    try {
+      await postService.deletePost(postId, userId)
+      return NextResponse.json({ success: true })
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'Unauthorized') {
+          return NextResponse.json({ error: error.message }, { status: 403 })
+        }
+        if (error.message === 'Post not found') {
+          return NextResponse.json({ error: error.message }, { status: 404 })
+        }
+      }
+      return NextResponse.json(
+        { error: 'Failed to delete post' },
+        { status: 500 }
+      )
+    }
+  }
+
+  async getUserPosts(userId: string, request: NextRequest) {
+    try {
+      const searchParams = request.nextUrl.searchParams
+      const pagination = paginationSchema.parse({
+        page: searchParams.get('page'),
+        limit: searchParams.get('limit'),
+      })
+
+      const result = await postService.getUserPosts(userId, pagination)
+      return NextResponse.json(result)
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Failed to get user posts' },
+        { status: 500 }
+      )
+    }
+  }
+}
+
+export const postController = new PostController()
+
