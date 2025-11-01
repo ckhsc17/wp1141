@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Container, Box, Typography, CircularProgress, Alert, Paper } from '@mui/material'
 import AppBar from '@/components/AppBar'
 import PostForm from '@/components/PostForm'
@@ -9,6 +11,7 @@ import { usePosts, useToggleLike } from '@/hooks'
 import { useSession } from 'next-auth/react'
 
 export default function Home() {
+  const router = useRouter()
   const { data: session, status } = useSession()
   const { data: posts, isLoading, error } = usePosts()
   const toggleLike = useToggleLike()
@@ -16,6 +19,13 @@ export default function Home() {
   const handleLike = (postId: string) => {
     toggleLike.mutate(postId)
   }
+
+  // 檢查是否已登入但沒有 userId，需要設定
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user && !(session.user as any).userId) {
+      router.push('/register/setup')
+    }
+  }, [status, session, router])
 
   // 如果未登入，顯示歡迎頁面
   if (status === 'unauthenticated') {
@@ -36,8 +46,11 @@ export default function Home() {
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
               歡迎來到 Echoo
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-              請選擇登入方式以開始使用
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+              使用 Google、GitHub 或 Facebook 註冊新帳號
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+              或登入您現有的帳號
             </Typography>
             <AuthButtons />
           </Paper>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
@@ -12,7 +12,9 @@ import {
   Box,
   Alert,
   CircularProgress,
+  IconButton,
 } from '@mui/material'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -29,19 +31,60 @@ const setupUserIdSchema = z.object({
 
 type SetupUserIdInput = z.infer<typeof setupUserIdSchema>
 
+// 產生建議的 UserID
+function generateSuggestedUserId(email: string | null | undefined): string {
+  if (!email) {
+    return `user_${Math.random().toString(36).substr(2, 8)}`
+  }
+  
+  // 取 email 的前綴（@ 前面的部分），移除非英數字
+  const prefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').substring(0, 10)
+  
+  // 產生 5 位數亂碼
+  const randomChars = Math.random().toString(36).substr(2, 5)
+  
+  // 組合並確保總長度不超過 20
+  let userId = `${prefix}_${randomChars}`
+  if (userId.length > 20) {
+    userId = userId.substring(0, 20)
+  }
+  
+  // 確保至少 4 個字元
+  if (userId.length < 4) {
+    userId = userId + Math.random().toString(36).substr(2, 4 - userId.length)
+  }
+  
+  return userId
+}
+
 export default function SetupUserIdPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [suggestedUserId, setSuggestedUserId] = useState('')
+  const [regenerateCount, setRegenerateCount] = useState(0)
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<SetupUserIdInput>({
     resolver: zodResolver(setupUserIdSchema),
   })
+
+  const watchedUserId = watch('userId')
+
+  // 初始化建議的 UserID
+  useEffect(() => {
+    if (session?.user?.email) {
+      const suggested = generateSuggestedUserId(session.user.email)
+      setSuggestedUserId(suggested)
+      setValue('userId', suggested)
+    }
+  }, [session, setValue, regenerateCount])
 
   // 如果未登入，重定向到首頁
   if (status === 'loading') {
@@ -68,6 +111,10 @@ export default function SetupUserIdPage() {
     return null
   }
 
+  const handleRegenerate = () => {
+    setRegenerateCount(prev => prev + 1)
+  }
+
   const onSubmit = async (data: SetupUserIdInput) => {
     try {
       setIsChecking(true)
@@ -84,8 +131,10 @@ export default function SetupUserIdPage() {
       // 設定 userID
       await axios.post('/api/users/setup', { userId: data.userId })
 
-      // 重新整理 session
-      router.refresh()
+      // 更新 session
+      await update()
+      
+      // 重新導向到首頁
       router.push('/')
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -124,20 +173,34 @@ export default function SetupUserIdPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            <TextField
-              fullWidth
-              label="UserID"
-              placeholder="例如: john_doe_123"
-              {...register('userId')}
-              error={!!errors.userId}
-              helperText={errors.userId?.message}
-              sx={{ mb: 3 }}
-              disabled={isSubmitting || isChecking}
-              inputProps={{
-                maxLength: 20,
-                pattern: '[a-zA-Z0-9_]+',
-              }}
-            />
+            <Box sx={{ position: 'relative', mb: 3 }}>
+              <TextField
+                fullWidth
+                label="UserID"
+                placeholder="例如: john_doe_123"
+                {...register('userId')}
+                error={!!errors.userId}
+                helperText={errors.userId?.message}
+                disabled={isSubmitting || isChecking}
+                inputProps={{
+                  maxLength: 20,
+                  pattern: '[a-zA-Z0-9_]+',
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <IconButton
+                      onClick={handleRegenerate}
+                      edge="end"
+                      disabled={isSubmitting || isChecking}
+                      title="重新產生 UserID"
+                      sx={{ mr: -1 }}
+                    >
+                      <RefreshIcon />
+                    </IconButton>
+                  ),
+                }}
+              />
+            </Box>
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="caption" color="text.secondary">

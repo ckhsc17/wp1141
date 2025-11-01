@@ -12,9 +12,9 @@ datasource db {
 
 model User {
   id            String    @id @default(cuid())
-  userId        String?   @unique // 用戶自訂 ID (4-20 字元，英數字與底線)，可選
+  userId        String?   @unique // 用戶自訂 ID (4-20 字元，英數字與底線)，首次登入時為 null
   name          String
-  email         String?   @unique
+  email         String?   // 移除 unique，允許相同 email 用不同 provider
   emailVerified DateTime?
   image         String?
   bio           String?   @default("")

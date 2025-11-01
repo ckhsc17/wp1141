@@ -2,11 +2,11 @@ import { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
 import FacebookProvider from "next-auth/providers/facebook"
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
+import { CustomPrismaAdapter } from "./custom-adapter"
 import { prisma } from "./prisma"
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: CustomPrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -26,9 +26,9 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
-    signIn: '/login',
-    signOut: '/login',
-    error: '/login',
+    signIn: '/',
+    signOut: '/',
+    error: '/',
     newUser: '/register/setup',
   },
   callbacks: {

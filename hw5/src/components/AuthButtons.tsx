@@ -27,7 +27,7 @@ export default function AuthButtons() {
           },
         }}
       >
-        使用 Google 登入
+        使用 Google 繼續
       </Button>
 
       <Button
@@ -44,7 +44,7 @@ export default function AuthButtons() {
           },
         }}
       >
-        使用 GitHub 登入
+        使用 GitHub 繼續
       </Button>
 
       <Button
@@ -61,7 +61,7 @@ export default function AuthButtons() {
           },
         }}
       >
-        使用 Facebook 登入
+        使用 Facebook 繼續
       </Button>
 
       <Divider sx={{ my: 2 }} />
