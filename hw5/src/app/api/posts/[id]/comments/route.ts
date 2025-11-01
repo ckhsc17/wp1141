@@ -5,14 +5,15 @@ import { commentController } from '@/server/controllers/commentController'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  return commentController.getComments(params.id)
+  const { id } = await params
+  return commentController.getComments(id)
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   
@@ -20,6 +21,7 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  return commentController.createComment(params.id, request, session.user.id)
+  const { id } = await params
+  return commentController.createComment(id, request, session.user.id)
 }
 

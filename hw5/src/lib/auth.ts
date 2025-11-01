@@ -22,7 +22,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: "database",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
@@ -32,15 +32,15 @@ export const authOptions: NextAuthOptions = {
     newUser: '/register/setup',
   },
   callbacks: {
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        (session.user as any).id = token.sub
+    async session({ session, user }) {
+      if (session.user && user) {
+        (session.user as any).id = user.id
         // 取得 userID
-        const user = await prisma.user.findUnique({
-          where: { id: token.sub },
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
           select: { userId: true },
         })
-        ;(session.user as any).userId = user?.userId
+        ;(session.user as any).userId = dbUser?.userId
       }
       return session
     },

@@ -5,14 +5,15 @@ import { postController } from '@/server/controllers/postController'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  return postController.getPost(params.id)
+  const { id } = await params
+  return postController.getPost(id)
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   
@@ -20,12 +21,13 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  return postController.updatePost(params.id, request, session.user.id)
+  const { id } = await params
+  return postController.updatePost(id, request, session.user.id)
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   
@@ -33,6 +35,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  return postController.deletePost(params.id, session.user.id)
+  const { id } = await params
+  return postController.deletePost(id, session.user.id)
 }
 

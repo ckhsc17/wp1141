@@ -12,7 +12,7 @@ datasource db {
 
 model User {
   id            String    @id @default(cuid())
-  userId        String    @unique // 用戶自訂 ID (4-20 字元，英數字與底線)
+  userId        String?   @unique // 用戶自訂 ID (4-20 字元，英數字與底線)，可選
   name          String
   email         String?   @unique
   emailVerified DateTime?

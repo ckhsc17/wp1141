@@ -5,7 +5,7 @@ import { commentController } from '@/server/controllers/commentController'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   
@@ -13,6 +13,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  return commentController.deleteComment(params.id, session.user.id)
+  const { id } = await params
+  return commentController.deleteComment(id, session.user.id)
 }
 

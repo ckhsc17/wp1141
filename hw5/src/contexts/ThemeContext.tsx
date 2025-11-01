@@ -51,8 +51,11 @@ const lightTheme: Theme = createTheme({
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<ThemeMode>('dark')
+  const [mounted, setMounted] = useState(false)
 
+  // 只在 client 端掛載後讀取 localStorage
   useEffect(() => {
+    setMounted(true)
     // 從 localStorage 讀取主題設定
     const savedMode = localStorage.getItem('theme') as ThemeMode
     if (savedMode && (savedMode === 'light' || savedMode === 'dark')) {
@@ -61,9 +64,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    if (!mounted) return
+    
     // 儲存主題設定到 localStorage
     localStorage.setItem('theme', mode)
-    
+  }, [mode, mounted])
+  
+  useEffect(() => {
     // 同步 Tailwind 的 dark mode
     if (mode === 'dark') {
       document.documentElement.classList.add('dark')

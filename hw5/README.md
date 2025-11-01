@@ -144,6 +144,8 @@ npm run dev
 
 訪問 http://localhost:3000
 
+**API 文件**: 訪問 http://localhost:3000/api-docs 查看 Swagger UI
+
 ## 開發指令
 
 ```bash
@@ -240,6 +242,7 @@ npm run lint            # 執行 ESLint
 ✅ 分層架構設計
 ✅ TypeScript 類型安全
 ✅ Responsive 設計
+✅ Swagger UI API 文件
 
 ## 待實現功能
 

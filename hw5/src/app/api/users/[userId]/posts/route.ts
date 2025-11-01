@@ -3,8 +3,9 @@ import { postController } from '@/server/controllers/postController'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
-  return postController.getUserPosts(params.userId, request)
+  const { userId } = await params
+  return postController.getUserPosts(userId, request)
 }
 

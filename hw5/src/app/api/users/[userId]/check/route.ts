@@ -6,6 +6,6 @@ export async function GET(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   const { userId } = await params
-  return userController.getUser(userId)
+  return userController.checkUserId(userId)
 }
 
