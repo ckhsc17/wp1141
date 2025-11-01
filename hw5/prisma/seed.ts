@@ -1,123 +1,118 @@
 import { PrismaClient } from '@prisma/client'
+import { faker } from '@faker-js/faker'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('Seeding database...')
 
-  // 建立測試用戶
-  const user1 = await prisma.user.upsert({
-    where: { userId: 'alice_dev' },
-    update: {},
-    create: {
-      userId: 'alice_dev',
-      name: 'Alice Developer',
-      email: 'alice@example.com',
-      bio: 'Full-stack developer passionate about building great products',
-    },
-  })
+  // 清空現有資料
+  await prisma.comment.deleteMany()
+  await prisma.like.deleteMany()
+  await prisma.post.deleteMany()
+  await prisma.account.deleteMany()
+  await prisma.session.deleteMany()
+  await prisma.verificationToken.deleteMany()
+  await prisma.user.deleteMany()
 
-  const user2 = await prisma.user.upsert({
-    where: { userId: 'bob_designer' },
-    update: {},
-    create: {
-      userId: 'bob_designer',
-      name: 'Bob Designer',
-      email: 'bob@example.com',
-      bio: 'UI/UX Designer & creative enthusiast',
-    },
-  })
+  console.log('Cleared existing data')
 
-  const user3 = await prisma.user.upsert({
-    where: { userId: 'charlie_tech' },
-    update: {},
-    create: {
-      userId: 'charlie_tech',
-      name: 'Charlie Tech',
-      email: 'charlie@example.com',
-      bio: 'Tech blogger and open source contributor',
-    },
-  })
-
-  console.log('Created users:', { user1: user1.userId, user2: user2.userId, user3: user3.userId })
-
-  // 建立測試貼文
-  const posts = await Promise.all([
-    prisma.post.create({
+  // 建立 20 個測試用戶
+  const users = []
+  for (let i = 0; i < 20; i++) {
+    const firstName = faker.person.firstName()
+    const lastName = faker.person.lastName()
+    const userId = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${faker.string.alphanumeric(4)}`
+    
+    const user = await prisma.user.create({
       data: {
-        content: 'Just shipped a new feature! 🚀 Excited to see how users will interact with it. #buildinpublic',
-        authorId: user1.id,
+        userId,
+        name: `${firstName} ${lastName}`,
+        email: faker.internet.email({ firstName, lastName }),
+        bio: faker.person.bio(),
+        image: faker.image.avatar(),
       },
-    }),
-    prisma.post.create({
-      data: {
-        content: 'Beautiful sunset at the office today. Sometimes you need to step back and appreciate the moment. 🌅',
-        authorId: user2.id,
-      },
-    }),
-    prisma.post.create({
-      data: {
-        content: 'Just read an amazing blog post about React 19 features. The future of web development looks bright! 📚',
-        authorId: user3.id,
-      },
-    }),
-    prisma.post.create({
-      data: {
-        content: 'Coffee and code. The perfect morning routine. ☕ What are you working on today?',
-        authorId: user1.id,
-      },
-    }),
-    prisma.post.create({
-      data: {
-        content: 'Design isn\'t just what it looks like - design is how it works. - Steve Jobs',
-        authorId: user2.id,
-      },
-    }),
-  ])
+    })
+    users.push(user)
+  }
 
-  console.log(`Created ${posts.length} posts`)
+  console.log(`Created ${users.length} users`)
 
-  // 建立一些按讚
+  // 為每個用戶建立 3-8 則貼文
+  const allPosts = []
+  for (const user of users) {
+    const postCount = faker.number.int({ min: 3, max: 8 })
+    for (let i = 0; i < postCount; i++) {
+      const post = await prisma.post.create({
+        data: {
+          content: faker.lorem.sentence({ min: 10, max: 50 }),
+          authorId: user.id,
+          createdAt: faker.date.recent({ days: 30 }),
+        },
+      })
+      allPosts.push(post)
+    }
+  }
+
+  console.log(`Created ${allPosts.length} posts`)
+
+  // 隨機按讚：每個貼文有 30-70% 的用戶按讚
+  const likes = []
+  for (const post of allPosts) {
+    const numLikes = faker.number.int({ min: Math.floor(users.length * 0.3), max: Math.floor(users.length * 0.7) })
+    const shuffledUsers = faker.helpers.shuffle([...users])
+    const usersToLike = shuffledUsers.slice(0, numLikes)
+    
+    for (const user of usersToLike) {
+      // 不會按讚自己的貼文
+      if (user.id !== post.authorId) {
+        likes.push({
+          postId: post.id,
+          userId: user.id,
+          createdAt: faker.date.between({ from: post.createdAt, to: new Date() }),
+        })
+      }
+    }
+  }
+
   await prisma.like.createMany({
-    data: [
-      { postId: posts[0].id, userId: user2.id },
-      { postId: posts[0].id, userId: user3.id },
-      { postId: posts[1].id, userId: user1.id },
-      { postId: posts[1].id, userId: user3.id },
-      { postId: posts[2].id, userId: user1.id },
-      { postId: posts[2].id, userId: user2.id },
-    ],
+    data: likes,
     skipDuplicates: true,
   })
 
-  console.log('Created likes')
+  console.log(`Created ${likes.length} likes`)
 
-  // 建立一些留言
-  await Promise.all([
-    prisma.comment.create({
-      data: {
-        content: 'Congratulations! Can\'t wait to try it out.',
-        postId: posts[0].id,
-        authorId: user2.id,
-      },
-    }),
-    prisma.comment.create({
-      data: {
-        content: 'Looks amazing! Great work! 🔥',
-        postId: posts[0].id,
-        authorId: user3.id,
-      },
-    }),
-    prisma.comment.create({
-      data: {
-        content: 'Love the design!',
-        postId: posts[1].id,
-        authorId: user1.id,
-      },
-    }),
-  ])
+  // 隨機留言：30-50% 的貼文有留言
+  const postsWithComments = faker.helpers.arrayElements(allPosts, {
+    min: Math.floor(allPosts.length * 0.3),
+    max: Math.floor(allPosts.length * 0.5),
+  })
 
-  console.log('Created comments')
+  const comments = []
+  for (const post of postsWithComments) {
+    const numComments = faker.number.int({ min: 1, max: 5 })
+    const shuffledUsers = faker.helpers.shuffle([...users])
+    
+    for (let i = 0; i < numComments; i++) {
+      const user = shuffledUsers[i]
+      // 不會留言在自己的貼文
+      if (user.id !== post.authorId) {
+        comments.push({
+          content: faker.lorem.sentence({ min: 5, max: 30 }),
+          postId: post.id,
+          authorId: user.id,
+          createdAt: faker.date.between({ from: post.createdAt, to: new Date() }),
+        })
+      }
+    }
+  }
+
+  await prisma.comment.createMany({
+    data: comments,
+    skipDuplicates: true,
+  })
+
+  console.log(`Created ${comments.length} comments`)
   console.log('Database seeded successfully!')
 }
 
