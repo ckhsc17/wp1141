@@ -29,6 +29,8 @@ model User {
   drafts        Draft[]
   following     Follow[]  @relation("UserFollowing")
   followers     Follow[]  @relation("UserFollowers")
+  mentions      Mention[] @relation("UserMentions")
+  mentionedIn   Mention[] @relation("UserMentioned")
   
   @@index([userId])
   @@index([email])
@@ -83,6 +85,7 @@ model Post {
   author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likes    Like[]
   comments Comment[]
+  mentions Mention[]
   
   @@index([authorId])
   @@index([createdAt])
@@ -115,6 +118,7 @@ model Comment {
   author  User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   parent  Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies Comment[] @relation("CommentReplies")
+  mentions Mention[]
   
   @@index([postId])
   @@index([authorId])
@@ -145,4 +149,24 @@ model Follow {
   @@unique([followerId, followingId])
   @@index([followerId])
   @@index([followingId])
+}
+
+model Mention {
+  id           String   @id @default(cuid())
+  postId       String?
+  commentId    String?
+  mentionerId  String
+  mentionedId  String
+  createdAt    DateTime @default(now())
+  read         Boolean  @default(false)
+  
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentioner User     @relation("UserMentions", fields: [mentionerId], references: [id], onDelete: Cascade)
+  mentioned User     @relation("UserMentioned", fields: [mentionedId], references: [id], onDelete: Cascade)
+  
+  @@index([mentionerId])
+  @@index([mentionedId])
+  @@index([postId])
+  @@index([commentId])
 }

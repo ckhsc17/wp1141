@@ -52,6 +52,20 @@ export interface Comment {
   }
 }
 
+export interface Mention {
+  id: string
+  postId?: string | null
+  commentId?: string | null
+  mentionerId: string
+  mentionedId: string
+  createdAt: Date
+  read: boolean
+  mentioner?: User
+  mentioned?: User
+  post?: Post
+  comment?: Comment
+}
+
 export interface ExtendedSession extends Session {
   user: {
     id: string

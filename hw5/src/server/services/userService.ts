@@ -28,6 +28,14 @@ export class UserService {
     const isTaken = await userRepository.isUserIdTaken(userId)
     return { available: !isTaken }
   }
+
+  async searchUsers(query: string, limit: number = 10) {
+    if (!query || query.trim().length === 0) {
+      return []
+    }
+
+    return userRepository.searchUsers(query, limit)
+  }
 }
 
 export const userService = new UserService()

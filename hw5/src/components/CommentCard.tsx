@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useDeleteComment } from '@/hooks'
+import MentionText from './MentionText'
 
 interface CommentCardProps {
   comment: Comment
@@ -92,7 +93,7 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
             </Box>
             
             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 2 }}>
-              {comment.content}
+              <MentionText content={comment.content} />
             </Typography>
             
             <Box display="flex" alignItems="center" gap={4}>

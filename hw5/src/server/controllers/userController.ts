@@ -59,6 +59,22 @@ export class UserController {
       )
     }
   }
+
+  async searchUsers(request: NextRequest) {
+    try {
+      const { searchParams } = new URL(request.url)
+      const query = searchParams.get('q') || ''
+      const limit = parseInt(searchParams.get('limit') || '10')
+
+      const users = await userService.searchUsers(query, limit)
+      return NextResponse.json({ users })
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Failed to search users' },
+        { status: 500 }
+      )
+    }
+  }
 }
 
 export const userController = new UserController()

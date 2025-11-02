@@ -1,12 +1,27 @@
 import { postRepository } from '../repositories/postRepository'
 import { CreatePostInput, UpdatePostInput, PaginationInput } from '@/schemas/post.schema'
+import { mentionService } from './mentionService'
 
 export class PostService {
   async createPost(data: CreatePostInput, authorId: string) {
-    return postRepository.create({
+    const post = await postRepository.create({
       content: data.content,
       authorId,
     })
+
+    // Create mentions if any
+    try {
+      await mentionService.createMentions({
+        content: data.content,
+        mentionerId: authorId,
+        postId: post.id,
+      })
+    } catch (error) {
+      console.error('Failed to create mentions for post:', error)
+      // Don't throw - post creation should succeed even if mentions fail
+    }
+
+    return post
   }
 
   async getPosts(pagination: PaginationInput, userId?: string) {

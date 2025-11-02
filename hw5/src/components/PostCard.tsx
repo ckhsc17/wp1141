@@ -7,6 +7,7 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import { Post } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
+import MentionText from './MentionText'
 
 interface PostCardProps {
   post: Post
@@ -64,7 +65,7 @@ export default function PostCard({ post, onLike, isLiked = false }: PostCardProp
             </Box>
             
             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 2 }}>
-              {post.content}
+              <MentionText content={post.content} />
             </Typography>
             
             <Box display="flex" gap={4}>

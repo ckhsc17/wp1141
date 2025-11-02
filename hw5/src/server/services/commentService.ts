@@ -1,6 +1,7 @@
 import { commentRepository } from '../repositories/commentRepository'
 import { postRepository } from '../repositories/postRepository'
 import { CreateCommentInput } from '@/schemas/comment.schema'
+import { mentionService } from './mentionService'
 
 export class CommentService {
   async createComment(
@@ -27,12 +28,26 @@ export class CommentService {
       }
     }
 
-    return commentRepository.create({
+    const comment = await commentRepository.create({
       content: data.content,
       postId,
       authorId,
       parentId: parentId || null,
     })
+
+    // Create mentions if any
+    try {
+      await mentionService.createMentions({
+        content: data.content,
+        mentionerId: authorId,
+        commentId: comment.id,
+      })
+    } catch (error) {
+      console.error('Failed to create mentions for comment:', error)
+      // Don't throw - comment creation should succeed even if mentions fail
+    }
+
+    return comment
   }
 
   async getCommentsByPost(postId: string) {
@@ -67,12 +82,26 @@ export class CommentService {
     }
 
     // 使用父留言的 postId
-    return commentRepository.create({
+    const comment = await commentRepository.create({
       content: data.content,
       postId: parentComment.postId,
       authorId,
       parentId: parentCommentId,
     })
+
+    // Create mentions if any
+    try {
+      await mentionService.createMentions({
+        content: data.content,
+        mentionerId: authorId,
+        commentId: comment.id,
+      })
+    } catch (error) {
+      console.error('Failed to create mentions for reply:', error)
+      // Don't throw - reply creation should succeed even if mentions fail
+    }
+
+    return comment
   }
 
   async deleteComment(id: string, userId: string) {

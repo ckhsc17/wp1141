@@ -50,6 +50,24 @@ export class UserRepository {
     })
     return !!user
   }
+
+  async searchUsers(query: string, limit: number = 10) {
+    return prisma.user.findMany({
+      where: {
+        OR: [
+          { userId: { contains: query, mode: 'insensitive' } },
+          { name: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      select: {
+        id: true,
+        userId: true,
+        name: true,
+        image: true,
+      },
+      take: limit,
+    })
+  }
 }
 
 export const userRepository = new UserRepository()
