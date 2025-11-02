@@ -36,48 +36,12 @@ export default function AppBar() {
         borderColor: 'divider'
       }}
     >
-      <Toolbar>
-        <Link href="/" passHref>
-          <Typography 
-            variant="h6" 
-            component="div" 
-            sx={{ 
-              flexGrow: 0,
-              fontWeight: 700,
-              cursor: 'pointer',
-              textDecoration: 'none',
-              color: 'text.primary'
-            }}
-          >
-            Twitter Clone
-          </Typography>
-        </Link>
-        
-        <Box sx={{ flexGrow: 1 }} />
-        
-        <IconButton onClick={toggleTheme} sx={{ mr: 2 }}>
+      <Toolbar sx={{ justifyContent: 'flex-end' }}>
+        <IconButton onClick={toggleTheme}>
           {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
         </IconButton>
         
-        {session ? (
-          <>
-            <IconButton onClick={handleMenuOpen} sx={{ p: 0 }}>
-              <Avatar src={session.user?.image || ''} sx={{ width: 32, height: 32 }}>
-                {session.user?.name?.charAt(0).toUpperCase()}
-              </Avatar>
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-            >
-              <MenuItem onClick={() => { handleMenuClose(); window.location.href = `/profile/${session.user?.userId}` }}>
-                Profile
-              </MenuItem>
-              <MenuItem onClick={handleSignOut}>Sign out</MenuItem>
-            </Menu>
-          </>
-        ) : (
+        {!session && (
           <Button color="primary" variant="contained" onClick={() => signIn()}>
             Sign in
           </Button>

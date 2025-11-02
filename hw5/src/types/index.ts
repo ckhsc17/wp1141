@@ -9,6 +9,11 @@ export interface User {
   bio?: string | null
   createdAt?: Date
   updatedAt?: Date
+  _count?: {
+    posts: number
+    likes: number
+    comments: number
+  }
 }
 
 export interface Post {

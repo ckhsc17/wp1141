@@ -8,7 +8,6 @@ import SendIcon from '@mui/icons-material/Send'
 import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
-import AppBar from '@/components/AppBar'
 import PostCard from '@/components/PostCard'
 import CommentCard from '@/components/CommentCard'
 import { useComments, useReplies, useToggleLike, useCreateComment } from '@/hooks'
@@ -90,34 +89,26 @@ export default function PostDetailPage() {
 
   if (isPostLoading) {
     return (
-      <>
-        <AppBar />
-        <Container maxWidth="sm" sx={{ py: 8 }}>
-          <Box display="flex" justifyContent="center">
-            <CircularProgress />
-          </Box>
-        </Container>
-      </>
+      <Container maxWidth="sm" sx={{ py: 8 }}>
+        <Box display="flex" justifyContent="center">
+          <CircularProgress />
+        </Box>
+      </Container>
     )
   }
 
   if (postError || !post) {
     return (
-      <>
-        <AppBar />
-        <Container maxWidth="sm" sx={{ py: 8 }}>
-          <Alert severity="error">
-            Failed to load post
-          </Alert>
-        </Container>
-      </>
+      <Container maxWidth="sm" sx={{ py: 8 }}>
+        <Alert severity="error">
+          Failed to load post
+        </Alert>
+      </Container>
     )
   }
 
   return (
-    <>
-      <AppBar />
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+    <Container maxWidth="sm" sx={{ py: 2 }}>
         <IconButton onClick={handleBack} sx={{ mb: 1 }}>
           <ArrowBackIcon />
         </IconButton>
@@ -240,7 +231,6 @@ export default function PostDetailPage() {
           </>
         )}
       </Container>
-    </>
   )
 }
 

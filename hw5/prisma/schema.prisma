@@ -26,6 +26,7 @@ model User {
   posts         Post[]
   likes         Like[]
   comments      Comment[]
+  drafts        Draft[]
   
   @@index([userId])
   @@index([email])
@@ -116,4 +117,16 @@ model Comment {
   @@index([postId])
   @@index([authorId])
   @@index([parentId])
+}
+
+model Draft {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
 }

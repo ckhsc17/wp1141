@@ -19,7 +19,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import axios from 'axios'
-import AppBar from '@/components/AppBar'
 
 const setupUserIdSchema = z.object({
   userId: z
@@ -89,14 +88,11 @@ export default function SetupUserIdPage() {
   // 如果未登入，重定向到首頁
   if (status === 'loading') {
     return (
-      <>
-        <AppBar />
-        <Container maxWidth="sm" sx={{ py: 8 }}>
-          <Box display="flex" justifyContent="center">
-            <CircularProgress />
-          </Box>
-        </Container>
-      </>
+      <Container maxWidth="sm" sx={{ py: 8 }}>
+        <Box display="flex" justifyContent="center">
+          <CircularProgress />
+        </Box>
+      </Container>
     )
   }
 
@@ -147,93 +143,90 @@ export default function SetupUserIdPage() {
   }
 
   return (
-    <>
-      <AppBar />
-      <Container maxWidth="sm" sx={{ py: 8 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            backgroundColor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, mb: 1 }}>
-            設定您的 UserID
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-            UserID 是您的唯一識別碼，其他人可以使用 @your_userid 找到您
-          </Typography>
+    <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          backgroundColor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, mb: 1 }}>
+          設定您的 UserID
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+          UserID 是您的唯一識別碼，其他人可以使用 @your_userid 找到您
+        </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
 
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Box sx={{ position: 'relative', mb: 3 }}>
-              <TextField
-                fullWidth
-                label="UserID"
-                placeholder="例如: john_doe_123"
-                {...register('userId')}
-                error={!!errors.userId}
-                helperText={errors.userId?.message}
-                disabled={isSubmitting || isChecking}
-                inputProps={{
-                  maxLength: 20,
-                  pattern: '[a-zA-Z0-9_]+',
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <IconButton
-                      onClick={handleRegenerate}
-                      edge="end"
-                      disabled={isSubmitting || isChecking}
-                      title="重新產生 UserID"
-                      sx={{ mr: -1 }}
-                    >
-                      <RefreshIcon />
-                    </IconButton>
-                  ),
-                }}
-              />
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                規則：
-              </Typography>
-              <Typography variant="caption" color="text.secondary" component="div">
-                • 4-20 個字元
-              </Typography>
-              <Typography variant="caption" color="text.secondary" component="div">
-                • 只能包含英文字母、數字與底線
-              </Typography>
-              <Typography variant="caption" color="text.secondary" component="div">
-                • UserID 一旦設定後無法修改
-              </Typography>
-            </Box>
-
-            <Button
-              type="submit"
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Box sx={{ position: 'relative', mb: 3 }}>
+            <TextField
               fullWidth
-              variant="contained"
-              size="large"
+              label="UserID"
+              placeholder="例如: john_doe_123"
+              {...register('userId')}
+              error={!!errors.userId}
+              helperText={errors.userId?.message}
               disabled={isSubmitting || isChecking}
-              sx={{ mb: 2 }}
-            >
-              {isSubmitting || isChecking ? (
-                <CircularProgress size={24} sx={{ mr: 1 }} />
-              ) : null}
-              {isChecking ? '檢查中...' : isSubmitting ? '設定中...' : '完成設定'}
-            </Button>
-          </form>
-        </Paper>
-      </Container>
-    </>
+              inputProps={{
+                maxLength: 20,
+                pattern: '[a-zA-Z0-9_]+',
+              }}
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    onClick={handleRegenerate}
+                    edge="end"
+                    disabled={isSubmitting || isChecking}
+                    title="重新產生 UserID"
+                    sx={{ mr: -1 }}
+                  >
+                    <RefreshIcon />
+                  </IconButton>
+                ),
+              }}
+            />
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              規則：
+            </Typography>
+            <Typography variant="caption" color="text.secondary" component="div">
+              • 4-20 個字元
+            </Typography>
+            <Typography variant="caption" color="text.secondary" component="div">
+              • 只能包含英文字母、數字與底線
+            </Typography>
+            <Typography variant="caption" color="text.secondary" component="div">
+              • UserID 一旦設定後無法修改
+            </Typography>
+          </Box>
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            size="large"
+            disabled={isSubmitting || isChecking}
+            sx={{ mb: 2 }}
+          >
+            {isSubmitting || isChecking ? (
+              <CircularProgress size={24} sx={{ mr: 1 }} />
+            ) : null}
+            {isChecking ? '檢查中...' : isSubmitting ? '設定中...' : '完成設定'}
+          </Button>
+        </form>
+      </Paper>
+    </Container>
   )
 }
 

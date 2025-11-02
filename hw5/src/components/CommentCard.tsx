@@ -24,7 +24,7 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
   const isOwner = session?.user?.id === comment.authorId
   
   const handleClick = () => {
-    if (clickable && comment._count && comment._count.replies > 0) {
+    if (clickable) {
       router.push(`/posts/${postId}?commentId=${comment.id}`)
     }
   }
@@ -48,7 +48,7 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
         borderRadius: 0,
         borderBottom: '1px solid',
         borderColor: 'divider',
-        cursor: (clickable && comment._count && comment._count.replies > 0) ? 'pointer' : 'default',
+        cursor: clickable ? 'pointer' : 'default',
         '&:hover': {
           backgroundColor: clickable ? 'action.hover' : 'background.paper',
         }

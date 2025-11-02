@@ -183,6 +183,44 @@ export default function ApiDocsPage() {
           },
         },
       },
+      '/api/draft': {
+        get: {
+          summary: 'Get user draft',
+          responses: {
+            '200': { description: 'User draft data' },
+            '401': { description: 'Unauthorized' },
+          },
+        },
+        post: {
+          summary: 'Save or update user draft',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    content: { type: 'string', maxLength: 280 },
+                  },
+                  required: ['content'],
+                },
+              },
+            },
+          },
+          responses: {
+            '201': { description: 'Draft saved' },
+            '401': { description: 'Unauthorized' },
+          },
+        },
+        delete: {
+          summary: 'Delete user draft',
+          responses: {
+            '200': { description: 'Draft deleted' },
+            '401': { description: 'Unauthorized' },
+            '404': { description: 'Draft not found' },
+          },
+        },
+      },
     },
   }
 
