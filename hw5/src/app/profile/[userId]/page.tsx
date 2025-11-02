@@ -47,7 +47,17 @@ export default function ProfilePage() {
   }
 
   return (
-    <Box sx={{ maxWidth: '100%' }}>
+    <Box
+    sx={{
+        //display: 'flex',
+        //justifyContent: 'center',
+        //alignItems: 'center',
+        //width: '100%',        // 若你要水平填滿
+        //minHeight: '100vh',   // 若你也要垂直置中整屏
+        maxWidth: 'sm',       // 若你預期內容最大寬度為 theme 的 sm 尺寸
+        margin: '0 auto',     // 保證在大螢幕時水平置中
+    }}
+    >
       {/* Header with Name and Posts Count */}
       <Box sx={{ 
         borderBottom: '1px solid', 
@@ -142,7 +152,23 @@ export default function ProfilePage() {
       </Container>
 
       {/* Posts Section */}
-      <Container maxWidth="sm">
+      <Container maxWidth="sm" sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Typography 
+            variant="body2" 
+            fontWeight={600}
+            sx={{ 
+              py: 2, 
+              borderBottom: '2px solid',
+              borderColor: 'primary.main',
+              display: 'inline-block',
+              cursor: 'default',
+            }}
+          >
+            Posts
+          </Typography>
+        </Box>
+        
         {isPostsLoading && (
           <Box display="flex" justifyContent="center" py={4}>
             <CircularProgress />

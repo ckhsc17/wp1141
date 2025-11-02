@@ -59,7 +59,7 @@ export default function Sidebar() {
           flexDirection: 'column',
           position: 'sticky',
           top: 0,
-          backgroundColor: 'background.paper',
+          backgroundColor: '#000000',
         }}
       >
         {/* Logo */}
