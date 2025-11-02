@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 
 export class CommentRepository {
-  async create(data: { content: string; postId: string; authorId: string }) {
+  async create(data: { content: string; postId: string; authorId: string; parentId?: string | null }) {
     return prisma.comment.create({
       data,
       include: {
@@ -13,13 +13,18 @@ export class CommentRepository {
             image: true,
           },
         },
+        _count: {
+          select: {
+            replies: true,
+          },
+        },
       },
     })
   }
 
   async findManyByPost(postId: string) {
     return prisma.comment.findMany({
-      where: { postId },
+      where: { postId, parentId: null },  // 只查詢頂層留言
       orderBy: { createdAt: 'desc' },
       include: {
         author: {
@@ -28,6 +33,33 @@ export class CommentRepository {
             userId: true,
             name: true,
             image: true,
+          },
+        },
+        _count: {
+          select: {
+            replies: true,
+          },
+        },
+      },
+    })
+  }
+
+  async findManyByParent(parentId: string) {
+    return prisma.comment.findMany({
+      where: { parentId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: {
+          select: {
+            id: true,
+            userId: true,
+            name: true,
+            image: true,
+          },
+        },
+        _count: {
+          select: {
+            replies: true,
           },
         },
       },
@@ -50,6 +82,11 @@ export class CommentRepository {
             userId: true,
             name: true,
             image: true,
+          },
+        },
+        _count: {
+          select: {
+            replies: true,
           },
         },
       },

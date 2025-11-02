@@ -88,7 +88,8 @@ async function main() {
     max: Math.floor(allPosts.length * 0.5),
   })
 
-  const comments = []
+  // 先建立頂層留言
+  const topLevelComments = []
   for (const post of postsWithComments) {
     const numComments = faker.number.int({ min: 1, max: 5 })
     const shuffledUsers = faker.helpers.shuffle([...users])
@@ -97,22 +98,50 @@ async function main() {
       const user = shuffledUsers[i]
       // 不會留言在自己的貼文
       if (user.id !== post.authorId) {
-        comments.push({
-          content: faker.lorem.sentence({ min: 5, max: 30 }),
-          postId: post.id,
-          authorId: user.id,
-          createdAt: faker.date.between({ from: post.createdAt, to: new Date() }),
+        const comment = await prisma.comment.create({
+          data: {
+            content: faker.lorem.sentence({ min: 5, max: 30 }),
+            postId: post.id,
+            authorId: user.id,
+            createdAt: faker.date.between({ from: post.createdAt, to: new Date() }),
+          },
         })
+        topLevelComments.push(comment)
       }
     }
   }
 
-  await prisma.comment.createMany({
-    data: comments,
-    skipDuplicates: true,
+  console.log(`Created ${topLevelComments.length} top-level comments`)
+
+  // 為部分頂層留言建立 1-3 層巢狀回覆
+  const commentsWithReplies = faker.helpers.arrayElements(topLevelComments, {
+    min: Math.floor(topLevelComments.length * 0.3),
+    max: Math.floor(topLevelComments.length * 0.5),
   })
 
-  console.log(`Created ${comments.length} comments`)
+  let replyCount = 0
+  for (const comment of commentsWithReplies) {
+    const numReplies = faker.number.int({ min: 1, max: 3 })
+    
+    for (let i = 0; i < numReplies; i++) {
+      const user = faker.helpers.arrayElement(users)
+      // 不會回覆自己
+      if (user.id !== comment.authorId) {
+        await prisma.comment.create({
+          data: {
+            content: faker.lorem.sentence({ min: 5, max: 30 }),
+            postId: comment.postId,
+            authorId: user.id,
+            parentId: comment.id,
+            createdAt: faker.date.between({ from: comment.createdAt, to: new Date() }),
+          },
+        })
+        replyCount++
+      }
+    }
+  }
+
+  console.log(`Created ${replyCount} replies`)
   console.log('Database seeded successfully!')
 }
 

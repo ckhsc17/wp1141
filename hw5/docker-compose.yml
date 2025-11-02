@@ -3,11 +3,11 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: twitter-clone-db
+    container_name: echoo-db
     environment:
-      POSTGRES_USER: twitter_user
-      POSTGRES_PASSWORD: twitter_password
-      POSTGRES_DB: twitter_clone
+      POSTGRES_USER: echoo_user
+      POSTGRES_PASSWORD: echoo_password
+      POSTGRES_DB: echoo
     ports:
       - "5432:5432"
     volumes:

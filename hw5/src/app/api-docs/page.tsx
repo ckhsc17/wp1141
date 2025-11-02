@@ -128,6 +128,61 @@ export default function ApiDocsPage() {
           },
         },
       },
+      '/api/comments/{id}': {
+        get: {
+          summary: 'Get comment by ID',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': { description: 'Comment details' },
+            '404': { description: 'Not found' },
+          },
+        },
+        delete: {
+          summary: 'Delete comment',
+          responses: {
+            '200': { description: 'Comment deleted' },
+            '401': { description: 'Unauthorized' },
+            '403': { description: 'Forbidden' },
+            '404': { description: 'Not found' },
+          },
+        },
+      },
+      '/api/comments/{id}/replies': {
+        get: {
+          summary: 'Get comment replies',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': { description: 'List of replies' },
+            '404': { description: 'Comment not found' },
+          },
+        },
+        post: {
+          summary: 'Create reply to comment',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    content: { type: 'string', maxLength: 280 },
+                  },
+                  required: ['content'],
+                },
+              },
+            },
+          },
+          responses: {
+            '201': { description: 'Reply created' },
+            '401': { description: 'Unauthorized' },
+            '404': { description: 'Parent comment not found' },
+          },
+        },
+      },
     },
   }
 

@@ -36,9 +36,13 @@ export interface Comment {
   content: string
   postId: string
   authorId: string
+  parentId?: string | null
   createdAt: Date
   updatedAt: Date
   author?: User
+  _count?: {
+    replies: number
+  }
 }
 
 export interface ExtendedSession extends Session {
@@ -79,5 +83,6 @@ export interface CreatePostInput {
 export interface CreateCommentInput {
   content: string
   postId: string
+  parentId?: string
 }
 

@@ -2,30 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { commentController } from '@/server/controllers/commentController'
-import { commentRepository } from '@/server/repositories/commentRepository'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params
-    const comment = await commentRepository.findById(id)
-    
-    if (!comment) {
-      return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
-    }
-    
-    return NextResponse.json({ comment })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to get comment' },
-      { status: 500 }
-    )
-  }
+  const { id } = await params
+  return commentController.getReplies(id)
 }
 
-export async function DELETE(
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -36,6 +22,6 @@ export async function DELETE(
   }
 
   const { id } = await params
-  return commentController.deleteComment(id, session.user.id)
+  return commentController.createReply(id, request, session.user.id)
 }
 

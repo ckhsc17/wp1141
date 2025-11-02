@@ -15,6 +15,17 @@ export function useComments(postId: string) {
   })
 }
 
+export function useReplies(commentId: string) {
+  return useQuery({
+    queryKey: ['replies', commentId],
+    queryFn: async () => {
+      const { data } = await axios.get(`/api/comments/${commentId}/replies`)
+      return data.replies as Comment[]
+    },
+    enabled: !!commentId,
+  })
+}
+
 export function useCreateComment() {
   const queryClient = useQueryClient()
 
@@ -30,6 +41,22 @@ export function useCreateComment() {
   })
 }
 
+export function useCreateReply() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
+      const { data } = await axios.post(`/api/comments/${commentId}/replies`, { content })
+      return data.reply as Comment
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['replies'] })
+      queryClient.invalidateQueries({ queryKey: ['comments'] })
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+    },
+  })
+}
+
 export function useDeleteComment() {
   const queryClient = useQueryClient()
 
@@ -38,6 +65,7 @@ export function useDeleteComment() {
       await axios.delete(`/api/comments/${id}`)
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['replies'] })
       queryClient.invalidateQueries({ queryKey: ['comments'] })
       queryClient.invalidateQueries({ queryKey: ['posts'] })
     },

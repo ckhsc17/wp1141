@@ -15,17 +15,44 @@ export class CommentController {
     }
   }
 
-  async createComment(postId: string, request: NextRequest, userId: string) {
+  async createComment(postId: string, request: NextRequest, userId: string, parentId?: string) {
     try {
       const body = await request.json()
       const data = createCommentSchema.parse(body)
 
-      const comment = await commentService.createComment(data, postId, userId)
+      const comment = await commentService.createComment(data, postId, userId, parentId)
       return NextResponse.json({ comment }, { status: 201 })
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to create comment' },
         { status: error instanceof Error && error.message === 'Post not found' ? 404 : 400 }
+      )
+    }
+  }
+
+  async getReplies(commentId: string) {
+    try {
+      const replies = await commentService.getReplies(commentId)
+      return NextResponse.json({ replies })
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to get replies' },
+        { status: error instanceof Error && error.message === 'Comment not found' ? 404 : 500 }
+      )
+    }
+  }
+
+  async createReply(commentId: string, request: NextRequest, userId: string) {
+    try {
+      const body = await request.json()
+      const data = createCommentSchema.parse(body)
+
+      const reply = await commentService.createReply(data, commentId, userId)
+      return NextResponse.json({ reply }, { status: 201 })
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to create reply' },
+        { status: error instanceof Error && error.message === 'Parent comment not found' ? 404 : 400 }
       )
     }
   }

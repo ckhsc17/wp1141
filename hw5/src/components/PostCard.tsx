@@ -29,7 +29,7 @@ export default function PostCard({ post, onLike, isLiked = false }: PostCardProp
     >
       <CardContent sx={{ '&:last-child': { pb: 2 } }}>
         <Box display="flex" gap={2}>
-          <Link href={`/profile/${post.author?.userId}`} passHref>
+          <Link href={`/profile/${post.author?.userId}`}>
             <Avatar 
               src={post.author?.image || ''} 
               sx={{ cursor: 'pointer' }}
@@ -79,7 +79,7 @@ export default function PostCard({ post, onLike, isLiked = false }: PostCardProp
                 </Typography>
               </IconButton>
               
-              <Link href={`/post/${post.id}`} passHref>
+              <Link href={`/posts/${post.id}`}>
                 <IconButton size="small" sx={{ color: 'text.secondary' }}>
                   <ChatBubbleOutlineIcon fontSize="small" />
                   <Typography variant="caption" sx={{ ml: 0.5 }}>
