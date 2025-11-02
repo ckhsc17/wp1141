@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Container, Box, CircularProgress, Alert, IconButton, Paper, TextField, Button, Avatar, Typography } from '@mui/material'
+import { Container, Box, CircularProgress, Alert, IconButton, Paper, Button, Avatar, Typography } from '@mui/material'
+import TextField from '@mui/material/TextField'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import SendIcon from '@mui/icons-material/Send'
 import { useParams } from 'next/navigation'
@@ -13,6 +14,7 @@ import CommentCard from '@/components/CommentCard'
 import { useComments, useReplies, useToggleLike, useCreateComment } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import { Post, Comment } from '@/types'
+import MentionInput from '@/components/MentionInput'
 
 export default function PostDetailPage() {
   const router = useRouter()
@@ -124,13 +126,13 @@ export default function PostDetailPage() {
                     {session.user?.name?.charAt(0).toUpperCase()}
                   </Avatar>
                   <Box flex={1}>
-                    <TextField
+                    <MentionInput
                       fullWidth
                       multiline
                       rows={3}
                       placeholder="Post your reply"
                       value={commentContent}
-                      onChange={(e) => setCommentContent(e.target.value)}
+                      onChange={setCommentContent}
                       variant="standard"
                       sx={{ mb: 1 }}
                       inputProps={{ maxLength: 280 }}
@@ -184,13 +186,13 @@ export default function PostDetailPage() {
                     {session.user?.name?.charAt(0).toUpperCase()}
                   </Avatar>
                   <Box flex={1}>
-                    <TextField
+                    <MentionInput
                       fullWidth
                       multiline
                       rows={3}
                       placeholder="Post your reply"
                       value={commentContent}
-                      onChange={(e) => setCommentContent(e.target.value)}
+                      onChange={setCommentContent}
                       variant="standard"
                       sx={{ mb: 1 }}
                       inputProps={{ maxLength: 280 }}

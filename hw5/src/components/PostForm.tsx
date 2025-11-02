@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Paper, TextField, Button, Box, Avatar } from '@mui/material'
+import { Paper, Button, Box, Avatar } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import { useCreatePost } from '@/hooks/usePosts'
 import { useSession } from 'next-auth/react'
+import MentionInput from './MentionInput'
 
 interface PostFormProps {
   onPostCreated?: () => void
@@ -45,13 +46,13 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
         </Avatar>
         
         <Box flex={1}>
-          <TextField
+          <MentionInput
             fullWidth
             multiline
             rows={3}
             placeholder="What's happening?"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={setContent}
             variant="standard"
             sx={{ mb: 1 }}
           />

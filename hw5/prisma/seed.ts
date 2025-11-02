@@ -7,9 +7,12 @@ async function main() {
   console.log('Seeding database...')
 
   // 清空現有資料
+  await prisma.mention.deleteMany()
   await prisma.comment.deleteMany()
   await prisma.like.deleteMany()
   await prisma.post.deleteMany()
+  await prisma.draft.deleteMany()
+  await prisma.follow.deleteMany()
   await prisma.account.deleteMany()
   await prisma.session.deleteMany()
   await prisma.verificationToken.deleteMany()

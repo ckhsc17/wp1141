@@ -30,8 +30,8 @@ export class MentionService {
       return []
     }
 
-    // Validate that all mentioned users exist
-    const validUserIds = await this.validateUserIds(userIds)
+    // Validate that all mentioned users exist and exclude the mentioner
+    const validUserIds = await this.validateUserIds(userIds, mentionerId)
     
     if (validUserIds.length === 0) {
       return []
@@ -63,12 +63,12 @@ export class MentionService {
   /**
    * Validate that all user IDs exist and return their internal IDs
    */
-  async validateUserIds(userIds: string[]): Promise<string[]> {
+  async validateUserIds(userIds: string[], excludeUserId?: string): Promise<string[]> {
     const validUserIds: string[] = []
 
     for (const userId of userIds) {
       const user = await userRepository.findByUserId(userId)
-      if (user) {
+      if (user && (!excludeUserId || user.id !== excludeUserId)) {
         validUserIds.push(user.id)
       }
     }

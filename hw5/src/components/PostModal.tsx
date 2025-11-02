@@ -6,7 +6,6 @@ import {
   DialogTitle, 
   DialogContent, 
   IconButton, 
-  TextField, 
   Button, 
   Box, 
   Avatar, 
@@ -17,6 +16,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import ImageIcon from '@mui/icons-material/Image'
 import { useSession } from 'next-auth/react'
 import { useCreatePost, useDraft, useSaveDraft, useDeleteDraft } from '@/hooks'
+import MentionInput from './MentionInput'
 
 interface PostModalProps {
   open: boolean
@@ -123,13 +123,13 @@ export default function PostModal({ open, onClose }: PostModalProps) {
           </Avatar>
           
           <Box flex={1}>
-            <TextField
+            <MentionInput
               fullWidth
               multiline
               rows={8}
               placeholder="What's happening?"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={setContent}
               variant="standard"
               autoFocus
               inputProps={{

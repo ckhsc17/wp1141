@@ -29,12 +29,19 @@ export class UserService {
     return { available: !isTaken }
   }
 
-  async searchUsers(query: string, limit: number = 10) {
+  async searchUsers(query: string, limit: number = 10, excludeUserId?: string) {
     if (!query || query.trim().length === 0) {
       return []
     }
 
-    return userRepository.searchUsers(query, limit)
+    const users = await userRepository.searchUsers(query, limit)
+    
+    // Filter out the current user if excludeUserId is provided
+    if (excludeUserId) {
+      return users.filter(user => user.id !== excludeUserId)
+    }
+    
+    return users
   }
 }
 

@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Paper, TextField, Button, Box, Avatar, Typography } from '@mui/material'
+import { Paper, Button, Box, Avatar, Typography } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import { useCreateReply } from '@/hooks'
 import { useSession } from 'next-auth/react'
+import MentionInput from './MentionInput'
 
 interface ReplyFormProps {
   commentId: string
@@ -46,13 +47,13 @@ export default function ReplyForm({ commentId, onReplyCreated }: ReplyFormProps)
         </Avatar>
         
         <Box flex={1}>
-          <TextField
+          <MentionInput
             fullWidth
             multiline
             rows={3}
             placeholder="Post your reply"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={setContent}
             variant="standard"
             sx={{ mb: 1 }}
             inputProps={{

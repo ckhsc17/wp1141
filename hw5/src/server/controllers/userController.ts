@@ -60,13 +60,13 @@ export class UserController {
     }
   }
 
-  async searchUsers(request: NextRequest) {
+  async searchUsers(request: NextRequest, excludeUserId?: string) {
     try {
       const { searchParams } = new URL(request.url)
       const query = searchParams.get('q') || ''
       const limit = parseInt(searchParams.get('limit') || '10')
 
-      const users = await userService.searchUsers(query, limit)
+      const users = await userService.searchUsers(query, limit, excludeUserId)
       return NextResponse.json({ users })
     } catch (error) {
       return NextResponse.json(

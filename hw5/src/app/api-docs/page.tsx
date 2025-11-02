@@ -221,6 +221,84 @@ export default function ApiDocsPage() {
           },
         },
       },
+      '/api/users/search': {
+        get: {
+          summary: 'Search users',
+          parameters: [
+            { name: 'q', in: 'query', required: true, description: 'Search query', schema: { type: 'string' } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+          ],
+          responses: {
+            '200': { description: 'List of matching users' },
+          },
+        },
+      },
+      '/api/mentions': {
+        get: {
+          summary: 'Get user mentions',
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+          ],
+          responses: {
+            '200': { description: 'List of mentions' },
+            '401': { description: 'Unauthorized' },
+          },
+        },
+        put: {
+          summary: 'Mark all mentions as read',
+          responses: {
+            '200': { description: 'All mentions marked as read' },
+            '401': { description: 'Unauthorized' },
+          },
+        },
+      },
+      '/api/mentions/{id}': {
+        put: {
+          summary: 'Mark mention as read',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': { description: 'Mention marked as read' },
+            '401': { description: 'Unauthorized' },
+            '404': { description: 'Mention not found' },
+          },
+        },
+      },
+      '/api/mentions/unread': {
+        get: {
+          summary: 'Get unread mention count',
+          responses: {
+            '200': { description: 'Unread mention count' },
+            '401': { description: 'Unauthorized' },
+          },
+        },
+      },
+      '/api/users/{userId}/follow': {
+        get: {
+          summary: 'Check follow status',
+          parameters: [
+            { name: 'userId', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': { description: 'Follow status' },
+            '401': { description: 'Unauthorized' },
+            '404': { description: 'User not found' },
+          },
+        },
+        post: {
+          summary: 'Toggle follow/unfollow',
+          parameters: [
+            { name: 'userId', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': { description: 'Follow toggled' },
+            '401': { description: 'Unauthorized' },
+            '404': { description: 'User not found' },
+          },
+        },
+      },
     },
   }
 
