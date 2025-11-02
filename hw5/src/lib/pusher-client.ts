@@ -7,6 +7,12 @@ const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'us2'
 const pusherClient = PUSHER_KEY
   ? new Pusher(PUSHER_KEY, {
       cluster: PUSHER_CLUSTER,
+      authEndpoint: '/api/pusher/auth',
+      auth: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
     })
   : null
 

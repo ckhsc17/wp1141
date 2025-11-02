@@ -25,6 +25,7 @@ export class MentionService {
     }
 
     const userIds = extractMentions(content)
+    console.log('[MentionService] Extracted mentions from content:', userIds)
     
     if (userIds.length === 0) {
       return []
@@ -32,6 +33,7 @@ export class MentionService {
 
     // Validate that all mentioned users exist and exclude the mentioner
     const validUserIds = await this.validateUserIds(userIds, mentionerId)
+    console.log('[MentionService] Valid user IDs after validation:', validUserIds)
     
     if (validUserIds.length === 0) {
       return []
@@ -113,33 +115,39 @@ export class MentionService {
     contentId: string
   }) {
     if (!pusherServer) {
-      console.log('Pusher not configured, skipping notification')
+      console.log('[MentionService] Pusher not configured, skipping notification')
       return
     }
 
     const mentioner = await userRepository.findById(mentionerId)
     if (!mentioner) {
+      console.log('[MentionService] Mentioner not found:', mentionerId)
       return
     }
 
+    const channelName = `private-user-${mentionedUserId}`
+    console.log('[MentionService] Sending Pusher notification:', {
+      channel: channelName,
+      mentioner: mentioner.userId,
+      type,
+      contentId,
+    })
+
     try {
-      await pusherServer.trigger(
-        `private-user-${mentionedUserId}`,
-        'mention-created',
-        {
-          mentioner: {
-            id: mentioner.id,
-            userId: mentioner.userId,
-            name: mentioner.name,
-            image: mentioner.image,
-          },
-          type,
-          contentId,
-          createdAt: new Date().toISOString(),
-        }
-      )
+      await pusherServer.trigger(channelName, 'mention-created', {
+        mentioner: {
+          id: mentioner.id,
+          userId: mentioner.userId,
+          name: mentioner.name,
+          image: mentioner.image,
+        },
+        type,
+        contentId,
+        createdAt: new Date().toISOString(),
+      })
+      console.log('[MentionService] Pusher notification sent successfully')
     } catch (error) {
-      console.error('Failed to send Pusher notification:', error)
+      console.error('[MentionService] Failed to send Pusher notification:', error)
       // Don't throw - Pusher failures shouldn't break the application
     }
   }

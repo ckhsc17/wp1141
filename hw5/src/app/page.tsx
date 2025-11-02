@@ -6,7 +6,7 @@ import { Container, Box, Typography, CircularProgress, Alert, Paper, AppBar as M
 import PostForm from '@/components/PostForm'
 import PostCard from '@/components/PostCard'
 import AuthButtons from '@/components/AuthButtons'
-import { usePosts, useToggleLike } from '@/hooks'
+import { usePosts, useToggleLike, usePusherMentions } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import { signIn } from 'next-auth/react'
 import { useThemeMode } from '@/contexts/ThemeContext'
@@ -25,6 +25,9 @@ export default function Home() {
   const handleLike = (postId: string) => {
     toggleLike.mutate(postId)
   }
+
+  // Listen for Pusher mention notifications
+  usePusherMentions((session?.user as any)?.userId)
 
   // 檢查是否已登入但沒有 userId，需要設定
   useEffect(() => {
