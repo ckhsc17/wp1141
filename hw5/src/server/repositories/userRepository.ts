@@ -16,6 +16,8 @@ export class UserRepository {
             posts: true,
             likes: true,
             comments: true,
+            following: true,
+            followers: true,
           },
         },
       },

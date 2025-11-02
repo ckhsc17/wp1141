@@ -8,6 +8,7 @@ import PostCard from '@/components/PostCard'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import EditIcon from '@mui/icons-material/Edit'
 import EditProfileModal from '@/components/EditProfileModal'
+import FollowButton from '@/components/FollowButton'
 import { useSession } from 'next-auth/react'
 import { format } from 'date-fns'
 
@@ -96,7 +97,7 @@ export default function ProfilePage() {
             {user.name.charAt(0).toUpperCase()}
           </Avatar>
         </Box>
-        {isOwnProfile && (
+        {isOwnProfile ? (
           <Button
             variant="outlined"
             size="small"
@@ -106,8 +107,13 @@ export default function ProfilePage() {
               position: 'absolute',
               bottom: 16,
               right: 16,
+              borderRadius: '9999px',
+              textTransform: 'none',
+              px: 2,
+              py: 0.5,
               borderColor: 'text.primary',
               color: 'text.primary',
+              backgroundColor: 'background.paper',
               '&:hover': {
                 borderColor: 'text.primary',
                 backgroundColor: 'action.hover',
@@ -116,6 +122,8 @@ export default function ProfilePage() {
           >
             Edit profile
           </Button>
+        ) : session && (
+          <FollowButton userId={userId} username={user.userId} />
         )}
       </Box>
 
@@ -140,15 +148,20 @@ export default function ProfilePage() {
           )}
         </Box>
 
-        {/* Following/Followers (Placeholder for future) */}
-        {/* <Box display="flex" gap={4} justifyContent="center" mt={2}>
+        <Box display="flex" gap={4} justifyContent="center" mt={2}>
           <Typography variant="body2" color="text.secondary">
-            99 Following
+            <Typography component="span" fontWeight={700} color="text.primary">
+              {user._count?.following || 0}
+            </Typography>{' '}
+            Following
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            40 Followers
+            <Typography component="span" fontWeight={700} color="text.primary">
+              {user._count?.followers || 0}
+            </Typography>{' '}
+            Followers
           </Typography>
-        </Box> */}
+        </Box>
       </Container>
 
       {/* Posts Section */}

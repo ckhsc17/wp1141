@@ -85,7 +85,14 @@ export default function SetupUserIdPage() {
     }
   }, [session, setValue, regenerateCount])
 
-  // 如果未登入，重定向到首頁
+  // 檢查是否需要重定向
+  useEffect(() => {
+    if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.userId)) {
+      router.push('/')
+    }
+  }, [status, session, router])
+
+  // 如果未登入，顯示 loading
   if (status === 'loading') {
     return (
       <Container maxWidth="sm" sx={{ py: 8 }}>
@@ -96,15 +103,15 @@ export default function SetupUserIdPage() {
     )
   }
 
-  if (status === 'unauthenticated') {
-    router.push('/')
-    return null
-  }
-
-  // 如果已有 userID，重定向到首頁
-  if (session?.user?.userId) {
-    router.push('/')
-    return null
+  // 如果未登入或已有 userId，顯示 loading（redirecting）
+  if (status === 'unauthenticated' || (status === 'authenticated' && session?.user?.userId)) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 8 }}>
+        <Box display="flex" justifyContent="center">
+          <CircularProgress />
+        </Box>
+      </Container>
+    )
   }
 
   const handleRegenerate = () => {

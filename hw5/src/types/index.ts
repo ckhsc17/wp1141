@@ -13,6 +13,8 @@ export interface User {
     posts: number
     likes: number
     comments: number
+    following: number
+    followers: number
   }
 }
 
