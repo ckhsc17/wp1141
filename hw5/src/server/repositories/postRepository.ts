@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 
 export class PostRepository {
   async create(data: { content: string; authorId: string }) {
+    console.log('[PostRepository] Post created:')
     return prisma.post.create({
       data,
       include: {
@@ -22,6 +23,7 @@ export class PostRepository {
         },
       },
     })
+    
   }
 
   async findMany(options: {

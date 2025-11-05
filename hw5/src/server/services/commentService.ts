@@ -37,13 +37,25 @@ export class CommentService {
 
     // Create mentions if any
     try {
+      console.log('[CommentService] Attempting to create mentions for comment:', {
+        commentId: comment.id,
+        content: data.content,
+        authorId,
+      })
+      
       await mentionService.createMentions({
         content: data.content,
         mentionerId: authorId,
         commentId: comment.id,
       })
+      
+      console.log('[CommentService] Mentions processed successfully for comment:', comment.id)
     } catch (error) {
-      console.error('Failed to create mentions for comment:', error)
+      console.error('[CommentService] Failed to create mentions for comment:', {
+        commentId: comment.id,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
       // Don't throw - comment creation should succeed even if mentions fail
     }
 
@@ -91,13 +103,25 @@ export class CommentService {
 
     // Create mentions if any
     try {
+      console.log('[CommentService] Attempting to create mentions for reply:', {
+        commentId: comment.id,
+        content: data.content,
+        authorId,
+      })
+      
       await mentionService.createMentions({
         content: data.content,
         mentionerId: authorId,
         commentId: comment.id,
       })
+      
+      console.log('[CommentService] Mentions processed successfully for reply:', comment.id)
     } catch (error) {
-      console.error('Failed to create mentions for reply:', error)
+      console.error('[CommentService] Failed to create mentions for reply:', {
+        commentId: comment.id,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
       // Don't throw - reply creation should succeed even if mentions fail
     }
 

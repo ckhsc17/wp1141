@@ -9,12 +9,23 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('[API Route] /api/posts POST request received')
+  
   const session = await getServerSession(authOptions)
   
+  console.log('[API Route] Session check:', {
+    hasSession: !!session,
+    hasUserId: !!session?.user?.id,
+    userId: session?.user?.id,
+    userUserId: (session?.user as any)?.userId,
+  })
+  
   if (!session?.user?.id) {
+    console.warn('[API Route] Unauthorized request to /api/posts')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  console.log('[API Route] Calling postController.createPost')
   return postController.createPost(request, session.user.id)
 }
 

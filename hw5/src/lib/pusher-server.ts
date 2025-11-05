@@ -13,7 +13,8 @@ export const pusherServer =
           useTLS: true,
         }
         
-        console.log('[Pusher Server] Initializing Pusher server:', {
+        console.log('[Pusher Server] ===== INITIALIZING PUSHER SERVER =====')
+        console.log('[Pusher Server] Configuration:', {
           appId: config.appId,
           key: config.key.substring(0, 8) + '...',
           secret: config.secret.substring(0, 8) + '...',
@@ -23,15 +24,21 @@ export const pusherServer =
         
         const server = new Pusher(config)
         
-        console.log('[Pusher Server] Pusher server initialized successfully')
+        console.log('[Pusher Server] ✅ Pusher server initialized successfully')
+        console.log('[Pusher Server] Pusher server instance:', !!server)
+        console.log('[Pusher Server] ===== PUSHER SERVER READY =====')
         return server
       })()
     : (() => {
-        console.warn('[Pusher Server] Pusher credentials not configured:', {
+        console.warn('[Pusher Server] ⚠️  Pusher credentials not configured:', {
           hasAppId: !!process.env.PUSHER_APP_ID,
           hasKey: !!process.env.PUSHER_KEY,
           hasSecret: !!process.env.PUSHER_SECRET,
+          PUSHER_APP_ID: process.env.PUSHER_APP_ID || 'NOT SET',
+          PUSHER_KEY: process.env.PUSHER_KEY ? process.env.PUSHER_KEY.substring(0, 8) + '...' : 'NOT SET',
+          PUSHER_SECRET: process.env.PUSHER_SECRET ? 'SET' : 'NOT SET',
         })
+        console.warn('[Pusher Server] Pusher server will be NULL')
         return null
       })()
 

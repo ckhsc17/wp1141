@@ -20,14 +20,29 @@ export class MentionService {
    * Extract @mentions from content and create mention records
    */
   async createMentions({ content, mentionerId, postId, commentId }: CreateMentionsParams) {
+    console.log('[MentionService] createMentions called:', {
+      contentLength: content.length,
+      mentionerId,
+      postId,
+      commentId,
+      hasPostId: !!postId,
+      hasCommentId: !!commentId,
+    })
+    
     if (!postId && !commentId) {
+      console.error('[MentionService] Either postId or commentId must be provided')
       throw new Error('Either postId or commentId must be provided')
     }
 
     const userIds = extractMentions(content)
-    console.log('[MentionService] Extracted mentions from content:', userIds)
+    console.log('[MentionService] Extracted mentions from content:', {
+      userIds,
+      count: userIds.length,
+      content: content.substring(0, 100), // 只顯示前 100 個字元
+    })
     
     if (userIds.length === 0) {
+      console.log('[MentionService] No mentions found in content, returning early')
       return []
     }
 
@@ -47,10 +62,29 @@ export class MentionService {
       mentionedId: userId,
     }))
 
+    console.log('[MentionService] Creating mention records:', {
+      count: mentionData.length,
+      mentionData: mentionData.map(m => ({
+        postId: m.postId,
+        commentId: m.commentId,
+        mentionerId: m.mentionerId,
+        mentionedId: m.mentionedId,
+      })),
+    })
+
     const mentions = await mentionRepository.createMany(mentionData)
+    
+    console.log('[MentionService] Mention records created successfully:', {
+      count: mentions.count,
+      postId,
+      commentId,
+    })
 
     // Send Pusher notifications for each mention (if Pusher is configured)
+    console.log('[MentionService] Starting to send Pusher notifications for', validUserIds.length, 'mentions')
+    
     for (const userId of validUserIds) {
+      console.log('[MentionService] Sending notification to user:', userId)
       await this.sendMentionNotification({
         mentionedUserId: userId,
         mentionerId,
@@ -58,6 +92,8 @@ export class MentionService {
         contentId: postId || commentId || '',
       })
     }
+    
+    console.log('[MentionService] All Pusher notifications sent, returning mention data')
 
     return mentionData
   }
