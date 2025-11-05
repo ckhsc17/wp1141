@@ -41,8 +41,41 @@ export default function AppBar() {
           {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
         </IconButton>
         
-        {!session && (
-          <Button color="primary" variant="contained" onClick={() => signIn()}>
+        {session && session.user ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
+            <IconButton
+              onClick={handleMenuOpen}
+              size="small"
+              aria-controls={anchorEl ? 'account-menu' : undefined}
+              aria-haspopup="true"
+              aria-expanded={anchorEl ? 'true' : undefined}
+            >
+              <Avatar src={session.user.image || ''} sx={{ width: 32, height: 32 }}>
+                {session.user.name?.charAt(0).toUpperCase()}
+              </Avatar>
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              id="account-menu"
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              onClick={handleMenuClose}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            >
+              <MenuItem component={Link} href={session?.user ? `/profile/${(session.user as any).userId}` : '/profile'}>
+                <Avatar sx={{ width: 24, height: 24, mr: 1 }} src={session.user.image || ''}>
+                  {session.user.name?.charAt(0).toUpperCase()}
+                </Avatar>
+                個人資料
+              </MenuItem>
+              <MenuItem onClick={handleSignOut}>
+                登出
+              </MenuItem>
+            </Menu>
+          </Box>
+        ) : (
+          <Button color="primary" variant="contained" onClick={() => signIn()} sx={{ ml: 2 }}>
             Sign in
           </Button>
         )}

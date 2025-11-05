@@ -12,6 +12,9 @@ import {
   Avatar,
   Typography,
   IconButton,
+  Menu,
+  MenuItem,
+  Divider,
   useTheme,
   useMediaQuery
 } from '@mui/material'
@@ -21,10 +24,12 @@ import NotificationsIcon from '@mui/icons-material/Notifications'
 import MessageIcon from '@mui/icons-material/Message'
 import PersonIcon from '@mui/icons-material/Person'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
+import LogoutIcon from '@mui/icons-material/Logout'
+import SettingsIcon from '@mui/icons-material/Settings'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import PostModal from './PostModal'
 
 export default function Sidebar() {
@@ -33,6 +38,21 @@ export default function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const [postModalOpen, setPostModalOpen] = useState(false)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
+  const menuOpen = Boolean(menuAnchorEl)
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchorEl(event.currentTarget)
+  }
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null)
+  }
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' })
+    handleMenuClose()
+  }
 
   const navItems = [
     { label: 'Home', icon: HomeIcon, href: '/', exact: true },
@@ -159,10 +179,59 @@ export default function Sidebar() {
                   @{(session.user as any).userId}
                 </Typography>
               </Box>
-              <IconButton size="small">
+              <IconButton 
+                size="small"
+                onClick={handleMenuOpen}
+                aria-controls={menuOpen ? 'user-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={menuOpen ? 'true' : undefined}
+              >
                 <MoreHorizIcon />
               </IconButton>
             </Box>
+            
+            {/* User Menu */}
+            <Menu
+              id="user-menu"
+              anchorEl={menuAnchorEl}
+              open={menuOpen}
+              onClose={handleMenuClose}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+            >
+              <MenuItem 
+                component={Link}
+                href={session?.user ? `/profile/${(session.user as any).userId}` : '/profile'}
+                onClick={handleMenuClose}
+              >
+                <ListItemIcon>
+                  <PersonIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>個人資料</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={handleMenuClose}>
+                <ListItemIcon>
+                  <SettingsIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>設定</ListItemText>
+              </MenuItem>
+              <Divider />
+              <MenuItem 
+                onClick={handleSignOut}
+                sx={{ color: 'error.main' }}
+              >
+                <ListItemIcon>
+                  <LogoutIcon fontSize="small" sx={{ color: 'error.main' }} />
+                </ListItemIcon>
+                <ListItemText>登出</ListItemText>
+              </MenuItem>
+            </Menu>
           </Box>
         )}
       </Box>
