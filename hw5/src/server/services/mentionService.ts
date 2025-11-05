@@ -114,40 +114,70 @@ export class MentionService {
     type: 'post' | 'comment'
     contentId: string
   }) {
+    const startTime = Date.now()
+    
+    console.log('[MentionService] Preparing to send Pusher notification:', {
+      mentionedUserId,
+      mentionerId,
+      type,
+      contentId,
+      hasPusherServer: !!pusherServer,
+    })
+    
     if (!pusherServer) {
-      console.log('[MentionService] Pusher not configured, skipping notification')
+      console.warn('[MentionService] Pusher not configured, skipping notification')
       return
     }
 
     const mentioner = await userRepository.findById(mentionerId)
     if (!mentioner) {
-      console.log('[MentionService] Mentioner not found:', mentionerId)
+      console.error('[MentionService] Mentioner not found:', mentionerId)
       return
     }
 
     const channelName = `private-user-${mentionedUserId}`
-    console.log('[MentionService] Sending Pusher notification:', {
-      channel: channelName,
-      mentioner: mentioner.userId,
+    const eventName = 'mention-created'
+    const payload = {
+      mentioner: {
+        id: mentioner.id,
+        userId: mentioner.userId,
+        name: mentioner.name,
+        image: mentioner.image,
+      },
       type,
       contentId,
+      createdAt: new Date().toISOString(),
+    }
+    
+    console.log('[MentionService] Sending Pusher notification:', {
+      channel: channelName,
+      event: eventName,
+      mentioner: mentioner.userId,
+      mentionerName: mentioner.name,
+      type,
+      contentId,
+      payloadSize: JSON.stringify(payload).length,
     })
 
     try {
-      await pusherServer.trigger(channelName, 'mention-created', {
-        mentioner: {
-          id: mentioner.id,
-          userId: mentioner.userId,
-          name: mentioner.name,
-          image: mentioner.image,
-        },
-        type,
-        contentId,
-        createdAt: new Date().toISOString(),
+      const result = await pusherServer.trigger(channelName, eventName, payload)
+      const duration = Date.now() - startTime
+      
+      console.log('[MentionService] Pusher notification sent successfully:', {
+        channel: channelName,
+        event: eventName,
+        duration: `${duration}ms`,
+        result: result,
       })
-      console.log('[MentionService] Pusher notification sent successfully')
     } catch (error) {
-      console.error('[MentionService] Failed to send Pusher notification:', error)
+      const duration = Date.now() - startTime
+      console.error('[MentionService] Failed to send Pusher notification:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        channel: channelName,
+        event: eventName,
+        duration: `${duration}ms`,
+      })
       // Don't throw - Pusher failures shouldn't break the application
     }
   }

@@ -109,14 +109,35 @@ export function usePusherMentions(userId: string | undefined) {
 
     // 監聽 Pusher 連接狀態變化
     const handleConnectionStateChange = (states: { previous: string; current: string }) => {
-      console.log('[usePusherMentions] Pusher connection state changed:', states)
+      console.log('[usePusherMentions] Pusher connection state changed:', {
+        previous: states.previous,
+        current: states.current,
+        channelName,
+        userId,
+      })
+      
       if (states.current === 'connected' && states.previous === 'disconnected' && pusherClient) {
-        console.log('[usePusherMentions] Re-subscribing after reconnection...')
-        pusherClient.subscribe(channelName)
+        console.log('[usePusherMentions] Reconnected to Pusher, re-subscribing to channel:', channelName)
+        const newChannel = pusherClient.subscribe(channelName)
+        newChannel.bind('pusher:subscription_succeeded', () => {
+          console.log('[usePusherMentions] Successfully re-subscribed after reconnection:', channelName)
+        })
+        newChannel.bind('pusher:subscription_error', (error: any) => {
+          console.error('[usePusherMentions] Re-subscription error after reconnection:', {
+            channelName,
+            error,
+          })
+        })
       }
     }
 
     pusherClient.connection.bind('state_change', handleConnectionStateChange)
+    
+    console.log('[usePusherMentions] Pusher subscription setup completed:', {
+      channelName,
+      userId,
+      connectionState: pusherClient.connection.state,
+    })
 
     // 清理函數
     return () => {
