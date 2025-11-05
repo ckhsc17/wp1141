@@ -16,27 +16,10 @@ import { pusherServer } from '@/lib/pusher-server'
  * 格式：application/x-www-form-urlencoded
  */
 export async function POST(request: NextRequest) {
-  const startTime = Date.now()
-  
   try {
-    console.log('[Pusher Auth] Received authentication request')
-    
     const session = await getServerSession(authOptions)
-    
-    console.log('[Pusher Auth] Session check:', {
-      hasSession: !!session,
-      hasUserId: !!session?.user?.id,
-      hasPusherServer: !!pusherServer,
-      userId: session?.user?.id,
-      userUserId: (session?.user as any)?.userId,
-    })
 
     if (!session?.user?.id || !pusherServer) {
-      console.warn('[Pusher Auth] Unauthorized - missing session or pusher server:', {
-        hasSession: !!session,
-        hasUserId: !!session?.user?.id,
-        hasPusherServer: !!pusherServer,
-      })
       return NextResponse.json(
         { error: 'Unauthorized' },
         { 
@@ -56,18 +39,7 @@ export async function POST(request: NextRequest) {
     const socketId = formData.get('socket_id') as string
     const channelName = formData.get('channel_name') as string
 
-    console.log('[Pusher Auth] Request parameters:', {
-      socketId,
-      channelName,
-      hasSocketId: !!socketId,
-      hasChannelName: !!channelName,
-    })
-
     if (!socketId || !channelName) {
-      console.error('[Pusher Auth] Missing required parameters:', {
-        socketId: !!socketId,
-        channelName: !!channelName,
-      })
       return NextResponse.json(
         { error: 'Missing socket_id or channel_name' },
         { status: 400 }
@@ -76,17 +48,10 @@ export async function POST(request: NextRequest) {
 
     // 驗證用戶只能訂閱自己的頻道
     const expectedChannel = `private-user-${(session.user as any).userId}`
-    console.log('[Pusher Auth] Channel validation:', {
-      requestedChannel: channelName,
-      expectedChannel,
-      match: channelName === expectedChannel,
-    })
-    
     if (channelName !== expectedChannel) {
-      console.warn('[Pusher Auth] Channel name mismatch - unauthorized:', {
+      console.warn('[Pusher Auth] Channel name mismatch:', {
         channelName,
         expectedChannel,
-        userId: session.user.id,
         userUserId: (session.user as any).userId,
       })
       return NextResponse.json(
@@ -103,26 +68,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[Pusher Auth] Authenticating user for channel:', {
-      userId: session.user.id,
-      userIdFromSession: (session.user as any).userId,
-      channelName,
-      socketId,
-    })
-
     // authorizeChannel 返回格式：{ auth: "APP_KEY:signature" }
-    // 對於 private channel，這是正確的格式
     const auth = pusherServer.authorizeChannel(socketId, channelName)
-    
-    const duration = Date.now() - startTime
-    console.log('[Pusher Auth] Authentication successful:', {
-      channelName,
-      socketId,
-      authKeyLength: auth.auth?.length || 0,
-      duration: `${duration}ms`,
-    })
 
-    // 返回認證信息（Pusher 期望的格式）
     return NextResponse.json(auth, {
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -132,12 +80,7 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error) {
-    const duration = Date.now() - startTime
-    console.error('[Pusher Auth] Error during authentication:', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      duration: `${duration}ms`,
-    })
+    console.error('[Pusher Auth] Error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { 
@@ -155,7 +98,6 @@ export async function POST(request: NextRequest) {
 
 // 處理 CORS preflight 請求
 export async function OPTIONS() {
-  console.log('[Pusher Auth] CORS preflight request received')
   return NextResponse.json(
     {},
     {

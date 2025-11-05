@@ -2,6 +2,10 @@
 
 一個使用 Next.js 全端框架打造的社交媒體應用，模擬 Twitter/X 的核心功能。
 
+線上連結：https://echoo-echoo.vercel.app/
+
+FB 登入已有建置於 NextAuth 中，但由於需進行商家驗證才能公開，故此功能目前無法於線上使用；若欲測試可聯絡我並附上 FB 名稱，我可以將您邀請為測試帳戶（bowenchen0227@gmail.com）
+
 ## 技術棧
 
 ### 全端框架

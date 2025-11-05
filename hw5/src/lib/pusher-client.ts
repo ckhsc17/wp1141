@@ -7,53 +7,21 @@ const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap3'
 // 根據 Pusher 官方文檔：https://pusher.com/docs/channels/using_channels/client-api/
 const pusherClient = PUSHER_KEY
   ? (() => {
-      console.log('[Pusher Client] Initializing Pusher client:', {
-        key: PUSHER_KEY.substring(0, 8) + '...',
-        cluster: PUSHER_CLUSTER,
-        authEndpoint: '/api/pusher/auth',
-      })
-      
       const client = new Pusher(PUSHER_KEY, {
         cluster: PUSHER_CLUSTER,
-        // 對於 private/presence channels，需要設置認證端點
         authEndpoint: '/api/pusher/auth',
-        // Pusher 會自動發送 cookies，不需要手動設置 headers
-        // 認證端點會自動接收 formData 格式的請求
         enabledTransports: ['ws', 'wss'],
         forceTLS: true,
       })
 
-      // 監聽連接事件
-      client.connection.bind('connecting', () => {
-        console.log('[Pusher Client] Connecting to Pusher...')
-      })
-
-      client.connection.bind('connected', () => {
-        console.log('[Pusher Client] Connected to Pusher successfully')
-      })
-
-      client.connection.bind('disconnected', () => {
-        console.log('[Pusher Client] Disconnected from Pusher')
-      })
-
+      // 監聽連接錯誤
       client.connection.bind('error', (error: any) => {
         console.error('[Pusher Client] Connection error:', error)
       })
 
-      client.connection.bind('state_change', (states: { previous: string; current: string }) => {
-        console.log('[Pusher Client] Connection state changed:', {
-          previous: states.previous,
-          current: states.current,
-        })
-      })
-
-      console.log('[Pusher Client] Pusher client initialized successfully')
       return client
     })()
-  : (() => {
-      console.warn('[Pusher Client] Pusher key not configured, Pusher client will not be initialized')
-      return null
-    })()
+  : null
 
 export default pusherClient
 

@@ -20,36 +20,17 @@ export class MentionService {
    * Extract @mentions from content and create mention records
    */
   async createMentions({ content, mentionerId, postId, commentId }: CreateMentionsParams) {
-    console.log('[MentionService] createMentions called:', {
-      contentLength: content.length,
-      mentionerId,
-      postId,
-      commentId,
-      hasPostId: !!postId,
-      hasCommentId: !!commentId,
-    })
-    
     if (!postId && !commentId) {
-      console.error('[MentionService] Either postId or commentId must be provided')
       throw new Error('Either postId or commentId must be provided')
     }
 
     const userIds = extractMentions(content)
-    console.log('[MentionService] Extracted mentions from content:', {
-      userIds,
-      count: userIds.length,
-      content: content.substring(0, 100), // 只顯示前 100 個字元
-    })
-    
     if (userIds.length === 0) {
-      console.log('[MentionService] No mentions found in content, returning early')
       return []
     }
 
     // Validate that all mentioned users exist and exclude the mentioner
     const validUserIds = await this.validateUserIds(userIds, mentionerId)
-    console.log('[MentionService] Valid user IDs after validation:', validUserIds)
-    
     if (validUserIds.length === 0) {
       return []
     }
@@ -62,29 +43,10 @@ export class MentionService {
       mentionedId: userId,
     }))
 
-    console.log('[MentionService] Creating mention records:', {
-      count: mentionData.length,
-      mentionData: mentionData.map(m => ({
-        postId: m.postId,
-        commentId: m.commentId,
-        mentionerId: m.mentionerId,
-        mentionedId: m.mentionedId,
-      })),
-    })
+    await mentionRepository.createMany(mentionData)
 
-    const mentions = await mentionRepository.createMany(mentionData)
-    
-    console.log('[MentionService] Mention records created successfully:', {
-      count: mentions.count,
-      postId,
-      commentId,
-    })
-
-    // Send Pusher notifications for each mention (if Pusher is configured)
-    console.log('[MentionService] Starting to send Pusher notifications for', validUserIds.length, 'mentions')
-    
+    // Send Pusher notifications for each mention
     for (const userId of validUserIds) {
-      console.log('[MentionService] Sending notification to user:', userId)
       await this.sendMentionNotification({
         mentionedUserId: userId,
         mentionerId,
@@ -92,8 +54,6 @@ export class MentionService {
         contentId: postId || commentId || '',
       })
     }
-    
-    console.log('[MentionService] All Pusher notifications sent, returning mention data')
 
     return mentionData
   }
@@ -145,23 +105,19 @@ export class MentionService {
     type,
     contentId,
   }: {
-    mentionedUserId: string
+    mentionedUserId: string // 這是內部 ID (user.id)
     mentionerId: string
     type: 'post' | 'comment'
     contentId: string
   }) {
-    const startTime = Date.now()
-    
-    console.log('[MentionService] Preparing to send Pusher notification:', {
-      mentionedUserId,
-      mentionerId,
-      type,
-      contentId,
-      hasPusherServer: !!pusherServer,
-    })
-    
     if (!pusherServer) {
-      console.warn('[MentionService] Pusher not configured, skipping notification')
+      return
+    }
+
+    // 獲取被提及用戶的資訊（需要 userId 來構建頻道名）
+    const mentionedUser = await userRepository.findById(mentionedUserId)
+    if (!mentionedUser || !mentionedUser.userId) {
+      console.error('[MentionService] Mentioned user not found or missing userId:', mentionedUserId)
       return
     }
 
@@ -171,7 +127,8 @@ export class MentionService {
       return
     }
 
-    const channelName = `private-user-${mentionedUserId}`
+    // 使用 userId（不是內部 ID）來構建頻道名，與客戶端訂閱一致
+    const channelName = `private-user-${mentionedUser.userId}`
     const eventName = 'mention-created'
     const payload = {
       mentioner: {
@@ -184,35 +141,14 @@ export class MentionService {
       contentId,
       createdAt: new Date().toISOString(),
     }
-    
-    console.log('[MentionService] Sending Pusher notification:', {
-      channel: channelName,
-      event: eventName,
-      mentioner: mentioner.userId,
-      mentionerName: mentioner.name,
-      type,
-      contentId,
-      payloadSize: JSON.stringify(payload).length,
-    })
 
     try {
-      const result = await pusherServer.trigger(channelName, eventName, payload)
-      const duration = Date.now() - startTime
-      
-      console.log('[MentionService] Pusher notification sent successfully:', {
-        channel: channelName,
-        event: eventName,
-        duration: `${duration}ms`,
-        result: result,
-      })
+      await pusherServer.trigger(channelName, eventName, payload)
     } catch (error) {
-      const duration = Date.now() - startTime
       console.error('[MentionService] Failed to send Pusher notification:', {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
         channel: channelName,
         event: eventName,
-        duration: `${duration}ms`,
       })
       // Don't throw - Pusher failures shouldn't break the application
     }
