@@ -66,18 +66,39 @@ export function usePusherMentions(userId: string | undefined) {
 
   useEffect(() => {
     if (!userId || !pusherClient) {
-      console.log('[usePusherMentions] Pusher client or userId not available')
+      console.log('[usePusherMentions] Pusher client or userId not available', { userId, hasClient: !!pusherClient })
       return
     }
 
-    console.log('[usePusherMentions] Subscribing to channel:', `private-user-${userId}`)
+    const channelName = `private-user-${userId}`
+    console.log('[usePusherMentions] Subscribing to channel:', channelName)
 
-    const channel = pusherClient.subscribe(`private-user-${userId}`)
+    // 檢查 Pusher 連接狀態
+    if (pusherClient.connection.state === 'disconnected') {
+      console.log('[usePusherMentions] Pusher is disconnected, attempting to connect...')
+      pusherClient.connect()
+    }
+
+    // 訂閱頻道
+    const channel = pusherClient.subscribe(channelName)
     
+    // 處理訂閱成功
     channel.bind('pusher:subscription_succeeded', () => {
-      console.log('[usePusherMentions] Successfully subscribed to channel')
+      console.log('[usePusherMentions] Successfully subscribed to channel:', channelName)
     })
 
+    // 處理訂閱錯誤
+    channel.bind('pusher:subscription_error', (error: any) => {
+      console.error('[usePusherMentions] Subscription error:', error)
+      console.error('[usePusherMentions] Error details:', {
+        channelName,
+        userId,
+        errorType: error.type,
+        errorStatus: error.status,
+      })
+    })
+
+    // 處理提及通知
     channel.bind('mention-created', (data: any) => {
       console.log('[usePusherMentions] Received mention notification:', data)
       
@@ -86,14 +107,23 @@ export function usePusherMentions(userId: string | undefined) {
       queryClient.invalidateQueries({ queryKey: ['mentions', 'unread'] })
     })
 
-    channel.bind('pusher:subscription_error', (error: any) => {
-      console.error('[usePusherMentions] Subscription error:', error)
-    })
+    // 監聽 Pusher 連接狀態變化
+    const handleConnectionStateChange = (states: { previous: string; current: string }) => {
+      console.log('[usePusherMentions] Pusher connection state changed:', states)
+      if (states.current === 'connected' && states.previous === 'disconnected' && pusherClient) {
+        console.log('[usePusherMentions] Re-subscribing after reconnection...')
+        pusherClient.subscribe(channelName)
+      }
+    }
 
+    pusherClient.connection.bind('state_change', handleConnectionStateChange)
+
+    // 清理函數
     return () => {
-      console.log('[usePusherMentions] Unsubscribing from channel')
+      console.log('[usePusherMentions] Unsubscribing from channel:', channelName)
       if (pusherClient) {
-        pusherClient.unsubscribe(`private-user-${userId}`)
+        pusherClient.connection.unbind('state_change', handleConnectionStateChange)
+        pusherClient.unsubscribe(channelName)
       }
     }
   }, [userId, queryClient])

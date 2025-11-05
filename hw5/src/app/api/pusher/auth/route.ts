@@ -3,37 +3,116 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { pusherServer } from '@/lib/pusher-server'
 
+/**
+ * Pusher Private Channel Authentication Endpoint
+ * 
+ * 根據 Pusher 官方文檔：
+ * https://pusher.com/docs/channels/server_api/authorizing-users/
+ * 
+ * Pusher 會發送 POST 請求到此端點，包含：
+ * - socket_id: WebSocket 連接 ID
+ * - channel_name: 要訂閱的頻道名稱（例如：private-user-123）
+ * 
+ * 格式：application/x-www-form-urlencoded
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id || !pusherServer) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { 
+          status: 401,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Credentials': 'true',
+          }
+        }
+      )
     }
 
+    // Pusher 發送的是 application/x-www-form-urlencoded 格式
     const formData = await request.formData()
     const socketId = formData.get('socket_id') as string
     const channelName = formData.get('channel_name') as string
 
-    // Verify that the user is only subscribing to their own channel
+    if (!socketId || !channelName) {
+      return NextResponse.json(
+        { error: 'Missing socket_id or channel_name' },
+        { status: 400 }
+      )
+    }
+
+    // 驗證用戶只能訂閱自己的頻道
     const expectedChannel = `private-user-${(session.user as any).userId}`
     if (channelName !== expectedChannel) {
       console.log('[Pusher Auth] Channel name mismatch:', { channelName, expectedChannel })
-      return NextResponse.json({ error: 'Unauthorized channel' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Unauthorized channel' },
+        { 
+          status: 401,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Credentials': 'true',
+          }
+        }
+      )
     }
 
     console.log('[Pusher Auth] Authenticating user for channel:', {
       userId: session.user.id,
+      userIdFromSession: (session.user as any).userId,
       channelName,
       socketId,
     })
 
+    // authorizeChannel 返回格式：{ auth: "APP_KEY:signature" }
+    // 對於 private channel，這是正確的格式
     const auth = pusherServer.authorizeChannel(socketId, channelName)
 
-    return NextResponse.json(auth)
+    // 返回認證信息（Pusher 期望的格式）
+    return NextResponse.json(auth, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Credentials': 'true',
+      }
+    })
   } catch (error) {
     console.error('[Pusher Auth] Error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Credentials': 'true',
+        }
+      }
+    )
   }
+}
+
+// 處理 CORS preflight 請求
+export async function OPTIONS() {
+  return NextResponse.json(
+    {},
+    {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Credentials': 'true',
+      },
+    }
+  )
 }
 
