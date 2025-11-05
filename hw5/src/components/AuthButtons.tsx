@@ -1,10 +1,11 @@
 'use client'
 
-import { Button, Box, Divider, Typography } from '@mui/material'
+import { Button, Box, Divider, Typography, Link } from '@mui/material'
 import GoogleIcon from '@mui/icons-material/Google'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import { signIn } from 'next-auth/react'
+import NextLink from 'next/link'
 
 export default function AuthButtons() {
   const handleSignIn = (provider: string) => {
@@ -69,11 +70,18 @@ export default function AuthButtons() {
       <Typography 
         variant="caption" 
         color="text.secondary" 
-        align="center" 
+        align="center"
         display="block"
         sx={{ fontSize: '0.75rem' }}
       >
-        登入即表示您同意我們的服務條款和隱私政策
+        登入即表示您同意我們的{' '}
+        <Link component={NextLink} href="/terms" sx={{ textDecoration: 'none' }}>
+          服務條款
+        </Link>
+        {' '}和{' '}
+        <Link component={NextLink} href="/privacy" sx={{ textDecoration: 'none' }}>
+          隱私政策
+        </Link>
       </Typography>
     </Box>
   )
