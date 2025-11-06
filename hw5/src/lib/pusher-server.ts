@@ -14,7 +14,16 @@ export const pusherServer =
         }
         
         const server = new Pusher(config)
-        console.log('[Pusher Server] Initialized successfully')
+        console.log('[Pusher Server] ===== INITIALIZING PUSHER SERVER =====')
+        console.log('[Pusher Server] Configuration:', {
+          appId: config.appId,
+          key: config.key.substring(0, 8) + '...',
+          secret: config.secret.substring(0, 8) + '...',
+          cluster: config.cluster,
+          useTLS: config.useTLS,
+        })
+        console.log('[Pusher Server] ✅ Initialized successfully')
+        console.log('[Pusher Server] ===== PUSHER SERVER READY =====')
         return server
       })()
     : (() => {
