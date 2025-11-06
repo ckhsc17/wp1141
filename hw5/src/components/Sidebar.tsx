@@ -28,18 +28,22 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import PostModal from './PostModal'
+import { useUnreadNotificationCount } from '@/hooks/useNotification'
+import Badge from '@mui/material/Badge'
 
 export default function Sidebar() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const pathname = usePathname()
+  const router = useRouter()
   const { data: session } = useSession()
   const [postModalOpen, setPostModalOpen] = useState(false)
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
   const menuOpen = Boolean(menuAnchorEl)
+  const unreadCount = useUnreadNotificationCount()
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchorEl(event.currentTarget)
@@ -111,9 +115,11 @@ export default function Sidebar() {
             return (
               <ListItem key={item.label} disablePadding>
                 <ListItemButton
-                  component={Link}
-                  href={item.href}
                   selected={isActive}
+                  onClick={() => {
+                    console.log('[Sidebar] Navigation clicked:', { label: item.label, href: item.href })
+                    router.push(item.href)
+                  }}
                   sx={{
                     borderRadius: '25px',
                     mx: 1,
@@ -127,10 +133,19 @@ export default function Sidebar() {
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: 40 }}>
-                    <Icon 
-                      fontSize="large"
-                      sx={{ color: isActive ? 'text.primary' : 'text.secondary' }}
-                    />
+                    {item.label === 'Notifications' && unreadCount.data && unreadCount.data > 0 ? (
+                      <Badge badgeContent={unreadCount.data} color="error">
+                        <Icon 
+                          fontSize="large"
+                          sx={{ color: isActive ? 'text.primary' : 'text.secondary' }}
+                        />
+                      </Badge>
+                    ) : (
+                      <Icon 
+                        fontSize="large"
+                        sx={{ color: isActive ? 'text.primary' : 'text.secondary' }}
+                      />
+                    )}
                   </ListItemIcon>
                   <ListItemText 
                     primary={item.label}

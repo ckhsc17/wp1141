@@ -32,6 +32,8 @@ model User {
   mentions      Mention[] @relation("UserMentions")
   mentionedIn   Mention[] @relation("UserMentioned")
   reposts       Repost[]
+  notifications Notification[] @relation("UserNotifications")
+  actorNotifications Notification[] @relation("ActorNotifications")
   
   @@index([userId])
   @@index([email])
@@ -91,6 +93,7 @@ model Post {
   comments      Comment[]
   mentions      Mention[]
   repostRecords Repost[]
+  notifications Notification[]
   
   @@index([authorId])
   @@index([createdAt])
@@ -125,6 +128,7 @@ model Comment {
   parent  Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies Comment[] @relation("CommentReplies")
   mentions Mention[]
+  notifications Notification[]
   
   @@index([postId])
   @@index([authorId])
@@ -189,4 +193,27 @@ model Repost {
   @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // 'like', 'comment', 'mention'
+  userId    String   // 接收通知的用户
+  actorId   String   // 触发通知的用户
+  postId    String?  // 关联的贴文
+  commentId String?  // 关联的留言（如果是 comment 通知）
+  mentionId String?  // 关联的 mention（如果是 mention 通知）
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  user    User    @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actor   User    @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+  post    Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([actorId])
+  @@index([postId])
+  @@index([commentId])
+  @@index([createdAt])
 }

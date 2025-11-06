@@ -2,6 +2,7 @@ import { mentionRepository } from '../repositories/mentionRepository'
 import { userRepository } from '../repositories/userRepository'
 import { pusherServer } from '@/lib/pusher-server'
 import { extractMentions } from '@/utils/mention'
+import { notificationService } from './notificationService'
 
 interface CreateMentionsParams {
   content: string
@@ -58,27 +59,37 @@ export class MentionService {
       return []
     }
 
-    // Create mention records
-    const mentionData = validUserIds.map((userId) => ({
-      postId,
-      commentId,
-      mentionerId,
-      mentionedId: userId,
-    }))
-
-    console.log('[MentionService] Creating mention records:', {
-      count: mentionData.length,
-    })
-
-    const mentions = await mentionRepository.createMany(mentionData)
-    console.log('[MentionService] Mention records created:', {
-      count: mentions.count,
-    })
-
-    // Send Pusher notifications for each mention
-    console.log('[MentionService] Starting to send Pusher notifications for', validUserIds.length, 'mentions')
+    // Process each mention individually to create both mention and notification records
+    console.log('[MentionService] Starting to process', validUserIds.length, 'mentions')
     for (const userId of validUserIds) {
-      console.log('[MentionService] Processing notification for user ID:', userId)
+      console.log('[MentionService] Processing mention for user ID:', userId)
+      
+      // 创建 mention 记录
+      const mention = await mentionRepository.create({
+        postId: postId || undefined,
+        commentId: commentId || undefined,
+        mentionerId,
+        mentionedId: userId,
+      })
+      
+      console.log('[MentionService] Mention record created:', mention.id)
+      
+      // 创建通知记录
+      try {
+        await notificationService.createNotification({
+          type: 'mention',
+          userId,
+          actorId: mentionerId,
+          postId: postId || undefined,
+          commentId: commentId || undefined,
+          mentionId: mention.id,
+        })
+        console.log('[MentionService] Notification created for mention:', mention.id)
+      } catch (error) {
+        console.error('[MentionService] Failed to create notification:', error)
+      }
+      
+      // 发送 Pusher 通知（保持向后兼容）
       await this.sendMentionNotification({
         mentionedUserId: userId,
         mentionerId,
@@ -86,9 +97,14 @@ export class MentionService {
         contentId: postId || commentId || '',
       })
     }
-    console.log('[MentionService] All Pusher notifications processed')
+    console.log('[MentionService] All mentions processed')
 
-    return mentionData
+    return validUserIds.map((userId) => ({
+      postId,
+      commentId,
+      mentionerId,
+      mentionedId: userId,
+    }))
   }
 
   /**

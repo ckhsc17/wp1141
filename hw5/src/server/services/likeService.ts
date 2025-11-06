@@ -1,5 +1,6 @@
 import { likeRepository } from '../repositories/likeRepository'
 import { postRepository } from '../repositories/postRepository'
+import { notificationService } from './notificationService'
 
 export class LikeService {
   async toggleLike(postId: string, userId: string) {
@@ -19,6 +20,33 @@ export class LikeService {
     } else {
       // 按讚
       await likeRepository.create({ postId, userId })
+      
+      // 发送通知给贴文作者（如果不是自己）
+      if (post.authorId !== userId) {
+        console.log('[LikeService] Creating notification for like:', {
+          postId: post.id,
+          postAuthorId: post.authorId,
+          likerId: userId,
+        })
+        try {
+          const notification = await notificationService.createNotification({
+            type: 'like',
+            userId: post.authorId,
+            actorId: userId,
+            postId: post.id,
+          })
+          console.log('[LikeService] ✅ Notification created successfully:', notification?.id)
+        } catch (error) {
+          console.error('[LikeService] ❌ Failed to create notification:', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          })
+          // 不抛出错误，避免影响 like 操作
+        }
+      } else {
+        console.log('[LikeService] Skipping notification - user is post author')
+      }
+      
       return { liked: true }
     }
   }

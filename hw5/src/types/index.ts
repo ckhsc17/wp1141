@@ -117,3 +117,18 @@ export interface Repost {
   createdAt: Date
 }
 
+export interface Notification {
+  id: string
+  type: 'like' | 'comment' | 'mention'
+  userId: string
+  actorId: string
+  postId?: string | null
+  commentId?: string | null
+  mentionId?: string | null
+  read: boolean
+  createdAt: Date
+  actor?: User
+  post?: Post
+  comment?: Comment
+}
+

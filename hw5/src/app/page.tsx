@@ -31,7 +31,7 @@ export default function Home() {
     toggleRepost.mutate(postId)
   }
 
-  // Listen for Pusher mention notifications
+  // Listen for Pusher notifications (includes mentions, likes, comments)
   usePusherMentions((session?.user as any)?.userId)
 
   // 檢查是否已登入但沒有 userId，需要設定

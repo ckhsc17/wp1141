@@ -2,6 +2,7 @@ import { commentRepository } from '../repositories/commentRepository'
 import { postRepository } from '../repositories/postRepository'
 import { CreateCommentInput } from '@/schemas/comment.schema'
 import { mentionService } from './mentionService'
+import { notificationService } from './notificationService'
 
 export class CommentService {
   async createComment(
@@ -34,6 +35,34 @@ export class CommentService {
       authorId,
       parentId: parentId || null,
     })
+
+    // 发送通知给贴文作者（如果不是自己）
+    if (post.authorId !== authorId) {
+      console.log('[CommentService] Creating notification for comment:', {
+        postId: post.id,
+        postAuthorId: post.authorId,
+        commenterId: authorId,
+        commentId: comment.id,
+      })
+      try {
+        const notification = await notificationService.createNotification({
+          type: 'comment',
+          userId: post.authorId,
+          actorId: authorId,
+          postId: post.id,
+          commentId: comment.id,
+        })
+        console.log('[CommentService] ✅ Notification created successfully:', notification?.id)
+      } catch (error) {
+        console.error('[CommentService] ❌ Failed to create notification:', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        })
+        // 不抛出错误，避免影响 comment 操作
+      }
+    } else {
+      console.log('[CommentService] Skipping notification - user is post author')
+    }
 
     // Create mentions if any
     try {

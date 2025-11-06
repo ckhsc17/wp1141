@@ -7,4 +7,5 @@ export * from './useFollow'
 export * from './useMention'
 export * from './useUserSearch'
 export * from './useRepost'
+export * from './useNotification'
 

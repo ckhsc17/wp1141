@@ -19,6 +19,8 @@ import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import PostModal from './PostModal'
 import { useRouter } from 'next/navigation'
+import { useUnreadNotificationCount } from '@/hooks/useNotification'
+import Badge from '@mui/material/Badge'
 
 export default function BottomNav() {
   const theme = useTheme()
@@ -27,7 +29,7 @@ export default function BottomNav() {
   const router = useRouter()
   const { data: session } = useSession()
   const [postModalOpen, setPostModalOpen] = useState(false)
-  const [value, setValue] = useState(0)
+  const unreadCount = useUnreadNotificationCount()
 
   const navItems = [
     { label: 'Home', icon: HomeIcon, href: '/' },
@@ -41,6 +43,12 @@ export default function BottomNav() {
   if (isDesktop) {
     return null
   }
+
+  // Find current active tab index
+  const currentIndex = navItems.findIndex(
+    (item) => pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href))
+  )
+  const [value, setValue] = useState(currentIndex >= 0 ? currentIndex : 0)
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue)
@@ -77,13 +85,27 @@ export default function BottomNav() {
             },
           }}
         >
-          {navItems.map((item) => (
-            <BottomNavigationAction
-              key={item.label}
-              label={item.label}
-              icon={<item.icon />}
-            />
-          ))}
+          {navItems.map((item, index) => {
+            const isNotification = item.label === 'Notifications'
+            const showBadge = isNotification && unreadCount.data && unreadCount.data > 0
+            
+            return (
+              <BottomNavigationAction
+                key={item.label}
+                label={item.label}
+                icon={
+                  showBadge ? (
+                    <Badge badgeContent={unreadCount.data} color="error">
+                      <item.icon />
+                    </Badge>
+                  ) : (
+                    <item.icon />
+                  )
+                }
+                value={index}
+              />
+            )
+          })}
         </BottomNavigation>
       </Box>
 
