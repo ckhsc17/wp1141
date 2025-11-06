@@ -1,17 +1,24 @@
 import { z } from 'zod'
+import { calculateEffectiveLength } from '@/utils/mention'
 
 export const createPostSchema = z.object({
   content: z
     .string()
     .min(1, '貼文內容不能為空')
-    .max(280, '貼文最多 280 字元'),
+    .refine(
+      (val) => calculateEffectiveLength(val) <= 280,
+      '貼文最多 280 字元（連結佔用 23 字元）'
+    ),
 })
 
 export const updatePostSchema = z.object({
   content: z
     .string()
     .min(1, '貼文內容不能為空')
-    .max(280, '貼文最多 280 字元'),
+    .refine(
+      (val) => calculateEffectiveLength(val) <= 280,
+      '貼文最多 280 字元（連結佔用 23 字元）'
+    ),
 })
 
 export const paginationSchema = z.object({

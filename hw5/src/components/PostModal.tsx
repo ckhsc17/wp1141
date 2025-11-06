@@ -17,6 +17,7 @@ import ImageIcon from '@mui/icons-material/Image'
 import { useSession } from 'next-auth/react'
 import { useCreatePost, useDraft, useSaveDraft, useDeleteDraft } from '@/hooks'
 import MentionInput from './MentionInput'
+import { calculateEffectiveLength } from '@/utils/mention'
 
 interface PostModalProps {
   open: boolean
@@ -132,9 +133,6 @@ export default function PostModal({ open, onClose }: PostModalProps) {
               onChange={setContent}
               variant="standard"
               autoFocus
-              inputProps={{
-                maxLength: 280,
-              }}
               sx={{ mb: 2 }}
             />
             
@@ -148,8 +146,11 @@ export default function PostModal({ open, onClose }: PostModalProps) {
               
               <Box display="flex" gap={1} alignItems="center">
                 {content.length > 0 && (
-                  <Typography variant="caption" color="text.secondary">
-                    {content.length}/280
+                  <Typography 
+                    variant="caption" 
+                    color={calculateEffectiveLength(content) > 280 ? 'error' : 'text.secondary'}
+                  >
+                    {calculateEffectiveLength(content)}/280
                   </Typography>
                 )}
                 <Button
@@ -162,7 +163,7 @@ export default function PostModal({ open, onClose }: PostModalProps) {
                 <Button
                   onClick={handlePost}
                   variant="contained"
-                  disabled={!content.trim() || createPost.isPending}
+                  disabled={!content.trim() || createPost.isPending || calculateEffectiveLength(content) > 280}
                   size="small"
                 >
                   {createPost.isPending ? 'Posting...' : 'Post'}

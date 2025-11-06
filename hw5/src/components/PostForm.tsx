@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Paper, Button, Box, Avatar } from '@mui/material'
+import { Paper, Button, Box, Avatar, Typography } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import { useCreatePost } from '@/hooks/usePosts'
 import { useSession } from 'next-auth/react'
 import MentionInput from './MentionInput'
+import { calculateEffectiveLength } from '@/utils/mention'
 
 interface PostFormProps {
   onPostCreated?: () => void
@@ -57,11 +58,16 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
             sx={{ mb: 1 }}
           />
           
-          <Box display="flex" justifyContent="flex-end">
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            {content.length > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                {calculateEffectiveLength(content)}/280
+              </Typography>
+            )}
             <Button
               type="submit"
               variant="contained"
-              disabled={!content.trim() || createPost.isPending}
+              disabled={!content.trim() || createPost.isPending || calculateEffectiveLength(content) > 280}
               startIcon={<SendIcon />}
             >
               Post

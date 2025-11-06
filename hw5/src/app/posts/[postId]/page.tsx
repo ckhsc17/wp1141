@@ -15,6 +15,7 @@ import { useComments, useReplies, useToggleLike, useToggleRepost, useCreateComme
 import { useSession } from 'next-auth/react'
 import { Post, Comment } from '@/types'
 import MentionInput from '@/components/MentionInput'
+import { calculateEffectiveLength } from '@/utils/mention'
 
 export default function PostDetailPage() {
   const router = useRouter()
@@ -144,13 +145,16 @@ export default function PostDetailPage() {
                       inputProps={{ maxLength: 280 }}
                     />
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Typography variant="caption" color="text.secondary">
-                        {commentContent.length}/280
+                      <Typography 
+                        variant="caption" 
+                        color={calculateEffectiveLength(commentContent) > 280 ? 'error' : 'text.secondary'}
+                      >
+                        {calculateEffectiveLength(commentContent)}/280
                       </Typography>
                       <Button
                         type="submit"
                         variant="contained"
-                        disabled={!commentContent.trim() || createComment.isPending}
+                        disabled={!commentContent.trim() || createComment.isPending || calculateEffectiveLength(commentContent) > 280}
                         startIcon={<SendIcon />}
                       >
                         Reply

@@ -18,29 +18,61 @@ export default function MentionText({ content }: MentionTextProps) {
           return <span key={index}>{segment.content}</span>
         }
 
-        // Render mention as clickable link
-        return (
-          <Link
-            key={index}
-            href={`/profile/${segment.userId}`}
-            style={{
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            <Box
-              component="span"
-              sx={{
-                color: 'primary.main',
-                '&:hover': {
-                  textDecoration: 'underline',
-                },
+        if (segment.type === 'mention') {
+          // Render mention as clickable link
+          return (
+            <Link
+              key={index}
+              href={`/profile/${segment.userId}`}
+              style={{
+                color: 'inherit',
+                textDecoration: 'none',
               }}
             >
-              @{segment.userId}
-            </Box>
-          </Link>
-        )
+              <Box
+                component="span"
+                sx={{
+                  color: 'primary.main',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                @{segment.userId}
+              </Box>
+            </Link>
+          )
+        }
+
+        if (segment.type === 'link') {
+          // Render URL as clickable link (display original URL, link to normalized URL)
+          return (
+            <Link
+              key={index}
+              href={segment.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: 'inherit',
+                textDecoration: 'none',
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  color: 'primary.main',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                {segment.originalUrl}
+              </Box>
+            </Link>
+          )
+        }
+
+        return null
       })}
     </Box>
   )

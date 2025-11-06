@@ -6,6 +6,7 @@ import SendIcon from '@mui/icons-material/Send'
 import { useCreateReply } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import MentionInput from './MentionInput'
+import { calculateEffectiveLength } from '@/utils/mention'
 
 interface ReplyFormProps {
   commentId: string
@@ -56,19 +57,19 @@ export default function ReplyForm({ commentId, onReplyCreated }: ReplyFormProps)
             onChange={setContent}
             variant="standard"
             sx={{ mb: 1 }}
-            inputProps={{
-              maxLength: 280,
-            }}
           />
           
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary">
-              {content.length}/280
+            <Typography 
+              variant="caption" 
+              color={calculateEffectiveLength(content) > 280 ? 'error' : 'text.secondary'}
+            >
+              {calculateEffectiveLength(content)}/280
             </Typography>
             <Button
               type="submit"
               variant="contained"
-              disabled={!content.trim() || createReply.isPending}
+              disabled={!content.trim() || createReply.isPending || calculateEffectiveLength(content) > 280}
               startIcon={<SendIcon />}
             >
               Reply
