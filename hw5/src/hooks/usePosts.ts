@@ -95,7 +95,12 @@ export function useDeletePost() {
       await axios.delete(`/api/posts/${id}`)
     },
     onSuccess: () => {
+      // Invalidate all post-related queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ['posts'] })
+      queryClient.invalidateQueries({ queryKey: ['post'] })
+      queryClient.invalidateQueries({ queryKey: ['user-posts'] })
+      queryClient.invalidateQueries({ queryKey: ['reposts'] })
+      queryClient.invalidateQueries({ queryKey: ['liked-posts'] })
     },
   })
 }
