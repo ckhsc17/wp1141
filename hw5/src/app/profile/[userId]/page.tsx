@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Container, Box, Typography, Avatar, CircularProgress, Alert, Button, IconButton } from '@mui/material'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser, usePosts, useReposts, useToggleLike, useToggleRepost } from '@/hooks'
+import { useUser, usePosts, useReposts, useLikedPosts, useToggleLike, useToggleRepost } from '@/hooks'
 import PostCard from '@/components/PostCard'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import EditIcon from '@mui/icons-material/Edit'
@@ -20,10 +20,11 @@ export default function ProfilePage() {
   const { data: user, isLoading: isUserLoading, error: userError } = useUser(userId)
   const { data: posts, isLoading: isPostsLoading, error: postsError } = usePosts({ userId })
   const { data: reposts, isLoading: isRepostsLoading, error: repostsError } = useReposts(userId)
+  const { data: likedPosts, isLoading: isLikedPostsLoading, error: likedPostsError } = useLikedPosts(userId)
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'posts' | 'reposts'>('posts')
+  const [activeTab, setActiveTab] = useState<'posts' | 'reposts' | 'likes'>('posts')
   const isOwnProfile = session?.user && (session.user as any).userId === userId
 
   const handleLike = (postId: string) => {
@@ -210,6 +211,24 @@ export default function ProfilePage() {
           >
             Reposts
           </Typography>
+          <Typography 
+            variant="body2" 
+            fontWeight={600}
+            onClick={() => setActiveTab('likes')}
+            sx={{ 
+              py: 2,
+              px: 3,
+              borderBottom: activeTab === 'likes' ? '2px solid' : 'none',
+              borderColor: 'primary.main',
+              cursor: 'pointer',
+              color: activeTab === 'likes' ? 'text.primary' : 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              }
+            }}
+          >
+            Likes
+          </Typography>
         </Box>
         
         {activeTab === 'posts' && (
@@ -232,7 +251,6 @@ export default function ProfilePage() {
                 post={post}
                 onLike={handleLike}
                 onRepost={handleRepost}
-                isLiked={false}
               />
             ))}
 
@@ -272,6 +290,37 @@ export default function ProfilePage() {
             {reposts && reposts.length === 0 && (
               <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
                 No reposts yet
+              </Typography>
+            )}
+          </>
+        )}
+
+        {activeTab === 'likes' && (
+          <>
+            {isLikedPostsLoading && (
+              <Box display="flex" justifyContent="center" py={4}>
+                <CircularProgress />
+              </Box>
+            )}
+
+            {likedPostsError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                Failed to load liked posts
+              </Alert>
+            )}
+
+            {likedPosts && likedPosts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={handleLike}
+                onRepost={handleRepost}
+              />
+            ))}
+
+            {likedPosts && likedPosts.length === 0 && (
+              <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
+                No liked posts yet
               </Typography>
             )}
           </>

@@ -116,7 +116,6 @@ export default function Home() {
           post={post}
           onLike={handleLike}
           onRepost={handleRepost}
-          isLiked={false}
         />
       ))}
 

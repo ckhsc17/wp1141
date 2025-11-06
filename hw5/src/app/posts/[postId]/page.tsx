@@ -123,7 +123,7 @@ export default function PostDetailPage() {
 
         {!commentId && (
           <>
-            <PostCard post={post} onLike={handleLike} onRepost={handleRepost} isLiked={false} />
+            <PostCard post={post} onLike={handleLike} onRepost={handleRepost} />
             
             {session && (
               <Paper sx={{ p: 2, mb: 2, backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>

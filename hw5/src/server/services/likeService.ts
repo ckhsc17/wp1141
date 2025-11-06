@@ -32,6 +32,44 @@ export class LikeService {
     const count = await likeRepository.countByPost(postId)
     return { count }
   }
+
+  async getUserLikedPosts(userId: string, { page, limit }: { page: number; limit: number }) {
+    const skip = (page - 1) * limit
+    
+    // Get user's internal ID from userId
+    const { userRepository } = await import('../repositories/userRepository')
+    const user = await userRepository.findByUserId(userId)
+    
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    // Get likes by user
+    const likes = await likeRepository.findByUserId(user.id, { skip, take: limit })
+    
+    // Get posts from likes
+    const { postRepository } = await import('../repositories/postRepository')
+    const posts = await Promise.all(
+      likes.map(async (like) => {
+        const post = await postRepository.findById(like.postId)
+        return post
+      })
+    )
+
+    // Filter out null posts and get total count
+    const validPosts = posts.filter((post): post is NonNullable<typeof post> => post !== null)
+    const total = await likeRepository.countByUserId(user.id)
+
+    return {
+      posts: validPosts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  }
 }
 
 export const likeService = new LikeService()

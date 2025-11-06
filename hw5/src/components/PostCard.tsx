@@ -12,6 +12,7 @@ import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 import MentionText from './MentionText'
 import { useRepostStatus } from '@/hooks/useRepost'
+import { useLikeStatus } from '@/hooks/useLike'
 import { useSession } from 'next-auth/react'
 import UnrepostConfirmDialog from './UnrepostConfirmDialog'
 
@@ -23,7 +24,7 @@ interface PostCardProps {
   isReposted?: boolean // Optional override, if not provided will check automatically
 }
 
-export default function PostCard({ post, onLike, onRepost, isLiked = false, isReposted: isRepostedProp }: PostCardProps) {
+export default function PostCard({ post, onLike, onRepost, isLiked: isLikedProp, isReposted: isRepostedProp }: PostCardProps) {
   // Determine which post to display - if this is a repost, show the original post
   const displayPost = post.originalPost || post
   const isRepost = !!post.originalPost
@@ -36,6 +37,24 @@ export default function PostCard({ post, onLike, onRepost, isLiked = false, isRe
     session?.user?.id && displayPost.id ? displayPost.id : ''
   )
   const isReposted = isRepostedProp !== undefined ? isRepostedProp : (repostStatus?.reposted || false)
+  
+  // Check like status if not provided as prop
+  // Only use prop if explicitly provided (not undefined), otherwise check automatically
+  const { data: likeStatus } = useLikeStatus(
+    session?.user?.id && displayPost.id ? displayPost.id : ''
+  )
+  const isLikedState = isLikedProp !== undefined ? isLikedProp : (likeStatus?.liked || false)
+  
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[PostCard] Like status:', {
+      postId: displayPost.id,
+      isLikedProp,
+      likeStatus,
+      isLikedState,
+      hasSession: !!session?.user?.id,
+    })
+  }
   
   // Log repost status for debugging
   if (process.env.NODE_ENV === 'development') {
@@ -129,9 +148,9 @@ export default function PostCard({ post, onLike, onRepost, isLiked = false, isRe
               <IconButton 
                 size="small"
                 onClick={() => onLike?.(displayPost.id)}
-                sx={{ color: isLiked ? 'primary.main' : 'text.secondary' }}
+                sx={{ color: isLikedState ? 'error.main' : 'text.secondary' }}
               >
-                {isLiked ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
+                {isLikedState ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
                   {displayPost._count?.likes || 0}
                 </Typography>

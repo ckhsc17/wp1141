@@ -34,6 +34,21 @@ export class LikeRepository {
       where: { postId },
     })
   }
+
+  async findByUserId(userId: string, options: { skip: number; take: number }) {
+    return prisma.like.findMany({
+      where: { userId },
+      skip: options.skip,
+      take: options.take,
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async countByUserId(userId: string) {
+    return prisma.like.count({
+      where: { userId },
+    })
+  }
 }
 
 export const likeRepository = new LikeRepository()

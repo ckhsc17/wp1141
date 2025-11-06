@@ -43,6 +43,22 @@ export function useReposts(userId: string, params?: PaginationParams) {
   })
 }
 
+export function useLikedPosts(userId: string, params?: PaginationParams) {
+  return useQuery({
+    queryKey: ['liked-posts', userId, params?.page, params?.limit],
+    queryFn: async () => {
+      const { data } = await axios.get(`/api/users/${userId}/likes`, {
+        params: {
+          page: params?.page || 1,
+          limit: params?.limit || 20,
+        },
+      })
+      return data.posts as Post[]
+    },
+    enabled: !!userId,
+  })
+}
+
 export function useCreatePost() {
   const queryClient = useQueryClient()
 

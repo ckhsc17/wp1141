@@ -25,6 +25,22 @@ export class LikeController {
       )
     }
   }
+
+  async getUserLikedPosts(userId: string, request: Request) {
+    try {
+      const { searchParams } = new URL(request.url)
+      const page = parseInt(searchParams.get('page') || '1')
+      const limit = parseInt(searchParams.get('limit') || '20')
+
+      const result = await likeService.getUserLikedPosts(userId, { page, limit })
+      return NextResponse.json(result)
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to get liked posts' },
+        { status: 500 }
+      )
+    }
+  }
 }
 
 export const likeController = new LikeController()
