@@ -10,6 +10,7 @@ async function main() {
   await prisma.mention.deleteMany()
   await prisma.comment.deleteMany()
   await prisma.like.deleteMany()
+  await prisma.repost.deleteMany()
   await prisma.post.deleteMany()
   await prisma.draft.deleteMany()
   await prisma.follow.deleteMany()
@@ -145,6 +146,47 @@ async function main() {
   }
 
   console.log(`Created ${replyCount} replies`)
+
+  // 隨機 repost：20-40% 的貼文被 repost
+  const postsToRepost = faker.helpers.arrayElements(allPosts, {
+    min: Math.floor(allPosts.length * 0.2),
+    max: Math.floor(allPosts.length * 0.4),
+  })
+
+  let repostCount = 0
+  for (const post of postsToRepost) {
+    // 每個被 repost 的貼文，有 1-5 個用戶 repost
+    const numReposts = faker.number.int({ min: 1, max: 5 })
+    const shuffledUsers = faker.helpers.shuffle([...users])
+    
+    for (let i = 0; i < numReposts; i++) {
+      const user = shuffledUsers[i]
+      // 不會 repost 自己的貼文
+      if (user.id !== post.authorId) {
+        // 創建 repost post
+        const repostPost = await prisma.post.create({
+          data: {
+            content: '', // Repost posts have empty content
+            authorId: user.id,
+            originalPostId: post.id,
+            createdAt: faker.date.between({ from: post.createdAt, to: new Date() }),
+          },
+        })
+
+        // 創建 repost record
+        await prisma.repost.create({
+          data: {
+            postId: post.id,
+            userId: user.id,
+            createdAt: repostPost.createdAt,
+          },
+        })
+        repostCount++
+      }
+    }
+  }
+
+  console.log(`Created ${repostCount} reposts`)
   console.log('Database seeded successfully!')
 }
 

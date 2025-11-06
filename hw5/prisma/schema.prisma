@@ -31,6 +31,7 @@ model User {
   followers     Follow[]  @relation("UserFollowers")
   mentions      Mention[] @relation("UserMentions")
   mentionedIn   Mention[] @relation("UserMentioned")
+  reposts       Repost[]
   
   @@index([userId])
   @@index([email])
@@ -76,19 +77,24 @@ model VerificationToken {
 }
 
 model Post {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  content       String   @db.Text
+  authorId      String
+  originalPostId String?  // Reference to original post if this is a repost
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   
-  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  likes    Like[]
-  comments Comment[]
-  mentions Mention[]
+  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  originalPost  Post?     @relation("PostReposts", fields: [originalPostId], references: [id], onDelete: Cascade)
+  reposts       Post[]    @relation("PostReposts")
+  likes         Like[]
+  comments      Comment[]
+  mentions      Mention[]
+  repostRecords Repost[]
   
   @@index([authorId])
   @@index([createdAt])
+  @@index([originalPostId])
 }
 
 model Like {
@@ -169,4 +175,18 @@ model Mention {
   @@index([mentionedId])
   @@index([postId])
   @@index([commentId])
+}
+
+model Repost {
+  id        String   @id @default(cuid())
+  postId    String   // Original post being reposted
+  userId    String   // User who reposted
+  createdAt DateTime @default(now())
+  
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
 }

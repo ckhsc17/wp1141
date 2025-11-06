@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Container, Box, Typography, Avatar, CircularProgress, Alert, Button, IconButton } from '@mui/material'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser, usePosts, useToggleLike } from '@/hooks'
+import { useUser, usePosts, useReposts, useToggleLike, useToggleRepost } from '@/hooks'
 import PostCard from '@/components/PostCard'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import EditIcon from '@mui/icons-material/Edit'
@@ -19,12 +19,19 @@ export default function ProfilePage() {
   const { data: session } = useSession()
   const { data: user, isLoading: isUserLoading, error: userError } = useUser(userId)
   const { data: posts, isLoading: isPostsLoading, error: postsError } = usePosts({ userId })
+  const { data: reposts, isLoading: isRepostsLoading, error: repostsError } = useReposts(userId)
   const toggleLike = useToggleLike()
+  const toggleRepost = useToggleRepost()
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'posts' | 'reposts'>('posts')
   const isOwnProfile = session?.user && (session.user as any).userId === userId
 
   const handleLike = (postId: string) => {
     toggleLike.mutate(postId)
+  }
+
+  const handleRepost = (postId: string) => {
+    toggleRepost.mutate(postId)
   }
 
   if (isUserLoading) {
@@ -164,49 +171,110 @@ export default function ProfilePage() {
         </Box>
       </Container>
 
-      {/* Posts Section */}
+      {/* Posts/Reposts Section */}
       <Container maxWidth="sm" sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
-        <Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', display: 'flex' }}>
           <Typography 
             variant="body2" 
             fontWeight={600}
+            onClick={() => setActiveTab('posts')}
             sx={{ 
-              py: 2, 
-              borderBottom: '2px solid',
+              py: 2,
+              px: 3,
+              borderBottom: activeTab === 'posts' ? '2px solid' : 'none',
               borderColor: 'primary.main',
-              display: 'inline-block',
-              cursor: 'default',
+              cursor: 'pointer',
+              color: activeTab === 'posts' ? 'text.primary' : 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              }
             }}
           >
             Posts
           </Typography>
+          <Typography 
+            variant="body2" 
+            fontWeight={600}
+            onClick={() => setActiveTab('reposts')}
+            sx={{ 
+              py: 2,
+              px: 3,
+              borderBottom: activeTab === 'reposts' ? '2px solid' : 'none',
+              borderColor: 'primary.main',
+              cursor: 'pointer',
+              color: activeTab === 'reposts' ? 'text.primary' : 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              }
+            }}
+          >
+            Reposts
+          </Typography>
         </Box>
         
-        {isPostsLoading && (
-          <Box display="flex" justifyContent="center" py={4}>
-            <CircularProgress />
-          </Box>
+        {activeTab === 'posts' && (
+          <>
+            {isPostsLoading && (
+              <Box display="flex" justifyContent="center" py={4}>
+                <CircularProgress />
+              </Box>
+            )}
+
+            {postsError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                Failed to load posts
+              </Alert>
+            )}
+
+            {posts && posts.filter(post => !post.originalPostId).map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={handleLike}
+                onRepost={handleRepost}
+                isLiked={false}
+              />
+            ))}
+
+            {posts && posts.filter(post => !post.originalPostId).length === 0 && (
+              <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
+                No posts yet
+              </Typography>
+            )}
+          </>
         )}
 
-        {postsError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            Failed to load posts
-          </Alert>
-        )}
+        {activeTab === 'reposts' && (
+          <>
+            {isRepostsLoading && (
+              <Box display="flex" justifyContent="center" py={4}>
+                <CircularProgress />
+              </Box>
+            )}
 
-        {posts && posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            onLike={handleLike}
-            isLiked={false}
-          />
-        ))}
+            {repostsError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                Failed to load reposts
+              </Alert>
+            )}
 
-        {posts && posts.length === 0 && (
-          <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
-            No posts yet
-          </Typography>
+            {reposts && reposts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={handleLike}
+                onRepost={handleRepost}
+                isLiked={false}
+                isReposted={true} // In reposts tab, all posts are reposted by the user
+              />
+            ))}
+
+            {reposts && reposts.length === 0 && (
+              <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
+                No reposts yet
+              </Typography>
+            )}
+          </>
         )}
       </Container>
 

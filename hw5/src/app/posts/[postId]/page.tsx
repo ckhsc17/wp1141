@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import PostCard from '@/components/PostCard'
 import CommentCard from '@/components/CommentCard'
-import { useComments, useReplies, useToggleLike, useCreateComment } from '@/hooks'
+import { useComments, useReplies, useToggleLike, useToggleRepost, useCreateComment } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import { Post, Comment } from '@/types'
 import MentionInput from '@/components/MentionInput'
@@ -24,8 +24,17 @@ export default function PostDetailPage() {
   const commentId = searchParams.get('commentId')
   const { data: session } = useSession()
   const toggleLike = useToggleLike()
+  const toggleRepost = useToggleRepost()
   const [commentContent, setCommentContent] = useState('')
   const createComment = useCreateComment()
+
+  const handleLike = (postId: string) => {
+    toggleLike.mutate(postId)
+  }
+
+  const handleRepost = (postId: string) => {
+    toggleRepost.mutate(postId)
+  }
 
   // 查詢貼文
   const { data: post, isLoading: isPostLoading, error: postError } = useQuery<Post>({
@@ -66,9 +75,6 @@ export default function PostDetailPage() {
     }
   }
 
-  const handleLike = (id: string) => {
-    toggleLike.mutate(id)
-  }
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,7 +123,7 @@ export default function PostDetailPage() {
 
         {!commentId && (
           <>
-            <PostCard post={post} onLike={handleLike} isLiked={false} />
+            <PostCard post={post} onLike={handleLike} onRepost={handleRepost} isLiked={false} />
             
             {session && (
               <Paper sx={{ p: 2, mb: 2, backgroundColor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>

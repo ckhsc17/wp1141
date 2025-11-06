@@ -27,6 +27,22 @@ export function usePosts(params?: GetPostsParams) {
   })
 }
 
+export function useReposts(userId: string, params?: PaginationParams) {
+  return useQuery({
+    queryKey: ['reposts', userId, params?.page, params?.limit],
+    queryFn: async () => {
+      const { data } = await axios.get(`/api/users/${userId}/reposts`, {
+        params: {
+          page: params?.page || 1,
+          limit: params?.limit || 20,
+        },
+      })
+      return data.posts as Post[]
+    },
+    enabled: !!userId,
+  })
+}
+
 export function useCreatePost() {
   const queryClient = useQueryClient()
 

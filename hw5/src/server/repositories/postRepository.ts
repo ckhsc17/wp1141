@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 
 export class PostRepository {
-  async create(data: { content: string; authorId: string }) {
+  async create(data: { content: string; authorId: string; originalPostId?: string | null }) {
     console.log('[PostRepository] Post created:')
     return prisma.post.create({
       data,
@@ -15,13 +15,33 @@ export class PostRepository {
             image: true,
           },
         },
+        originalPost: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                userId: true,
+                name: true,
+                image: true,
+              },
+            },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                repostRecords: true,
+              } as any,
+            },
+          },
+        } as any,
         _count: {
           select: {
             likes: true,
             comments: true,
-          },
+            repostRecords: true,
+          } as any,
         },
-      },
+      } as any,
     })
     
   }
@@ -45,13 +65,33 @@ export class PostRepository {
             image: true,
           },
         },
+        originalPost: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                userId: true,
+                name: true,
+                image: true,
+              },
+            },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                repostRecords: true,
+              } as any,
+            },
+          },
+        } as any,
         _count: {
           select: {
             likes: true,
             comments: true,
-          },
+            repostRecords: true,
+          } as any,
         },
-      },
+      } as any,
     })
   }
 
@@ -67,13 +107,33 @@ export class PostRepository {
             image: true,
           },
         },
+        originalPost: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                userId: true,
+                name: true,
+                image: true,
+              },
+            },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                repostRecords: true,
+              } as any,
+            },
+          },
+        } as any,
         _count: {
           select: {
             likes: true,
             comments: true,
-          },
+            repostRecords: true,
+          } as any,
         },
-      },
+      } as any,
     })
   }
 

@@ -22,12 +22,15 @@ export interface Post {
   id: string
   content: string
   authorId: string
+  originalPostId?: string | null
   createdAt: Date
   updatedAt: Date
   author?: User
+  originalPost?: Post
   _count?: {
     likes: number
     comments: number
+    repostRecords?: number
   }
 }
 
@@ -105,5 +108,12 @@ export interface CreateCommentInput {
   content: string
   postId: string
   parentId?: string
+}
+
+export interface Repost {
+  id: string
+  postId: string
+  userId: string
+  createdAt: Date
 }
 

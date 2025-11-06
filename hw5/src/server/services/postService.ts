@@ -103,14 +103,16 @@ export class PostService {
         author: {
           userId,
         },
-      },
+        originalPostId: null, // Exclude reposts from regular posts
+      } as any,
     })
 
     const total = await postRepository.count({
       author: {
         userId,
       },
-    })
+      originalPostId: null, // Exclude reposts from count
+    } as any)
 
     return {
       posts,
