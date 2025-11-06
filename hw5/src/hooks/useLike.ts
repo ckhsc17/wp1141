@@ -38,3 +38,36 @@ export function useLikeStatus(postId: string) {
   })
 }
 
+export function useToggleCommentLike() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (commentId: string) => {
+      const { data } = await axios.post(`/api/comments/${commentId}/like`)
+      return data
+    },
+    onSuccess: (data, commentId) => {
+      queryClient.invalidateQueries({ queryKey: ['comments'] })
+      queryClient.invalidateQueries({ queryKey: ['comment-like-status', commentId] })
+      queryClient.invalidateQueries({ queryKey: ['comment-like-status'] })
+    },
+  })
+}
+
+export function useCommentLikeStatus(commentId: string) {
+  return useQuery({
+    queryKey: ['comment-like-status', commentId],
+    queryFn: async () => {
+      if (!commentId) return { liked: false }
+      try {
+        const { data } = await axios.get(`/api/comments/${commentId}/like/status`)
+        return data as { liked: boolean }
+      } catch (error) {
+        console.error('[useCommentLikeStatus] Error fetching comment like status:', error)
+        return { liked: false }
+      }
+    },
+    enabled: !!commentId,
+  })
+}
+

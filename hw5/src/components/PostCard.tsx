@@ -29,9 +29,14 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: isLikedProp, isReposted: isRepostedProp }: PostCardProps) {
-  // Determine which post to display - if this is a repost, show the original post
-  const displayPost = post.originalPost || post
-  const isRepost = !!post.originalPost
+  // Determine which post to display - if this is a repost, show the original post or comment
+  const displayPost = post.originalPost || (post.originalComment ? {
+    ...post,
+    content: post.originalComment.content,
+    author: post.originalComment.author,
+    createdAt: post.originalComment.createdAt,
+  } : post)
+  const isRepost = !!post.originalPost || !!post.originalComment
   const { data: session } = useSession()
   const [unrepostDialogOpen, setUnrepostDialogOpen] = useState(false)
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
@@ -135,11 +140,14 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
       }}
     >
       <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-        {isRepost && (
+        {(isRepost || post.originalComment) && (
           <Box display="flex" alignItems="center" gap={1} mb={1} sx={{ pl: 7 }}>
             <RepeatIcon fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
             <Typography variant="caption" color="text.secondary">
               {post.author?.name} reposted
+              {post.originalComment && (
+                <span> a comment by {post.originalComment.author?.name}</span>
+              )}
             </Typography>
           </Box>
         )}

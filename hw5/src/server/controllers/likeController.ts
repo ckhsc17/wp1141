@@ -26,6 +26,30 @@ export class LikeController {
     }
   }
 
+  async toggleCommentLike(commentId: string, userId: string) {
+    try {
+      const result = await likeService.toggleCommentLike(commentId, userId)
+      return NextResponse.json(result)
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to toggle comment like' },
+        { status: error instanceof Error && error.message === 'Comment not found' ? 404 : 500 }
+      )
+    }
+  }
+
+  async getCommentLikeStatus(commentId: string, userId: string) {
+    try {
+      const result = await likeService.getCommentLikeStatus(commentId, userId)
+      return NextResponse.json(result)
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Failed to get comment like status' },
+        { status: 500 }
+      )
+    }
+  }
+
   async getUserLikedPosts(userId: string, request: Request) {
     try {
       const { searchParams } = new URL(request.url)

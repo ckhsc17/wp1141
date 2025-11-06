@@ -16,6 +16,8 @@ export class CommentRepository {
         _count: {
           select: {
             replies: true,
+            likes: true,
+            repostRecords: true,
           },
         },
       },
@@ -38,6 +40,8 @@ export class CommentRepository {
         _count: {
           select: {
             replies: true,
+            likes: true,
+            repostRecords: true,
           },
         },
       },
@@ -60,6 +64,8 @@ export class CommentRepository {
         _count: {
           select: {
             replies: true,
+            likes: true,
+            repostRecords: true,
           },
         },
       },
@@ -87,6 +93,8 @@ export class CommentRepository {
         _count: {
           select: {
             replies: true,
+            likes: true,
+            repostRecords: true,
           },
         },
       },

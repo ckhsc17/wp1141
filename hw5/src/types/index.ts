@@ -23,10 +23,12 @@ export interface Post {
   content: string
   authorId: string
   originalPostId?: string | null
+  originalCommentId?: string | null
   createdAt: Date
   updatedAt: Date
   author?: User
   originalPost?: Post
+  originalComment?: Comment
   _count?: {
     likes: number
     comments: number
@@ -36,7 +38,8 @@ export interface Post {
 
 export interface Like {
   id: string
-  postId: string
+  postId?: string | null
+  commentId?: string | null
   userId: string
   createdAt: Date
 }
@@ -52,6 +55,8 @@ export interface Comment {
   author?: User
   _count?: {
     replies: number
+    likes?: number
+    repostRecords?: number
   }
 }
 
@@ -112,7 +117,8 @@ export interface CreateCommentInput {
 
 export interface Repost {
   id: string
-  postId: string
+  postId?: string | null
+  commentId?: string | null
   userId: string
   createdAt: Date
 }
@@ -131,4 +137,5 @@ export interface Notification {
   post?: Post
   comment?: Comment
 }
+
 

@@ -2,37 +2,69 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 
 export class RepostRepository {
-  async create(data: { postId: string; userId: string }) {
+  async create(data: { postId?: string | null; commentId?: string | null; userId: string }) {
     return prisma.repost.create({
       data,
     })
   }
 
-  async delete(postId: string, userId: string) {
-    return prisma.repost.delete({
-      where: {
-        postId_userId: {
-          postId,
-          userId,
+  async delete(postId: string | null, commentId: string | null, userId: string) {
+    if (postId) {
+      return prisma.repost.delete({
+        where: {
+          postId_userId: {
+            postId,
+            userId,
+          },
         },
-      },
-    })
+      })
+    } else if (commentId) {
+      return prisma.repost.delete({
+        where: {
+          commentId_userId: {
+            commentId,
+            userId,
+          },
+        },
+      })
+    } else {
+      throw new Error('Either postId or commentId must be provided')
+    }
   }
 
-  async findUnique(postId: string, userId: string) {
-    return prisma.repost.findUnique({
-      where: {
-        postId_userId: {
-          postId,
-          userId,
+  async findUnique(postId: string | null, commentId: string | null, userId: string) {
+    if (postId) {
+      return prisma.repost.findUnique({
+        where: {
+          postId_userId: {
+            postId,
+            userId,
+          },
         },
-      },
-    })
+      })
+    } else if (commentId) {
+      return prisma.repost.findUnique({
+        where: {
+          commentId_userId: {
+            commentId,
+            userId,
+          },
+        },
+      })
+    } else {
+      throw new Error('Either postId or commentId must be provided')
+    }
   }
 
   async countByPost(postId: string) {
     return prisma.repost.count({
       where: { postId },
+    })
+  }
+
+  async countByComment(commentId: string) {
+    return prisma.repost.count({
+      where: { commentId },
     })
   }
 

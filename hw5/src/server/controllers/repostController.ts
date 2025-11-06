@@ -30,6 +30,33 @@ export class RepostController {
     }
   }
 
+  async toggleCommentRepost(commentId: string, userId: string) {
+    console.log('[RepostController] toggleCommentRepost called:', { commentId, userId })
+    try {
+      const result = await repostService.toggleCommentRepost(commentId, userId)
+      console.log('[RepostController] toggleCommentRepost success:', result)
+      return NextResponse.json(result)
+    } catch (error) {
+      console.error('[RepostController] toggleCommentRepost error:', error)
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to toggle comment repost' },
+        { status: error instanceof Error && error.message === 'Comment not found' ? 404 : 500 }
+      )
+    }
+  }
+
+  async getCommentRepostStatus(commentId: string, userId: string) {
+    try {
+      const result = await repostService.getCommentRepostStatus(commentId, userId)
+      return NextResponse.json(result)
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Failed to get comment repost status' },
+        { status: 500 }
+      )
+    }
+  }
+
   async getUserReposts(userId: string, request: NextRequest) {
     try {
       const { searchParams } = new URL(request.url)

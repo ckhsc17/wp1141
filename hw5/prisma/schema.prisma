@@ -79,38 +79,45 @@ model VerificationToken {
 }
 
 model Post {
-  id            String   @id @default(cuid())
-  content       String   @db.Text
-  authorId      String
-  originalPostId String?  // Reference to original post if this is a repost
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                String   @id @default(cuid())
+  content           String   @db.Text
+  authorId          String
+  originalPostId    String?  // Reference to original post if this is a repost
+  originalCommentId String?  // Reference to original comment if this is a repost of a comment
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
   
-  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  originalPost  Post?     @relation("PostReposts", fields: [originalPostId], references: [id], onDelete: Cascade)
-  reposts       Post[]    @relation("PostReposts")
-  likes         Like[]
-  comments      Comment[]
-  mentions      Mention[]
-  repostRecords Repost[]
-  notifications Notification[]
+  author          User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  originalPost    Post?     @relation("PostReposts", fields: [originalPostId], references: [id], onDelete: Cascade)
+  originalComment Comment?  @relation("CommentReposts", fields: [originalCommentId], references: [id], onDelete: Cascade)
+  reposts         Post[]    @relation("PostReposts")
+  likes           Like[]
+  comments        Comment[]
+  mentions        Mention[]
+  repostRecords   Repost[]
+  notifications   Notification[]
   
   @@index([authorId])
   @@index([createdAt])
   @@index([originalPostId])
+  @@index([originalCommentId])
 }
 
 model Like {
   id        String   @id @default(cuid())
-  postId    String
+  postId    String?
+  commentId String?
   userId    String
   createdAt DateTime @default(now())
   
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@unique([postId, userId])
+  @@unique([commentId, userId])
   @@index([postId])
+  @@index([commentId])
   @@index([userId])
 }
 
@@ -123,12 +130,15 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  post    Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author  User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent  Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies Comment[] @relation("CommentReplies")
-  mentions Mention[]
+  post         Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author       User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent       Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      Comment[] @relation("CommentReplies")
+  mentions     Mention[]
   notifications Notification[]
+  likes        Like[]
+  repostRecords Repost[]
+  repostPosts  Post[]    @relation("CommentReposts")
   
   @@index([postId])
   @@index([authorId])
@@ -183,15 +193,19 @@ model Mention {
 
 model Repost {
   id        String   @id @default(cuid())
-  postId    String   // Original post being reposted
+  postId    String?  // Original post being reposted
+  commentId String?  // Original comment being reposted
   userId    String   // User who reposted
   createdAt DateTime @default(now())
   
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@unique([postId, userId])
+  @@unique([commentId, userId])
   @@index([postId])
+  @@index([commentId])
   @@index([userId])
 }
 
