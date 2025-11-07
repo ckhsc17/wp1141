@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Container, Box, Typography, CircularProgress, Alert, Paper, AppBar as MuiAppBar, Toolbar } from '@mui/material'
 import PostForm from '@/components/PostForm'
 import PostCard from '@/components/PostCard'
 import AuthButtons from '@/components/AuthButtons'
-import { usePosts, useToggleLike, useToggleRepost, usePusherMentions } from '@/hooks'
+import { usePosts, useToggleLike, useToggleRepost, usePusherNotifications } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import { signIn } from 'next-auth/react'
 import { useThemeMode } from '@/contexts/ThemeContext'
@@ -18,7 +18,10 @@ import Button from '@mui/material/Button'
 export default function Home() {
   const router = useRouter()
   const { data: session, status } = useSession()
-  const { data: posts, isLoading, error } = usePosts()
+  const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou')
+  const { data: posts, isLoading, error, refetch } = usePosts({ 
+    following: activeTab === 'following' 
+  })
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()
   const { mode, toggleTheme } = useThemeMode()
@@ -32,7 +35,11 @@ export default function Home() {
   }
 
   // Listen for Pusher notifications (includes mentions, likes, comments)
-  usePusherMentions((session?.user as any)?.userId)
+  usePusherNotifications((session?.user as any)?.userId)
+
+  const handlePostDelete = () => {
+    refetch() // Refetch posts after deletion
+  }
 
   // 檢查是否已登入但沒有 userId，需要設定
   useEffect(() => {
@@ -96,6 +103,46 @@ export default function Home() {
         Home
       </Typography>
 
+      {/* Tab Navigation */}
+      <Box display="flex" justifyContent="space-around" borderBottom="1px solid" borderColor="divider" mb={2}>
+        <Typography
+          variant="body2"
+          fontWeight={600}
+          onClick={() => setActiveTab('foryou')}
+          sx={{
+            py: 2,
+            px: 3,
+            borderBottom: activeTab === 'foryou' ? '2px solid' : 'none',
+            borderColor: 'primary.main',
+            cursor: 'pointer',
+            color: activeTab === 'foryou' ? 'text.primary' : 'text.secondary',
+            '&:hover': {
+              backgroundColor: 'action.hover',
+            }
+          }}
+        >
+          For You
+        </Typography>
+        <Typography
+          variant="body2"
+          fontWeight={600}
+          onClick={() => setActiveTab('following')}
+          sx={{
+            py: 2,
+            px: 3,
+            borderBottom: activeTab === 'following' ? '2px solid' : 'none',
+            borderColor: 'primary.main',
+            cursor: 'pointer',
+            color: activeTab === 'following' ? 'text.primary' : 'text.secondary',
+            '&:hover': {
+              backgroundColor: 'action.hover',
+            }
+          }}
+        >
+          Following
+        </Typography>
+      </Box>
+
       {session && <PostForm />}
 
       {isLoading && (
@@ -116,12 +163,16 @@ export default function Home() {
           post={post}
           onLike={handleLike}
           onRepost={handleRepost}
+          onDelete={handlePostDelete}
         />
       ))}
 
       {posts && posts.length === 0 && (
         <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
-          No posts yet. Be the first to post!
+          {activeTab === 'following' 
+            ? 'No posts from people you follow yet. Start following people to see their posts here!'
+            : 'No posts yet. Be the first to post!'
+          }
         </Typography>
       )}
     </Container>

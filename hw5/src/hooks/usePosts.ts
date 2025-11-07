@@ -6,15 +6,20 @@ import { Post, PaginationParams, CreatePostInput } from '@/types'
 
 interface GetPostsParams extends PaginationParams {
   userId?: string
+  following?: boolean
 }
 
 export function usePosts(params?: GetPostsParams) {
   return useQuery({
-    queryKey: ['posts', params?.userId, params?.page, params?.limit],
+    queryKey: ['posts', params?.userId, params?.following, params?.page, params?.limit],
     queryFn: async () => {
-      const url = params?.userId 
-        ? `/api/users/${params.userId}/posts`
-        : '/api/posts'
+      let url = '/api/posts'
+      
+      if (params?.userId) {
+        url = `/api/users/${params.userId}/posts`
+      } else if (params?.following) {
+        url = '/api/posts/following'
+      }
       
       const { data } = await axios.get(url, {
         params: {
@@ -24,6 +29,7 @@ export function usePosts(params?: GetPostsParams) {
       })
       return data.posts as Post[]
     },
+    enabled: true, // Always enabled
   })
 }
 

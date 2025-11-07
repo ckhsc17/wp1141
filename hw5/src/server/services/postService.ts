@@ -1,6 +1,8 @@
 import { postRepository } from '../repositories/postRepository'
 import { CreatePostInput, UpdatePostInput, PaginationInput } from '@/schemas/post.schema'
 import { mentionService } from './mentionService'
+import { followRepository } from '../repositories/followRepository'
+import { userRepository } from '../repositories/userRepository'
 
 export class PostService {
   async createPost(data: CreatePostInput, authorId: string) {
@@ -112,6 +114,65 @@ export class PostService {
         userId,
       },
       originalPostId: null, // Exclude reposts from count
+    } as any)
+
+    return {
+      posts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  }
+
+  async getFollowingPosts(userId: string, pagination: PaginationInput) {
+    const { page, limit } = pagination
+    const skip = (page - 1) * limit
+
+    // Get user's internal ID from userId
+    const user = await userRepository.findByUserId(userId)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    // Get all users that the current user follows
+    const { prisma } = await import('@/lib/prisma')
+    const follows = await prisma.follow.findMany({
+      where: { followerId: user.id },
+      select: { followingId: true },
+    })
+
+    const followingIds = follows.map((f) => f.followingId)
+
+    if (followingIds.length === 0) {
+      return {
+        posts: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      }
+    }
+
+    // Get posts from followed users (including reposts)
+    const posts = await postRepository.findMany({
+      skip,
+      take: limit,
+      where: {
+        authorId: {
+          in: followingIds,
+        },
+      } as any,
+    })
+
+    const total = await postRepository.count({
+      authorId: {
+        in: followingIds,
+      },
     } as any)
 
     return {

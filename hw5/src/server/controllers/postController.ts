@@ -140,6 +140,34 @@ export class PostController {
       )
     }
   }
+
+  async getFollowingPosts(request: NextRequest, userId: string) {
+    try {
+      const searchParams = request.nextUrl.searchParams
+      const pagination = paginationSchema.parse({
+        page: searchParams.get('page'),
+        limit: searchParams.get('limit'),
+      })
+
+      // Get user's userId (custom ID) from internal ID
+      const { userRepository } = await import('../repositories/userRepository')
+      const user = await userRepository.findById(userId)
+      if (!user || !user.userId) {
+        return NextResponse.json(
+          { error: 'User not found or missing userId' },
+          { status: 404 }
+        )
+      }
+
+      const result = await postService.getFollowingPosts(user.userId, pagination)
+      return NextResponse.json(result)
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to get following posts' },
+        { status: 500 }
+      )
+    }
+  }
 }
 
 export const postController = new PostController()
