@@ -8,6 +8,19 @@ export class DraftRepository {
     })
   }
 
+  async findManyByUserId(userId: string) {
+    return prisma.draft.findMany({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+    })
+  }
+
+  async findById(id: string) {
+    return prisma.draft.findUnique({
+      where: { id },
+    })
+  }
+
   async create(data: { content: string; userId: string }) {
     return prisma.draft.create({
       data,

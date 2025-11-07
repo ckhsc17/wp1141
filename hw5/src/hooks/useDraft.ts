@@ -7,30 +7,44 @@ export interface Draft {
   id: string
   content: string
   userId: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
 }
 
-export function useDraft() {
-  return useQuery<Draft | null>({
-    queryKey: ['draft'],
+export function useDrafts() {
+  return useQuery<Draft[]>({
+    queryKey: ['drafts'],
     queryFn: async () => {
-      const { data } = await axios.get('/api/draft')
-      return data.draft as Draft | null
+      const { data } = await axios.get('/api/drafts')
+      return (data.drafts as Draft[]) || []
     },
   })
 }
 
-export function useSaveDraft() {
+export function useCreateDraft() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (content: string) => {
-      const { data } = await axios.post('/api/draft', { content })
+      const { data } = await axios.post('/api/drafts', { content })
       return data.draft as Draft
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['draft'] })
+      queryClient.invalidateQueries({ queryKey: ['drafts'] })
+    },
+  })
+}
+
+export function useUpdateDraft() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, content }: { id: string; content: string }) => {
+      const { data } = await axios.put(`/api/drafts/${id}`, { content })
+      return data.draft as Draft
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drafts'] })
     },
   })
 }
@@ -39,11 +53,11 @@ export function useDeleteDraft() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async () => {
-      await axios.delete('/api/draft')
+    mutationFn: async (id: string) => {
+      await axios.delete(`/api/drafts/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['draft'] })
+      queryClient.invalidateQueries({ queryKey: ['drafts'] })
     },
   })
 }

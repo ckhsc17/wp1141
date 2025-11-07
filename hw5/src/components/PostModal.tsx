@@ -15,9 +15,17 @@ import {
 import CloseIcon from '@mui/icons-material/Close'
 import ImageIcon from '@mui/icons-material/Image'
 import { useSession } from 'next-auth/react'
-import { useCreatePost, useDraft, useSaveDraft, useDeleteDraft } from '@/hooks'
+import { 
+  useCreatePost, 
+  useDrafts, 
+  useCreateDraft, 
+  useUpdateDraft, 
+  useDeleteDraft 
+} from '@/hooks'
 import MentionInput from './MentionInput'
 import { calculateEffectiveLength } from '@/utils/mention'
+import DraftConfirmDialog from './DraftConfirmDialog'
+import DraftList from './DraftList'
 
 interface PostModalProps {
   open: boolean
@@ -28,36 +36,39 @@ export default function PostModal({ open, onClose }: PostModalProps) {
   const { data: session } = useSession()
   const [content, setContent] = useState('')
   const createPost = useCreatePost()
-  const { data: draft } = useDraft()
-  const saveDraft = useSaveDraft()
+  const { data: drafts, isLoading: draftsLoading } = useDrafts()
+  const createDraft = useCreateDraft()
+  const updateDraft = useUpdateDraft()
   const deleteDraft = useDeleteDraft()
-  const [hasDraft, setHasDraft] = useState(false)
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
+  const [showDraftList, setShowDraftList] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
-  // 載入草稿
-  useEffect(() => {
-    if (open && draft) {
-      setContent(draft.content)
-      setHasDraft(true)
-    } else if (open && !draft) {
-      setContent('')
-      setHasDraft(false)
-    }
-  }, [open, draft])
-
-  // 關閉時重置
+  // Reset state when modal closes
   useEffect(() => {
     if (!open) {
       setContent('')
-      setHasDraft(false)
+      setActiveDraftId(null)
+      setShowDraftList(false)
+      setConfirmOpen(false)
     }
   }, [open])
 
-  const handleClose = () => {
-    // 如果有內容且未發布，自動儲存為草稿
-    if (content.trim() && !hasDraft) {
-      saveDraft.mutate(content.trim())
+  const handleAttemptClose = () => {
+    if (content.trim().length > 0) {
+      setConfirmOpen(true)
+    } else {
+      onClose()
     }
-    onClose()
+  }
+
+  const handleDialogClose = (
+    _event: unknown,
+    reason: 'backdropClick' | 'escapeKeyDown'
+  ) => {
+    if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+      handleAttemptClose()
+    }
   }
 
   const handlePost = async () => {
@@ -66,8 +77,8 @@ export default function PostModal({ open, onClose }: PostModalProps) {
     try {
       await createPost.mutateAsync({ content: content.trim() })
       // 發布成功後刪除草稿
-      if (hasDraft && draft) {
-        await deleteDraft.mutateAsync()
+      if (activeDraftId) {
+        await deleteDraft.mutateAsync(activeDraftId)
       }
       onClose()
     } catch (error) {
@@ -79,17 +90,64 @@ export default function PostModal({ open, onClose }: PostModalProps) {
     if (!content.trim()) return
 
     try {
-      await saveDraft.mutateAsync(content.trim())
-      setHasDraft(true)
+      if (activeDraftId) {
+        await updateDraft.mutateAsync({ id: activeDraftId, content: content.trim() })
+      } else {
+        const newDraft = await createDraft.mutateAsync(content.trim())
+        setActiveDraftId(newDraft.id)
+      }
     } catch (error) {
       console.error('Failed to save draft:', error)
     }
   }
 
+  const handleConfirmSave = async () => {
+    try {
+      await handleSaveDraft()
+      setConfirmOpen(false)
+      setContent('')
+      setActiveDraftId(null)
+      setShowDraftList(false)
+      onClose()
+    } catch (error) {
+      console.error('Failed to save draft:', error)
+    }
+  }
+
+  const handleConfirmDiscard = () => {
+    setConfirmOpen(false)
+    setContent('')
+    setActiveDraftId(null)
+    setShowDraftList(false)
+    onClose()
+  }
+
+  const handleSelectDraft = (draft: { id: string; content: string }) => {
+    setActiveDraftId(draft.id)
+    setContent(draft.content)
+    setShowDraftList(false)
+  }
+
+  const handleDeleteDraftFromList = async (draft: { id: string }) => {
+    try {
+      await deleteDraft.mutateAsync(draft.id)
+      if (draft.id === activeDraftId) {
+        setActiveDraftId(null)
+        setContent('')
+      }
+    } catch (error) {
+      console.error('Failed to delete draft:', error)
+    }
+  }
+
+  const hasDraft = Boolean(activeDraftId)
+  const hasContent = content.trim().length > 0
+  const confirmSaving = createDraft.isPending || updateDraft.isPending
+
   return (
     <Dialog 
       open={open} 
-      onClose={handleClose}
+      onClose={handleDialogClose}
       maxWidth="sm"
       fullWidth
       PaperProps={{
@@ -100,7 +158,7 @@ export default function PostModal({ open, onClose }: PostModalProps) {
       }}
     >
       <DialogTitle sx={{ pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" gap={1}>
             {hasDraft && (
               <Chip 
@@ -110,69 +168,93 @@ export default function PostModal({ open, onClose }: PostModalProps) {
                 sx={{ fontSize: '0.75rem' }}
               />
             )}
+              <Button
+                size="small"
+                onClick={() => setShowDraftList(true)}
+                disabled={draftsLoading}
+              >
+                Drafts
+              </Button>
           </Box>
-          <IconButton onClick={handleClose} size="small">
+          <IconButton onClick={handleAttemptClose} size="small">
             <CloseIcon />
           </IconButton>
         </Box>
       </DialogTitle>
 
       <DialogContent sx={{ pt: 2, pb: 3 }}>
-        <Box display="flex" gap={2}>
-          <Avatar src={session?.user?.image || ''}>
-            {session?.user?.name?.charAt(0).toUpperCase()}
-          </Avatar>
-          
-          <Box flex={1}>
-            <MentionInput
-              fullWidth
-              multiline
-              rows={8}
-              placeholder="What's happening?"
-              value={content}
-              onChange={setContent}
-              variant="standard"
-              autoFocus
-              sx={{ mb: 2 }}
-            />
+        {showDraftList ? (
+          <DraftList
+            drafts={drafts || []}
+            onSelect={handleSelectDraft}
+            onDelete={handleDeleteDraftFromList}
+            onBack={() => setShowDraftList(false)}
+          />
+        ) : (
+          <Box display="flex" gap={2}>
+            <Avatar src={session?.user?.image || ''}>
+              {session?.user?.name?.charAt(0).toUpperCase()}
+            </Avatar>
             
-            <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-              <Box display="flex" gap={1}>
-                <IconButton disabled size="small">
-                  <ImageIcon fontSize="small" />
-                </IconButton>
-                {/* 未來擴充其他媒體選項 */}
-              </Box>
+            <Box flex={1}>
+              <MentionInput
+                fullWidth
+                multiline
+                rows={8}
+                placeholder="What's happening?"
+                value={content}
+                onChange={setContent}
+                variant="standard"
+                autoFocus
+                sx={{ mb: 2 }}
+              />
               
-              <Box display="flex" gap={1} alignItems="center">
-                {content.length > 0 && (
-                  <Typography 
-                    variant="caption" 
-                    color={calculateEffectiveLength(content) > 280 ? 'error' : 'text.secondary'}
+              <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+                <Box display="flex" gap={1}>
+                  <IconButton disabled size="small">
+                    <ImageIcon fontSize="small" />
+                  </IconButton>
+                  {/* 未來擴充其他媒體選項 */}
+                </Box>
+                
+                <Box display="flex" gap={1} alignItems="center">
+                  {content.length > 0 && (
+                    <Typography 
+                      variant="caption" 
+                      color={calculateEffectiveLength(content) > 280 ? 'error' : 'text.secondary'}
+                    >
+                      {calculateEffectiveLength(content)}/280
+                    </Typography>
+                  )}
+                  <Button
+                    onClick={handleSaveDraft}
+                    disabled={!hasContent || confirmSaving}
+                    size="small"
                   >
-                    {calculateEffectiveLength(content)}/280
-                  </Typography>
-                )}
-                <Button
-                  onClick={handleSaveDraft}
-                  disabled={!content.trim() || saveDraft.isPending}
-                  size="small"
-                >
-                  Save as draft
-                </Button>
-                <Button
-                  onClick={handlePost}
-                  variant="contained"
-                  disabled={!content.trim() || createPost.isPending || calculateEffectiveLength(content) > 280}
-                  size="small"
-                >
-                  {createPost.isPending ? 'Posting...' : 'Post'}
-                </Button>
+                    Save as draft
+                  </Button>
+                  <Button
+                    onClick={handlePost}
+                    variant="contained"
+                    disabled={!hasContent || createPost.isPending || calculateEffectiveLength(content) > 280}
+                    size="small"
+                  >
+                    {createPost.isPending ? 'Posting...' : 'Post'}
+                  </Button>
+                </Box>
               </Box>
             </Box>
           </Box>
-        </Box>
+        )}
       </DialogContent>
+
+      <DraftConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onSave={handleConfirmSave}
+        onDiscard={handleConfirmDiscard}
+        isSaving={confirmSaving}
+      />
     </Dialog>
   )
 }
