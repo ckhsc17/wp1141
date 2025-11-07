@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Container,
@@ -9,10 +9,11 @@ import {
   CircularProgress,
   Alert,
   Paper,
+  TextField,
+  InputAdornment,
 } from '@mui/material'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
-import PostForm from '@/components/PostForm'
 import PostCard from '@/components/PostCard'
 import AuthButtons from '@/components/AuthButtons'
 import {
@@ -22,10 +23,12 @@ import {
   useToggleCommentRepost,
   usePusherNotifications,
 } from '@/hooks'
+import SearchIcon from '@mui/icons-material/Search'
 
 export default function ExplorePage() {
   const router = useRouter()
   const { data: session, status } = useSession()
+  const [searchTerm, setSearchTerm] = useState('')
 
   const {
     data,
@@ -51,6 +54,19 @@ export default function ExplorePage() {
     () => posts.filter((post) => !post.originalCommentId),
     [posts]
   )
+
+  const filteredPosts = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return visiblePosts
+    }
+
+    const term = searchTerm.trim().toLowerCase()
+    return visiblePosts.filter((post) => {
+      const content = post.content?.toLowerCase() || ''
+      const authorName = post.author?.name?.toLowerCase() || ''
+      return content.includes(term) || authorName.includes(term)
+    })
+  }, [visiblePosts, searchTerm])
 
   const handleLike = (postId: string) => {
     toggleLike.mutate(postId)
@@ -138,7 +154,21 @@ export default function ExplorePage() {
         Explore
       </Typography>
 
-      {session && <PostForm />}
+      <Box sx={{ mb: 3 }}>
+        <TextField
+          fullWidth
+          placeholder="Search posts or creators"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
 
       {isLoading && !data && (
         <Box display="flex" justifyContent="center" py={4}>
@@ -152,7 +182,7 @@ export default function ExplorePage() {
         </Alert>
       )}
 
-      {visiblePosts.map((post) => (
+      {filteredPosts.map((post) => (
         <PostCard
           key={post.id}
           post={post}
@@ -162,9 +192,15 @@ export default function ExplorePage() {
         />
       ))}
 
-      {visiblePosts.length === 0 && !isLoading && (
+      {visiblePosts.length === 0 && !isLoading && !searchTerm && (
         <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
           No recommendations yet. Interact with more posts to improve your feed!
+        </Typography>
+      )}
+
+      {visiblePosts.length > 0 && filteredPosts.length === 0 && (
+        <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
+          No posts matched "{searchTerm}". Try a different keyword.
         </Typography>
       )}
 
