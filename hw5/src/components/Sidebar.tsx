@@ -76,14 +76,16 @@ export default function Sidebar() {
       <Box
         sx={{
           width: 280,
-          minHeight: '100vh',
+          height: '100vh',
           borderRight: '1px solid',
           borderColor: 'divider',
           display: 'flex',
           flexDirection: 'column',
-          position: 'sticky',
+          position: 'fixed',
           top: 0,
-          backgroundColor: '#000000',
+          left: 0,
+          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.background.paper,
+          zIndex: (theme) => theme.zIndex.drawer,
         }}
       >
         {/* Logo */}
