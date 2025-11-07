@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Card, CardContent, Typography, Avatar, IconButton, Box, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material'
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
 import FavoriteIcon from '@mui/icons-material/Favorite'
@@ -18,6 +18,7 @@ import { useLikeStatus } from '@/hooks/useLike'
 import { useDeletePost } from '@/hooks/usePosts'
 import { useSession } from 'next-auth/react'
 import UnrepostConfirmDialog from './UnrepostConfirmDialog'
+import { useRouter } from 'next/navigation'
 
 interface PostCardProps {
   post: Post
@@ -38,6 +39,7 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
   } : post)
   const isRepost = !!post.originalPost || !!post.originalComment
   const { data: session } = useSession()
+  const router = useRouter()
   const [unrepostDialogOpen, setUnrepostDialogOpen] = useState(false)
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -59,6 +61,16 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
     session?.user?.id && displayPost.id ? displayPost.id : ''
   )
   const isLikedState = isLikedProp !== undefined ? isLikedProp : (likeStatus?.liked || false)
+
+  const targetHref = useMemo(() => {
+    if (post.originalComment) {
+      return `/posts/${post.originalComment.postId}?commentId=${post.originalComment.id}`
+    }
+    if (post.originalPost) {
+      return `/posts/${post.originalPost.id}`
+    }
+    return `/posts/${post.id}`
+  }, [post])
   
   // Debug logging
   if (process.env.NODE_ENV === 'development') {
@@ -127,13 +139,27 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
     setDeleteConfirmOpen(false)
   }
 
+  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (unrepostDialogOpen || deleteConfirmOpen || Boolean(menuAnchorEl)) {
+      return
+    }
+
+    const target = event.target as HTMLElement
+    if (target.closest('button, a, [data-no-navigation]')) {
+      return
+    }
+    router.push(targetHref)
+  }
+
   return (
     <Card 
+      onClick={handleCardClick}
       sx={{ 
         backgroundColor: 'background.paper', 
         borderRadius: 0,
         borderBottom: '1px solid',
         borderColor: 'divider',
+        cursor: 'pointer',
         '&:hover': {
           backgroundColor: 'action.hover',
         }
@@ -192,6 +218,7 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
                 <IconButton
                   size="small"
                   onClick={handleMenuOpen}
+                  data-no-navigation
                   sx={{ color: 'text.secondary' }}
                 >
                   <MoreVertIcon fontSize="small" />
@@ -206,7 +233,11 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
             <Box display="flex" gap={4}>
               <IconButton 
                 size="small"
-                onClick={() => onLike?.(displayPost.id)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onLike?.(displayPost.id)
+                }}
+                data-no-navigation
                 sx={{ color: isLikedState ? 'error.main' : 'text.secondary' }}
               >
                 {isLikedState ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
@@ -224,6 +255,7 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
                   console.log('[PostCard] isReposted:', isReposted)
                   handleRepostClick()
                 }}
+                data-no-navigation
                 sx={{ color: isReposted ? 'primary.main' : 'text.secondary' }}
               >
                 {isReposted ? <RepeatIcon fontSize="small" /> : <RepeatOutlinedIcon fontSize="small" />}
@@ -232,14 +264,20 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
                 </Typography>
               </IconButton>
               
-              <Link href={`/posts/${displayPost.id}`}>
-                <IconButton size="small" sx={{ color: 'text.secondary' }}>
-                  <ChatBubbleOutlineIcon fontSize="small" />
-                  <Typography variant="caption" sx={{ ml: 0.5 }}>
-                    {displayPost._count?.comments || 0}
-                  </Typography>
-                </IconButton>
-              </Link>
+              <IconButton
+                size="small"
+                sx={{ color: 'text.secondary' }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  router.push(targetHref)
+                }}
+                data-no-navigation
+              >
+                <ChatBubbleOutlineIcon fontSize="small" />
+                <Typography variant="caption" sx={{ ml: 0.5 }}>
+                  {displayPost._count?.comments || 0}
+                </Typography>
+              </IconButton>
             </Box>
           </Box>
         </Box>

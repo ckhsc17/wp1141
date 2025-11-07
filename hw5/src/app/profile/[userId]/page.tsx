@@ -255,7 +255,7 @@ export default function ProfilePage() {
               </Alert>
             )}
 
-            {posts && posts.filter(post => !post.originalPostId).map((post) => (
+            {posts && posts.filter(post => !post.originalPostId && !post.originalCommentId).map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
@@ -264,7 +264,7 @@ export default function ProfilePage() {
               />
             ))}
 
-            {posts && posts.filter(post => !post.originalPostId).length === 0 && (
+            {posts && posts.filter(post => !post.originalPostId && !post.originalCommentId).length === 0 && (
               <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
                 No posts yet
               </Typography>

@@ -49,9 +49,14 @@ export class PostService {
     const posts = await postRepository.findMany({
       skip,
       take: limit,
+      where: {
+        originalCommentId: null,
+      } as any,
     })
 
-    const total = await postRepository.count()
+    const total = await postRepository.count({
+      originalCommentId: null,
+    } as any)
 
     return {
       posts,
@@ -106,6 +111,7 @@ export class PostService {
           userId,
         },
         originalPostId: null, // Exclude reposts from regular posts
+        originalCommentId: null,
       } as any,
     })
 
@@ -114,6 +120,7 @@ export class PostService {
         userId,
       },
       originalPostId: null, // Exclude reposts from count
+      originalCommentId: null,
     } as any)
 
     return {
@@ -166,6 +173,7 @@ export class PostService {
         authorId: {
           in: followingIds,
         },
+        originalCommentId: null,
       } as any,
     })
 
@@ -173,6 +181,7 @@ export class PostService {
       authorId: {
         in: followingIds,
       },
+      originalCommentId: null,
     } as any)
 
     return {

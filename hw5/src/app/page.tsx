@@ -157,7 +157,9 @@ export default function Home() {
         </Alert>
       )}
 
-      {posts && posts.map((post) => (
+      {posts && posts
+        .filter((post) => !post.originalCommentId)
+        .map((post) => (
         <PostCard
           key={post.id}
           post={post}
