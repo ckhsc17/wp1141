@@ -10,6 +10,14 @@
 1. notification：當使用者被追蹤、貼文或留言收到按讚、回覆，或有人在貼文/留言中提及該使用者時，系統會透過 Pusher 即時推播通知並在「Notifications」頁面顯示
 2. theme toggle：使用者可以點擊切換白天黑夜模式
 3. 利用 pagination 動態載入多篇貼文
+4. Explore 推薦牆：依據貼文互動（讚×2、留言×3、轉發×4）搭配 24 小時半衰期做加權排序，排除已追蹤用戶，提供高品質探索內容
+
+## Explore Feed 推薦策略
+
+- API：`GET /api/posts/explore`，回傳 `{ posts, pagination }` 結構，供前端使用 `useInfiniteQuery` 無限捲動。
+- 排序：計算 `score = (1 + 2×likes + 3×comments + 4×reposts) × decay`，其中 `decay = 0.5^(hours / 24)`。
+- 個人化：排除目前使用者本身及其追蹤對象的貼文，避免和 `Following` 動態牆重複。
+- 擴充：調整權重或半衰期可修改 `src/server/utils/feedScore.ts`；若未來導入 hashtag 或語意向量，只需擴充該模組即可。
 
 FB 登入已有建置於 NextAuth 中，但由於需進行商家驗證才能公開，故此功能目前無法於線上使用；若欲測試可聯絡我並附上 FB 名稱，我可以將您邀請為測試帳戶（bowenchen0227@gmail.com）
 

@@ -1,8 +1,8 @@
 import { postRepository } from '../repositories/postRepository'
 import { CreatePostInput, UpdatePostInput, PaginationInput } from '@/schemas/post.schema'
 import { mentionService } from './mentionService'
-import { followRepository } from '../repositories/followRepository'
 import { userRepository } from '../repositories/userRepository'
+import { calculateTrendingScore, extractTrendingInputFromPost } from '../utils/feedScore'
 
 export class PostService {
   async createPost(data: CreatePostInput, authorId: string) {
@@ -186,6 +186,79 @@ export class PostService {
 
     return {
       posts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  }
+
+  async getExploreFeed(pagination: PaginationInput, viewerId?: string) {
+    const { page, limit } = pagination
+    const offset = (page - 1) * limit
+
+    const { prisma } = await import('@/lib/prisma')
+
+    let excludedAuthorIds: string[] = []
+
+    if (viewerId) {
+      const followings = await prisma.follow.findMany({
+        where: { followerId: viewerId },
+        select: { followingId: true },
+      })
+
+      excludedAuthorIds = followings.map((f) => f.followingId)
+      excludedAuthorIds.push(viewerId)
+    }
+
+    const baseWhere = {
+      originalCommentId: null,
+      ...(excludedAuthorIds.length
+        ? {
+            authorId: {
+              notIn: excludedAuthorIds,
+            },
+          }
+        : {}),
+    } as any
+
+    const total = await postRepository.count(baseWhere)
+
+    if (total === 0) {
+      return {
+        posts: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      }
+    }
+
+    const candidateTake = Math.min(
+      Math.max(limit * page * 4, limit),
+      Math.max(total, limit)
+    )
+
+    const candidates = await postRepository.findMany({
+      skip: 0,
+      take: candidateTake,
+      where: baseWhere,
+    })
+
+    const scored = candidates.map((post) => ({
+      post,
+      score: calculateTrendingScore(extractTrendingInputFromPost(post)),
+    }))
+
+    const sorted = scored.sort((a, b) => b.score - a.score)
+    const sliced = sorted.slice(offset, offset + limit)
+
+    return {
+      posts: sliced.map((item) => item.post),
       pagination: {
         page,
         limit,

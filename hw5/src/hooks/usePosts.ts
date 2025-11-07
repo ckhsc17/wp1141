@@ -76,6 +76,31 @@ export function useInfinitePosts(params?: Omit<GetPostsParams, 'page'>) {
   })
 }
 
+export function useExplorePosts(params?: { limit?: number }) {
+  return useInfiniteQuery<PostsPage>({
+    queryKey: ['explore-posts', params?.limit],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam = 1 }) => {
+      const { data } = await axios.get('/api/posts/explore', {
+        params: {
+          page: pageParam,
+          limit: params?.limit || 20,
+        },
+      })
+
+      return {
+        posts: (data.posts as Post[]) ?? [],
+        pagination: data.pagination,
+      }
+    },
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.pagination) return undefined
+      const { page, totalPages } = lastPage.pagination
+      return page < totalPages ? page + 1 : undefined
+    },
+  })
+}
+
 export function useReposts(userId: string, params?: PaginationParams) {
   return useQuery({
     queryKey: ['reposts', userId, params?.page, params?.limit],

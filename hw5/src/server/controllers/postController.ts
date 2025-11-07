@@ -21,6 +21,24 @@ export class PostController {
     }
   }
 
+  async getExplorePosts(request: NextRequest, viewerId?: string) {
+    try {
+      const searchParams = request.nextUrl.searchParams
+      const pagination = paginationSchema.parse({
+        page: searchParams.get('page'),
+        limit: searchParams.get('limit'),
+      })
+
+      const result = await postService.getExploreFeed(pagination, viewerId)
+      return NextResponse.json(result)
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to get explore posts' },
+        { status: 500 }
+      )
+    }
+  }
+
   async createPost(request: NextRequest, userId: string) {
     const startTime = Date.now()
     console.log('[PostController] ===== POST REQUEST RECEIVED =====')
