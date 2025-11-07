@@ -1,6 +1,6 @@
-# Twitter/X Clone - Full-Stack Social Media App
+# Echoo - Full-Stack Social Media App
 
-一個使用 Next.js 全端框架打造的社交媒體應用，模擬 Twitter/X 的核心功能。
+一個使用 Next.js 全端框架打造的社交媒體應用，Echoo 重新詮釋即時社交平台的核心功能。
 
 線上連結：https://echoo-echoo.vercel.app/
 
@@ -116,7 +116,7 @@ npm run docker:up
 建立 `.env` 檔案：
 ```env
 # Database
-DATABASE_URL="postgresql://twitter_user:twitter_password@localhost:5432/twitter_clone?schema=public"
+DATABASE_URL="postgresql://echoo_user:echoo_password@localhost:5432/echoo?schema=public"
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"

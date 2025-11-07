@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Twitter Clone",
-  description: "A Twitter/X clone built with Next.js",
+  title: "Echoo",
+  description: "Echoo social platform built with Next.js",
 };
 
 export default function RootLayout({
