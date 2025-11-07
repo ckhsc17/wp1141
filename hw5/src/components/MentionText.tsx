@@ -24,6 +24,10 @@ export default function MentionText({ content }: MentionTextProps) {
             <Link
               key={index}
               href={`/profile/${segment.userId}`}
+              onClick={(event) => {
+                // Prevent parent click handlers (e.g., card navigation) from firing
+                event.stopPropagation()
+              }}
               style={{
                 color: 'inherit',
                 textDecoration: 'none',
@@ -52,6 +56,10 @@ export default function MentionText({ content }: MentionTextProps) {
               href={segment.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(event) => {
+                // Prevent parent click handlers (e.g., card navigation) from firing
+                event.stopPropagation()
+              }}
               style={{
                 color: 'inherit',
                 textDecoration: 'none',
