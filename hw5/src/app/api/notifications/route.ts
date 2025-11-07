@@ -13,3 +13,13 @@ export async function GET(request: NextRequest) {
   return notificationController.getNotifications(session.user.id, request)
 }
 
+export async function PUT() {
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  return notificationController.markAllAsRead(session.user.id)
+}
+

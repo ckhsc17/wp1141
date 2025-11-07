@@ -5,6 +5,9 @@
 線上連結：https://echoo-echoo.vercel.app/
 後端 openapi 可見：https://echoo-echoo.vercel.app/api-docs
 
+進階功能設計：
+1. notification：當使用者發布的貼文有被按讚/留言，或是某個貼文或留言標註到該使用者，就會即時跳出通知
+
 FB 登入已有建置於 NextAuth 中，但由於需進行商家驗證才能公開，故此功能目前無法於線上使用；若欲測試可聯絡我並附上 FB 名稱，我可以將您邀請為測試帳戶（bowenchen0227@gmail.com）
 
 ## 技術棧

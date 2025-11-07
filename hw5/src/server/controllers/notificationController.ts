@@ -42,6 +42,22 @@ export class NotificationController {
       )
     }
   }
+
+  async markAllAsRead(userId: string) {
+    try {
+      await notificationService.markAllAsRead(userId)
+      return NextResponse.json({ success: true })
+    } catch (error) {
+      console.error('[NotificationController] markAllAsRead error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to mark notifications as read' },
+        { status: 500 }
+      )
+    }
+  }
 }
 
 export const notificationController = new NotificationController()

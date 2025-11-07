@@ -161,6 +161,21 @@ export class NotificationService {
       throw error
     }
   }
+
+  async markAllAsRead(userId: string) {
+    console.log('[NotificationService] markAllAsRead called:', { userId })
+    try {
+      const result = await notificationRepository.markAllAsRead(userId)
+      console.log('[NotificationService] markAllAsRead success:', { updated: result.count })
+      return result
+    } catch (error) {
+      console.error('[NotificationService] markAllAsRead error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
+      throw error
+    }
+  }
 }
 
 export const notificationService = new NotificationService()

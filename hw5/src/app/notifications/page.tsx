@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Container, Box, Typography, CircularProgress, Alert, Avatar, Paper } from '@mui/material'
 import { useNotifications, usePusherNotifications } from '@/hooks/useNotification'
 import { useSession } from 'next-auth/react'
@@ -10,15 +10,35 @@ import CommentIcon from '@mui/icons-material/Comment'
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail'
 import Link from 'next/link'
 import { Notification } from '@/types'
+import axios from 'axios'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function NotificationsPage() {
   const { data: session } = useSession()
   const [page, setPage] = useState(1)
   const limit = 20
   const { data, isLoading, error } = useNotifications(page, limit)
+  const queryClient = useQueryClient()
+  const [hasMarkedRead, setHasMarkedRead] = useState(false)
   
   // Listen for Pusher notifications
   usePusherNotifications((session?.user as any)?.userId)
+
+  useEffect(() => {
+    const markNotifications = async () => {
+      if (!session?.user?.id || hasMarkedRead) return
+      try {
+        await axios.put('/api/notifications')
+        setHasMarkedRead(true)
+        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+        queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] })
+      } catch (err) {
+        console.error('[NotificationsPage] Failed to mark notifications as read:', err)
+      }
+    }
+
+    markNotifications()
+  }, [session?.user?.id, hasMarkedRead, queryClient])
 
   console.log('[NotificationsPage] Component rendered:', {
     hasSession: !!session,
