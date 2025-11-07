@@ -10,10 +10,11 @@ import { calculateEffectiveLength } from '@/utils/mention'
 
 interface ReplyFormProps {
   commentId: string
+  postId: string
   onReplyCreated?: () => void
 }
 
-export default function ReplyForm({ commentId, onReplyCreated }: ReplyFormProps) {
+export default function ReplyForm({ commentId, postId, onReplyCreated }: ReplyFormProps) {
   const { data: session } = useSession()
   const [content, setContent] = useState('')
   const createReply = useCreateReply()
@@ -24,7 +25,7 @@ export default function ReplyForm({ commentId, onReplyCreated }: ReplyFormProps)
     if (!content.trim()) return
 
     try {
-      await createReply.mutateAsync({ commentId, content: content.trim() })
+      await createReply.mutateAsync({ commentId, postId, content: content.trim() })
       setContent('')
       onReplyCreated?.()
     } catch (error) {

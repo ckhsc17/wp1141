@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import PostCard from '@/components/PostCard'
 import CommentCard from '@/components/CommentCard'
-import { useComments, useReplies, useToggleLike, useToggleRepost, useCreateComment } from '@/hooks'
+import { useComments, useReplies, useToggleLike, useToggleRepost, useCreateComment, useCreateReply } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import { Post, Comment } from '@/types'
 import MentionInput from '@/components/MentionInput'
@@ -28,6 +28,7 @@ export default function PostDetailPage() {
   const toggleRepost = useToggleRepost()
   const [commentContent, setCommentContent] = useState('')
   const createComment = useCreateComment()
+  const createReply = useCreateReply()
 
   const handleLike = (postId: string) => {
     toggleLike.mutate(postId)
@@ -84,10 +85,8 @@ export default function PostDetailPage() {
 
     try {
       if (commentId) {
-        // 回覆留言
-        await axios.post(`/api/comments/${commentId}/replies`, { content: commentContent.trim() })
+        await createReply.mutateAsync({ commentId, content: commentContent.trim(), postId })
       } else {
-        // 回覆貼文
         await createComment.mutateAsync({ postId, content: commentContent.trim() })
       }
       setCommentContent('')
@@ -154,7 +153,11 @@ export default function PostDetailPage() {
                       <Button
                         type="submit"
                         variant="contained"
-                        disabled={!commentContent.trim() || createComment.isPending || calculateEffectiveLength(commentContent) > 280}
+                        disabled={
+                          !commentContent.trim() ||
+                          calculateEffectiveLength(commentContent) > 280 ||
+                          createComment.isPending
+                        }
                         startIcon={<SendIcon />}
                       >
                         Reply
@@ -208,13 +211,20 @@ export default function PostDetailPage() {
                       inputProps={{ maxLength: 280 }}
                     />
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Typography variant="caption" color="text.secondary">
-                        {commentContent.length}/280
+                      <Typography
+                        variant="caption"
+                        color={calculateEffectiveLength(commentContent) > 280 ? 'error' : 'text.secondary'}
+                      >
+                        {calculateEffectiveLength(commentContent)}/280
                       </Typography>
                       <Button
                         type="submit"
                         variant="contained"
-                        disabled={!commentContent.trim()}
+                        disabled={
+                          !commentContent.trim() ||
+                          calculateEffectiveLength(commentContent) > 280 ||
+                          createReply.isPending
+                        }
                         startIcon={<SendIcon />}
                       >
                         Reply

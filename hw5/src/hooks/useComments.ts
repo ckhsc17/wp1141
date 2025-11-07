@@ -45,13 +45,13 @@ export function useCreateReply() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
+    mutationFn: async ({ commentId, content, postId }: { commentId: string; content: string; postId: string }) => {
       const { data } = await axios.post(`/api/comments/${commentId}/replies`, { content })
       return data.reply as Comment
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['replies'] })
-      queryClient.invalidateQueries({ queryKey: ['comments'] })
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['replies', variables.commentId] })
+      queryClient.invalidateQueries({ queryKey: ['comments', variables.postId] })
       queryClient.invalidateQueries({ queryKey: ['posts'] })
     },
   })
