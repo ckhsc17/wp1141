@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Container, Box, Typography, Avatar, CircularProgress, Alert, Button, IconButton } from '@mui/material'
 import { useParams, useRouter } from 'next/navigation'
 import { useUser, usePosts, useReposts, useLikedPosts, useToggleLike, useToggleRepost } from '@/hooks'
@@ -17,15 +17,23 @@ export default function ProfilePage() {
   const params = useParams()
   const userId = params.userId as string
   const { data: session } = useSession()
+  const isOwnProfile = session?.user && (session.user as any).userId === userId
   const { data: user, isLoading: isUserLoading, error: userError } = useUser(userId)
   const { data: posts, isLoading: isPostsLoading, error: postsError } = usePosts({ userId })
   const { data: reposts, isLoading: isRepostsLoading, error: repostsError } = useReposts(userId)
-  const { data: likedPosts, isLoading: isLikedPostsLoading, error: likedPostsError } = useLikedPosts(userId)
+  const { data: likedPosts, isLoading: isLikedPostsLoading, error: likedPostsError } = useLikedPosts(
+    isOwnProfile ? userId : undefined
+  )
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'posts' | 'reposts' | 'likes'>('posts')
-  const isOwnProfile = session?.user && (session.user as any).userId === userId
+
+  useEffect(() => {
+    if (!isOwnProfile && activeTab === 'likes') {
+      setActiveTab('posts')
+    }
+  }, [isOwnProfile, activeTab])
 
   const handleLike = (postId: string) => {
     toggleLike.mutate(postId)
@@ -211,24 +219,26 @@ export default function ProfilePage() {
           >
             Reposts
           </Typography>
-          <Typography 
-            variant="body2" 
-            fontWeight={600}
-            onClick={() => setActiveTab('likes')}
-            sx={{ 
-              py: 2,
-              px: 3,
-              borderBottom: activeTab === 'likes' ? '2px solid' : 'none',
-              borderColor: 'primary.main',
-              cursor: 'pointer',
-              color: activeTab === 'likes' ? 'text.primary' : 'text.secondary',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              }
-            }}
-          >
-            Likes
-          </Typography>
+          {isOwnProfile && (
+            <Typography 
+              variant="body2" 
+              fontWeight={600}
+              onClick={() => setActiveTab('likes')}
+              sx={{ 
+                py: 2,
+                px: 3,
+                borderBottom: activeTab === 'likes' ? '2px solid' : 'none',
+                borderColor: 'primary.main',
+                cursor: 'pointer',
+                color: activeTab === 'likes' ? 'text.primary' : 'text.secondary',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                }
+              }}
+            >
+              Likes
+            </Typography>
+          )}
         </Box>
         
         {activeTab === 'posts' && (
@@ -295,7 +305,7 @@ export default function ProfilePage() {
           </>
         )}
 
-        {activeTab === 'likes' && (
+        {activeTab === 'likes' && isOwnProfile && (
           <>
             {isLikedPostsLoading && (
               <Box display="flex" justifyContent="center" py={4}>

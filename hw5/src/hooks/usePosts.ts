@@ -49,7 +49,7 @@ export function useReposts(userId: string, params?: PaginationParams) {
   })
 }
 
-export function useLikedPosts(userId: string, params?: PaginationParams) {
+export function useLikedPosts(userId?: string, params?: PaginationParams) {
   return useQuery({
     queryKey: ['liked-posts', userId, params?.page, params?.limit],
     queryFn: async () => {
