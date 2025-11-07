@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Container, Box, Typography, CircularProgress, Alert, Paper } from '@mui/material'
 import Image from 'next/image'
 import PostForm from '@/components/PostForm'
 import PostCard from '@/components/PostCard'
 import AuthButtons from '@/components/AuthButtons'
-import { usePosts, useToggleLike, useToggleRepost, useToggleCommentRepost, usePusherNotifications } from '@/hooks'
+import { useInfinitePosts, useToggleLike, useToggleRepost, useToggleCommentRepost, usePusherNotifications } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import { signIn } from 'next-auth/react'
 
@@ -15,12 +15,31 @@ export default function Home() {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou')
-  const { data: posts, isLoading, error, refetch } = usePosts({ 
-    following: activeTab === 'following' 
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = useInfinitePosts({
+    following: activeTab === 'following',
   })
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()
   const toggleCommentRepost = useToggleCommentRepost()
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+
+  const posts = useMemo(
+    () => data?.pages.flatMap((page) => page.posts ?? []) ?? [],
+    [data]
+  )
+
+  const visiblePosts = useMemo(
+    () => posts.filter((post) => !post.originalCommentId),
+    [posts]
+  )
 
   const handleLike = (postId: string) => {
     toggleLike.mutate(postId)
@@ -40,6 +59,27 @@ export default function Home() {
   const handlePostDelete = () => {
     refetch() // Refetch posts after deletion
   }
+
+  useEffect(() => {
+    const loadMoreEl = loadMoreRef.current
+    if (!loadMoreEl) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { rootMargin: '200px' }
+    )
+
+    observer.observe(loadMoreEl)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, activeTab])
 
   // 檢查是否已登入但沒有 userId，需要設定
   useEffect(() => {
@@ -144,9 +184,7 @@ export default function Home() {
         </Alert>
       )}
 
-      {posts && posts
-        .filter((post) => !post.originalCommentId)
-        .map((post) => (
+      {visiblePosts.map((post) => (
         <PostCard
           key={post.id}
           post={post}
@@ -156,7 +194,7 @@ export default function Home() {
         />
       ))}
 
-      {posts && posts.length === 0 && (
+      {visiblePosts.length === 0 && !isLoading && (
         <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
           {activeTab === 'following' 
             ? 'No posts from people you follow yet. Start following people to see their posts here!'
@@ -164,6 +202,18 @@ export default function Home() {
           }
         </Typography>
       )}
+
+      <Box
+        ref={loadMoreRef}
+        sx={{
+          py: 3,
+          display: hasNextPage || isFetchingNextPage ? 'flex' : 'none',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        {isFetchingNextPage && <CircularProgress size={32} thickness={5} />}
+      </Box>
     </Container>
   )
 }

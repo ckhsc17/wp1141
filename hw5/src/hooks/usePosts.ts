@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { Post, PaginationParams, CreatePostInput } from '@/types'
 
@@ -14,13 +14,13 @@ export function usePosts(params?: GetPostsParams) {
     queryKey: ['posts', params?.userId, params?.following, params?.page, params?.limit],
     queryFn: async () => {
       let url = '/api/posts'
-      
+
       if (params?.userId) {
         url = `/api/users/${params.userId}/posts`
       } else if (params?.following) {
         url = '/api/posts/following'
       }
-      
+
       const { data } = await axios.get(url, {
         params: {
           page: params?.page || 1,
@@ -30,6 +30,49 @@ export function usePosts(params?: GetPostsParams) {
       return data.posts as Post[]
     },
     enabled: true,
+  })
+}
+
+interface PostsPage {
+  posts: Post[]
+  pagination?: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+export function useInfinitePosts(params?: Omit<GetPostsParams, 'page'>) {
+  return useInfiniteQuery<PostsPage>({
+    queryKey: ['posts', params?.userId, params?.following, params?.limit],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam = 1 }) => {
+      let url = '/api/posts'
+
+      if (params?.userId) {
+        url = `/api/users/${params.userId}/posts`
+      } else if (params?.following) {
+        url = '/api/posts/following'
+      }
+
+      const { data } = await axios.get(url, {
+        params: {
+          page: pageParam,
+          limit: params?.limit || 20,
+        },
+      })
+
+      return {
+        posts: (data.posts as Post[]) ?? [],
+        pagination: data.pagination,
+      }
+    },
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.pagination) return undefined
+      const { page, totalPages } = lastPage.pagination
+      return page < totalPages ? page + 1 : undefined
+    },
   })
 }
 
