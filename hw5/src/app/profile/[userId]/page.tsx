@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Container, Box, Typography, Avatar, CircularProgress, Alert, Button, IconButton } from '@mui/material'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser, usePosts, useReposts, useLikedPosts, useToggleLike, useToggleRepost } from '@/hooks'
+import { useUser, usePosts, useReposts, useLikedPosts, useToggleLike, useToggleRepost, useToggleCommentRepost } from '@/hooks'
 import PostCard from '@/components/PostCard'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import EditIcon from '@mui/icons-material/Edit'
@@ -26,8 +26,14 @@ export default function ProfilePage() {
   )
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()
+  const toggleCommentRepost = useToggleCommentRepost()
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'posts' | 'reposts' | 'likes'>('posts')
+
+  const filteredPosts = posts?.filter(post => !post.originalPostId && !post.originalCommentId) ?? []
+  const repostCount = reposts?.length ?? 0
+  const likesCount = isOwnProfile ? likedPosts?.length ?? 0 : undefined
+  const postsCount = filteredPosts.length
 
   useEffect(() => {
     if (!isOwnProfile && activeTab === 'likes') {
@@ -39,8 +45,12 @@ export default function ProfilePage() {
     toggleLike.mutate(postId)
   }
 
-  const handleRepost = (postId: string) => {
-    toggleRepost.mutate(postId)
+  const handleRepost = (targetId: string, options?: { isComment?: boolean }) => {
+    if (options?.isComment) {
+      toggleCommentRepost.mutate(targetId)
+    } else {
+      toggleRepost.mutate(targetId)
+    }
   }
 
   if (isUserLoading) {
@@ -91,7 +101,7 @@ export default function ProfilePage() {
               {user.name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {user._count?.posts || 0} posts
+              {postsCount} posts
             </Typography>
           </Box>
         </Box>
@@ -199,7 +209,7 @@ export default function ProfilePage() {
               }
             }}
           >
-            Posts
+            Posts ({postsCount})
           </Typography>
           <Typography 
             variant="body2" 
@@ -217,7 +227,7 @@ export default function ProfilePage() {
               }
             }}
           >
-            Reposts
+            Reposts ({repostCount})
           </Typography>
           {isOwnProfile && (
             <Typography 
@@ -236,7 +246,7 @@ export default function ProfilePage() {
                 }
               }}
             >
-              Likes
+              Likes ({likesCount ?? 0})
             </Typography>
           )}
         </Box>
@@ -255,7 +265,7 @@ export default function ProfilePage() {
               </Alert>
             )}
 
-            {posts && posts.filter(post => !post.originalPostId && !post.originalCommentId).map((post) => (
+            {filteredPosts.map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
@@ -264,7 +274,7 @@ export default function ProfilePage() {
               />
             ))}
 
-            {posts && posts.filter(post => !post.originalPostId && !post.originalCommentId).length === 0 && (
+            {filteredPosts.length === 0 && (
               <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
                 No posts yet
               </Typography>

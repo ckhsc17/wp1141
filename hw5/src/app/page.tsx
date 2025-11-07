@@ -6,7 +6,7 @@ import { Container, Box, Typography, CircularProgress, Alert, Paper, AppBar as M
 import PostForm from '@/components/PostForm'
 import PostCard from '@/components/PostCard'
 import AuthButtons from '@/components/AuthButtons'
-import { usePosts, useToggleLike, useToggleRepost, usePusherNotifications } from '@/hooks'
+import { usePosts, useToggleLike, useToggleRepost, useToggleCommentRepost, usePusherNotifications } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import { signIn } from 'next-auth/react'
 import { useThemeMode } from '@/contexts/ThemeContext'
@@ -24,14 +24,19 @@ export default function Home() {
   })
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()
+  const toggleCommentRepost = useToggleCommentRepost()
   const { mode, toggleTheme } = useThemeMode()
 
   const handleLike = (postId: string) => {
     toggleLike.mutate(postId)
   }
 
-  const handleRepost = (postId: string) => {
-    toggleRepost.mutate(postId)
+  const handleRepost = (targetId: string, options?: { isComment?: boolean }) => {
+    if (options?.isComment) {
+      toggleCommentRepost.mutate(targetId)
+    } else {
+      toggleRepost.mutate(targetId)
+    }
   }
 
   // Listen for Pusher notifications (includes mentions, likes, comments)

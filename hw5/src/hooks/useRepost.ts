@@ -62,12 +62,12 @@ export function useToggleCommentRepost() {
     },
     onSuccess: (data, commentId) => {
       console.log('[useToggleCommentRepost] Invalidating queries for commentId:', commentId)
-      // Invalidate all comment-related queries
       queryClient.invalidateQueries({ queryKey: ['comments'] })
       queryClient.invalidateQueries({ queryKey: ['reposts'] })
       queryClient.invalidateQueries({ queryKey: ['comment-repost-status', commentId] })
-      // Also invalidate all repost-status queries to refresh all comment cards
       queryClient.invalidateQueries({ queryKey: ['comment-repost-status'] })
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      queryClient.invalidateQueries({ queryKey: ['post'] })
     },
     onError: (error) => {
       console.error('[useToggleCommentRepost] Mutation error:', error)

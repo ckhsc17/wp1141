@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import PostCard from '@/components/PostCard'
 import CommentCard from '@/components/CommentCard'
-import { useComments, useReplies, useToggleLike, useToggleRepost, useCreateComment, useCreateReply } from '@/hooks'
+import { useComments, useReplies, useToggleLike, useToggleRepost, useToggleCommentRepost, useCreateComment, useCreateReply } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import { Post, Comment } from '@/types'
 import MentionInput from '@/components/MentionInput'
@@ -26,6 +26,7 @@ export default function PostDetailPage() {
   const { data: session } = useSession()
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()
+  const toggleCommentRepost = useToggleCommentRepost()
   const [commentContent, setCommentContent] = useState('')
   const createComment = useCreateComment()
   const createReply = useCreateReply()
@@ -34,8 +35,12 @@ export default function PostDetailPage() {
     toggleLike.mutate(postId)
   }
 
-  const handleRepost = (postId: string) => {
-    toggleRepost.mutate(postId)
+  const handleRepost = (targetId: string, options?: { isComment?: boolean }) => {
+    if (options?.isComment) {
+      toggleCommentRepost.mutate(targetId)
+    } else {
+      toggleRepost.mutate(targetId)
+    }
   }
 
   // 查詢貼文

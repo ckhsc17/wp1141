@@ -13,7 +13,7 @@ import { Post } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 import MentionText from './MentionText'
-import { useRepostStatus } from '@/hooks/useRepost'
+import { useRepostStatus, useCommentRepostStatus } from '@/hooks/useRepost'
 import { useLikeStatus } from '@/hooks/useLike'
 import { useDeletePost } from '@/hooks/usePosts'
 import { useSession } from 'next-auth/react'
@@ -23,21 +23,46 @@ import { useRouter } from 'next/navigation'
 interface PostCardProps {
   post: Post
   onLike?: (postId: string) => void
-  onRepost?: (postId: string) => void
+  onRepost?: (targetId: string, options?: { isComment?: boolean }) => void
   onDelete?: () => void // Callback after successful deletion
   isLiked?: boolean
   isReposted?: boolean // Optional override, if not provided will check automatically
 }
 
 export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: isLikedProp, isReposted: isRepostedProp }: PostCardProps) {
+  const originalPost = post.originalPost ?? undefined
+  const originalComment = post.originalComment ?? undefined
+
   // Determine which post to display - if this is a repost, show the original post or comment
-  const displayPost = post.originalPost || (post.originalComment ? {
+  const displayPost = originalPost || (originalComment ? {
     ...post,
-    content: post.originalComment.content,
-    author: post.originalComment.author,
-    createdAt: post.originalComment.createdAt,
+    content: originalComment.content,
+    author: originalComment.author,
+    createdAt: originalComment.createdAt,
   } : post)
-  const isRepost = !!post.originalPost || !!post.originalComment
+
+  const originalPostId = originalPost?.id ?? post.originalPostId ?? null
+  const originalCommentId = originalComment?.id ?? post.originalCommentId ?? null
+  const commentPostId = originalComment?.postId
+  const isCommentTarget = Boolean(originalCommentId)
+  const repostTargetId = isCommentTarget ? (originalCommentId ?? '') : (originalPostId ?? post.id)
+
+  const targetHref = useMemo(() => {
+    if (originalComment && commentPostId) {
+      return `/posts/${commentPostId}?commentId=${originalComment.id}`
+    }
+    if (post.originalCommentId && commentPostId) {
+      return `/posts/${commentPostId}?commentId=${post.originalCommentId}`
+    }
+    if (originalPost) {
+      return `/posts/${originalPost.id}`
+    }
+    if (post.originalPostId) {
+      return `/posts/${post.originalPostId}`
+    }
+    return `/posts/${post.id}`
+  }, [commentPostId, originalComment, originalPost, post])
+
   const { data: session } = useSession()
   const router = useRouter()
   const [unrepostDialogOpen, setUnrepostDialogOpen] = useState(false)
@@ -48,34 +73,32 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
   // Check if current user is the author of the displayed post
   const isOwnPost = session?.user?.id === displayPost.authorId
   
-  // Check repost status if not provided as prop
-  // Always check the original post's repost status (displayPost.id)
-  const { data: repostStatus } = useRepostStatus(
-    session?.user?.id && displayPost.id ? displayPost.id : ''
-  )
-  const isReposted = isRepostedProp !== undefined ? isRepostedProp : (repostStatus?.reposted || false)
+  const { data: postRepostStatus } = useRepostStatus(!isCommentTarget ? repostTargetId : '')
+  const { data: commentRepostStatus } = useCommentRepostStatus(isCommentTarget ? repostTargetId : '')
+  const resolvedReposted = isCommentTarget ? (commentRepostStatus?.reposted || false) : (postRepostStatus?.reposted || false)
+  const isReposted = isRepostedProp !== undefined ? isRepostedProp : resolvedReposted
   
-  // Check like status if not provided as prop
-  // Only use prop if explicitly provided (not undefined), otherwise check automatically
+  // Check like status only for post targets
   const { data: likeStatus } = useLikeStatus(
-    session?.user?.id && displayPost.id ? displayPost.id : ''
+    !isCommentTarget && session?.user?.id ? repostTargetId : ''
   )
   const isLikedState = isLikedProp !== undefined ? isLikedProp : (likeStatus?.liked || false)
 
-  const targetHref = useMemo(() => {
-    if (post.originalComment) {
-      return `/posts/${post.originalComment.postId}?commentId=${post.originalComment.id}`
-    }
-    if (post.originalPost) {
-      return `/posts/${post.originalPost.id}`
-    }
-    return `/posts/${post.id}`
-  }, [post])
+  const likesCount = isCommentTarget
+    ? originalComment?._count?.likes ?? 0
+    : displayPost._count?.likes ?? 0
+
+  const repostCount = isCommentTarget
+    ? originalComment?._count?.repostRecords ?? 0
+    : displayPost._count?.repostRecords ?? 0
+
+  const commentsCount = isCommentTarget
+    ? originalComment?._count?.replies ?? 0
+    : displayPost._count?.comments ?? 0
   
-  // Debug logging
   if (process.env.NODE_ENV === 'development') {
     console.log('[PostCard] Like status:', {
-      postId: displayPost.id,
+      postId: repostTargetId,
       isLikedProp,
       likeStatus,
       isLikedState,
@@ -83,30 +106,34 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
     })
   }
   
-  // Log repost status for debugging
   if (process.env.NODE_ENV === 'development') {
     console.log('[PostCard] Repost status:', {
-      postId: displayPost.id,
+      postId: repostTargetId,
       isRepostedProp,
-      repostStatus,
+      postRepostStatus,
+      commentRepostStatus,
       isReposted,
-      repostCount: displayPost._count?.repostRecords || 0,
+      repostCount,
       hasCount: !!displayPost._count,
+      isCommentTarget,
     })
   }
 
   const handleRepostClick = () => {
+    if (!onRepost) return
     if (isReposted) {
-      // Show confirmation dialog for unrepost
       setUnrepostDialogOpen(true)
     } else {
-      // Directly repost
-      onRepost?.(displayPost.id)
+      onRepost(repostTargetId, { isComment: isCommentTarget })
     }
   }
 
   const handleConfirmUnrepost = () => {
-    onRepost?.(displayPost.id)
+    if (!onRepost) {
+      setUnrepostDialogOpen(false)
+      return
+    }
+    onRepost(repostTargetId, { isComment: isCommentTarget })
     setUnrepostDialogOpen(false)
   }
 
@@ -166,7 +193,7 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
       }}
     >
       <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-        {(isRepost || post.originalComment) && (
+        {(post.originalPost || post.originalComment) && (
           <Box display="flex" alignItems="center" gap={1} mb={1} sx={{ pl: 7 }}>
             <RepeatIcon fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
             <Typography variant="caption" color="text.secondary">
@@ -242,7 +269,7 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
               >
                 {isLikedState ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
-                  {displayPost._count?.likes || 0}
+                  {likesCount}
                 </Typography>
               </IconButton>
               
@@ -251,8 +278,6 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  console.log('[PostCard] Repost button clicked for post:', displayPost.id)
-                  console.log('[PostCard] isReposted:', isReposted)
                   handleRepostClick()
                 }}
                 data-no-navigation
@@ -260,7 +285,7 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
               >
                 {isReposted ? <RepeatIcon fontSize="small" /> : <RepeatOutlinedIcon fontSize="small" />}
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
-                  {displayPost._count?.repostRecords || 0}
+                  {repostCount}
                 </Typography>
               </IconButton>
               
@@ -275,7 +300,7 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
               >
                 <ChatBubbleOutlineIcon fontSize="small" />
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
-                  {displayPost._count?.comments || 0}
+                  {commentsCount}
                 </Typography>
               </IconButton>
             </Box>

@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useDeleteComment, useToggleCommentLike, useCommentLikeStatus, useToggleCommentRepost, useCommentRepostStatus } from '@/hooks'
 import MentionText from './MentionText'
+import UnrepostConfirmDialog from './UnrepostConfirmDialog'
 
 interface CommentCardProps {
   comment: Comment
@@ -34,15 +35,26 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
   
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [unrepostDialogOpen, setUnrepostDialogOpen] = useState(false)
   
   const isOwner = session?.user?.id === comment.authorId
   const isLiked = likeStatus?.liked || false
   const isReposted = repostStatus?.reposted || false
   
-  const handleClick = () => {
-    if (clickable) {
-      router.push(`/posts/${postId}?commentId=${comment.id}`)
+  const targetHref = `/posts/${postId}?commentId=${comment.id}`
+
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!clickable) return
+    if (deleteConfirmOpen || Boolean(menuAnchorEl)) {
+      return
     }
+
+    const target = event.target as HTMLElement
+    if (target.closest('button, a, [data-no-navigation]')) {
+      return
+    }
+
+    router.push(targetHref)
   }
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -80,7 +92,20 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
 
   const handleRepost = (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (isReposted) {
+      setUnrepostDialogOpen(true)
+    } else {
+      toggleCommentRepost.mutate(comment.id)
+    }
+  }
+
+  const handleConfirmUnrepost = () => {
     toggleCommentRepost.mutate(comment.id)
+    setUnrepostDialogOpen(false)
+  }
+
+  const handleCancelUnrepost = () => {
+    setUnrepostDialogOpen(false)
   }
 
   return (
@@ -139,6 +164,7 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
                 <IconButton
                   size="small"
                   onClick={handleMenuOpen}
+                  data-no-navigation
                   sx={{ color: 'text.secondary' }}
                 >
                   <MoreVertIcon fontSize="small" />
@@ -154,6 +180,7 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
               <IconButton 
                 size="small"
                 onClick={handleLike}
+                data-no-navigation
                 sx={{ color: isLiked ? 'error.main' : 'text.secondary' }}
               >
                 {isLiked ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
@@ -165,6 +192,7 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
               <IconButton 
                 size="small"
                 onClick={handleRepost}
+                data-no-navigation
                 sx={{ color: isReposted ? 'primary.main' : 'text.secondary' }}
               >
                 {isReposted ? <RepeatIcon fontSize="small" /> : <RepeatOutlinedIcon fontSize="small" />}
@@ -178,8 +206,9 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
                 sx={{ color: 'text.secondary' }}
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleClick()
+                  router.push(targetHref)
                 }}
+                data-no-navigation
               >
                 <ChatBubbleOutlineIcon fontSize="small" />
                 <Typography variant="caption" sx={{ ml: 0.5 }}>
@@ -237,6 +266,12 @@ export default function CommentCard({ comment, onDelete, postId, clickable = tru
           </Button>
         </DialogActions>
       </Dialog>
+
+      <UnrepostConfirmDialog
+        open={unrepostDialogOpen}
+        onClose={handleCancelUnrepost}
+        onConfirm={handleConfirmUnrepost}
+      />
     </Card>
   )
 }

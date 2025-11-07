@@ -29,7 +29,7 @@ export function usePosts(params?: GetPostsParams) {
       })
       return data.posts as Post[]
     },
-    enabled: true, // Always enabled
+    enabled: true,
   })
 }
 
