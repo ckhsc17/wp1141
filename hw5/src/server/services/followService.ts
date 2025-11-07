@@ -1,4 +1,5 @@
 import { followRepository } from '../repositories/followRepository'
+import { notificationService } from './notificationService'
 
 export class FollowService {
   async checkFollowStatus(followerId: string, followingId: string) {
@@ -24,6 +25,19 @@ export class FollowService {
       return { isFollowing: false }
     } else {
       await followRepository.follow(followerId, followingId)
+      try {
+        await notificationService.createNotification({
+          type: 'follow',
+          userId: followingId,
+          actorId: followerId,
+        })
+      } catch (error) {
+        console.error('[FollowService] Failed to create follow notification:', {
+          error: error instanceof Error ? error.message : String(error),
+          followerId,
+          followingId,
+        })
+      }
       return { isFollowing: true }
     }
   }

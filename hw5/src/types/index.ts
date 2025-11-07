@@ -125,7 +125,7 @@ export interface Repost {
 
 export interface Notification {
   id: string
-  type: 'like' | 'comment' | 'mention'
+  type: 'like' | 'comment' | 'mention' | 'follow'
   userId: string
   actorId: string
   postId?: string | null

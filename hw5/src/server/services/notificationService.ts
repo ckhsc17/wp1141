@@ -3,7 +3,7 @@ import { userRepository } from '../repositories/userRepository'
 import { pusherServer } from '@/lib/pusher-server'
 
 interface CreateNotificationParams {
-  type: 'like' | 'comment' | 'mention'
+  type: 'like' | 'comment' | 'mention' | 'follow'
   userId: string // 接收通知的用户 ID (internal)
   actorId: string // 触发通知的用户 ID (internal)
   postId?: string | null

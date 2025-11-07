@@ -7,7 +7,9 @@
 後端 openapi 可見：https://echoo-echoo.vercel.app/api-docs
 
 進階功能設計：
-notification：當使用者的貼文或留言收到按讚、回覆，或有人在貼文/留言中提及該使用者時，系統會透過 Pusher 即時推播通知並在「Notifications」頁面顯示
+1. notification：當使用者被追蹤、貼文或留言收到按讚、回覆，或有人在貼文/留言中提及該使用者時，系統會透過 Pusher 即時推播通知並在「Notifications」頁面顯示
+2. theme toggle：使用者可以點擊切換白天黑夜模式
+3. 利用 pagination 動態載入多篇貼文
 
 FB 登入已有建置於 NextAuth 中，但由於需進行商家驗證才能公開，故此功能目前無法於線上使用；若欲測試可聯絡我並附上 FB 名稱，我可以將您邀請為測試帳戶（bowenchen0227@gmail.com）
 

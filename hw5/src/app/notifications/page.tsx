@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import CommentIcon from '@mui/icons-material/Comment'
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail'
+import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import Link from 'next/link'
 import { Notification } from '@/types'
 import axios from 'axios'
@@ -56,6 +57,8 @@ export default function NotificationsPage() {
         return <CommentIcon sx={{ color: 'primary.main' }} />
       case 'mention':
         return <AlternateEmailIcon sx={{ color: 'primary.main' }} />
+      case 'follow':
+        return <PersonAddIcon sx={{ color: 'success.main' }} />
       default:
         return null
     }
@@ -70,6 +73,8 @@ export default function NotificationsPage() {
         return `${actorName} commented on your post`
       case 'mention':
         return `${actorName} mentioned you`
+      case 'follow':
+        return `${actorName} started following you`
       default:
         return 'New notification'
     }
@@ -78,6 +83,9 @@ export default function NotificationsPage() {
   const getNotificationLink = (notification: Notification) => {
     if (notification.postId) {
       return `/posts/${notification.postId}`
+    }
+    if (notification.type === 'follow' && notification.actor?.userId) {
+      return `/profile/${notification.actor.userId}`
     }
     return '/'
   }
