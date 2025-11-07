@@ -2,18 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Container, Box, Typography, CircularProgress, Alert, Paper, AppBar as MuiAppBar, Toolbar } from '@mui/material'
+import { Container, Box, Typography, CircularProgress, Alert, Paper } from '@mui/material'
+import Image from 'next/image'
 import PostForm from '@/components/PostForm'
 import PostCard from '@/components/PostCard'
 import AuthButtons from '@/components/AuthButtons'
 import { usePosts, useToggleLike, useToggleRepost, useToggleCommentRepost, usePusherNotifications } from '@/hooks'
 import { useSession } from 'next-auth/react'
 import { signIn } from 'next-auth/react'
-import { useThemeMode } from '@/contexts/ThemeContext'
-import Brightness4Icon from '@mui/icons-material/Brightness4'
-import Brightness7Icon from '@mui/icons-material/Brightness7'
-import IconButton from '@mui/material/IconButton'
-import Button from '@mui/material/Button'
 
 export default function Home() {
   const router = useRouter()
@@ -25,7 +21,6 @@ export default function Home() {
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()
   const toggleCommentRepost = useToggleCommentRepost()
-  const { mode, toggleTheme } = useThemeMode()
 
   const handleLike = (postId: string) => {
     toggleLike.mutate(postId)
@@ -56,49 +51,36 @@ export default function Home() {
   // 如果未登入，顯示歡迎頁面
   if (status === 'unauthenticated') {
     return (
-      <>
-        <MuiAppBar 
-          position="static" 
-          elevation={0}
-          sx={{ 
-            backgroundColor: 'background.default',
-            borderBottom: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Toolbar sx={{ justifyContent: 'flex-end' }}>
-            <IconButton onClick={toggleTheme}>
-              {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
-            <Button color="primary" variant="contained" onClick={() => signIn()}>
-              Sign in
-            </Button>
-          </Toolbar>
-        </MuiAppBar>
-        <Container maxWidth="sm" sx={{ py: 8 }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Container maxWidth="sm">
           <Paper 
             elevation={0}
             sx={{ 
               p: 4, 
               textAlign: 'center',
-              backgroundColor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'divider'
+              backgroundColor: '#000000',
+              color: '#FFFFFF',
+              borderRadius: 3,
             }}
           >
+            <Box display="flex" justifyContent="center" mb={3}>
+              <Image src="/favicon.ico" alt="Echoo logo" width={192} height={192} />
+            </Box>
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
               歡迎來到 Echoo
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+            <Typography variant="body1" sx={{ mb: 1, color: '#FFFFFF' }}>
               使用 Google、GitHub 或 Facebook 註冊新帳號
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+            <Typography variant="body2" sx={{ mb: 4, color: '#FFFFFF' }}>
               或登入您現有的帳號
             </Typography>
-            <AuthButtons />
+            <Box sx={{ maxWidth: 400, mx: 'auto' }}>
+              <AuthButtons />
+            </Box>
           </Paper>
         </Container>
-      </>
+      </Box>
     )
   }
 

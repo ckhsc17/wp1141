@@ -5,13 +5,20 @@ import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
 import { useThemeMode } from '@/contexts/ThemeContext'
 import { signIn, signOut, useSession } from 'next-auth/react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export default function AppBar() {
   const { mode, toggleTheme } = useThemeMode()
   const { data: session } = useSession()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const pathname = usePathname()
+
+  // 登入頁不顯示 header
+  if (pathname === '/' && !session?.user) {
+    return null
+  }
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
