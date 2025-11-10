@@ -30,15 +30,18 @@ function updatePostCollectionWithRepost(
   reposted: boolean
 ): unknown {
   const adjustPost = (post: Post) => {
-    if (post.id !== postId && post.originalPostId !== postId && post.originalCommentId !== postId) {
+    if (post.id !== postId) {
       return post
     }
-    const currentCount = post._count?.repostRecords ?? 0
+    const existingCount = post._count ?? { likes: 0, comments: 0, repostRecords: 0 }
+    const currentCount = existingCount.repostRecords ?? 0
     const nextCount = currentCount + (reposted ? 1 : -1)
     return {
       ...post,
       _count: {
-        ...post._count,
+        ...existingCount,
+        likes: existingCount.likes ?? 0,
+        comments: existingCount.comments ?? 0,
         repostRecords: Math.max(0, nextCount),
       },
     }
@@ -78,11 +81,12 @@ function updateCommentCollectionWithRepost(
 
   const adjustComment = (comment: Comment) => {
     if (comment.id !== commentId) return comment
-    const currentCount = comment._count?.repostRecords ?? 0
+    const existingCount = comment._count ?? { replies: 0, likes: 0, repostRecords: 0 }
+    const currentCount = existingCount.repostRecords ?? 0
     return {
       ...comment,
       _count: {
-        ...comment._count,
+        ...existingCount,
         repostRecords: Math.max(0, currentCount + (reposted ? 1 : -1)),
       },
     }

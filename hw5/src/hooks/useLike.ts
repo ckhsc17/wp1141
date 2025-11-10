@@ -25,16 +25,17 @@ function updatePostCollectionWithLike(
   let updatedData = data
   let targetPost: Post | undefined
   const adjustPost = (post: Post) => {
-    if (post.id !== postId && post.originalPostId !== postId && post.originalCommentId !== postId) {
+    if (post.id !== postId) {
       return post
     }
-    const likesCount = post._count?.likes ?? 0
+    const existingCount = post._count ?? { likes: 0, comments: 0, repostRecords: 0 }
+    const likesCount = existingCount.likes
     const nextLikes = likesCount + (liked ? 1 : -1)
     const nextCount = {
+      ...existingCount,
       likes: Math.max(0, nextLikes),
-      comments: post._count?.comments ?? 0,
-      repostRecords: post._count?.repostRecords ?? 0,
-      ...post._count,
+      comments: existingCount.comments ?? 0,
+      repostRecords: existingCount.repostRecords ?? 0,
     }
     const adjustedPost = { ...post, _count: nextCount }
     targetPost = adjustedPost
@@ -181,6 +182,40 @@ export function useLikeStatus(postId: string) {
   })
 }
 
+type CommentLikeMutationContext = {
+  previousLikeStatus?: { liked: boolean }
+  previousCommentQueries: Array<[unknown[], unknown]>
+  previousReplyQueries: Array<[unknown[], unknown]>
+}
+
+function updateCommentCollectionWithLike(
+  data: unknown,
+  commentId: string,
+  liked: boolean
+): unknown {
+  if (!data) return data
+
+  if (Array.isArray(data)) {
+    return data.map((comment: any) => {
+      if (comment.id !== commentId) return comment
+      const existingCount = comment._count ?? { replies: 0, likes: 0, repostRecords: 0 }
+      const likesCount = existingCount.likes ?? 0
+      const nextLikes = likesCount + (liked ? 1 : -1)
+      return {
+        ...comment,
+        _count: {
+          ...existingCount,
+          likes: Math.max(0, nextLikes),
+          replies: existingCount.replies ?? 0,
+          repostRecords: existingCount.repostRecords ?? 0,
+        },
+      }
+    })
+  }
+
+  return data
+}
+
 export function useToggleCommentLike() {
   const queryClient = useQueryClient()
 
@@ -189,8 +224,53 @@ export function useToggleCommentLike() {
       const { data } = await axios.post(`/api/comments/${commentId}/like`)
       return data
     },
-    onSuccess: (data, commentId) => {
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({ queryKey: ['comments'] })
+      await queryClient.cancelQueries({ queryKey: ['replies'] })
+      await queryClient.cancelQueries({ queryKey: ['comment-like-status', commentId] })
+
+      const previousLikeStatus = queryClient.getQueryData<{ liked: boolean }>(['comment-like-status', commentId])
+      const previousCommentQueries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ['comments'] })
+        .map((query) => [query.queryKey, query.state.data] as [unknown[], unknown])
+      const previousReplyQueries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ['replies'] })
+        .map((query) => [query.queryKey, query.state.data] as [unknown[], unknown])
+
+      const isCurrentlyLiked = previousLikeStatus?.liked ?? false
+      const nextLiked = !isCurrentlyLiked
+
+      queryClient.setQueryData(['comment-like-status', commentId], { liked: nextLiked })
+
+      previousCommentQueries.forEach(([queryKey, data]) => {
+        const updated = updateCommentCollectionWithLike(data, commentId, nextLiked)
+        queryClient.setQueryData(queryKey, updated)
+      })
+
+      previousReplyQueries.forEach(([queryKey, data]) => {
+        const updated = updateCommentCollectionWithLike(data, commentId, nextLiked)
+        queryClient.setQueryData(queryKey, updated)
+      })
+
+      return { previousLikeStatus, previousCommentQueries, previousReplyQueries } satisfies CommentLikeMutationContext
+    },
+    onError: (_err, commentId, context) => {
+      if (!context) return
+      if (context.previousLikeStatus) {
+        queryClient.setQueryData(['comment-like-status', commentId], context.previousLikeStatus)
+      }
+      context.previousCommentQueries.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+      context.previousReplyQueries.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data)
+      })
+    },
+    onSettled: (_data, _error, commentId) => {
       queryClient.invalidateQueries({ queryKey: ['comments'] })
+      queryClient.invalidateQueries({ queryKey: ['replies'] })
       queryClient.invalidateQueries({ queryKey: ['comment-like-status', commentId] })
       queryClient.invalidateQueries({ queryKey: ['comment-like-status'] })
     },
