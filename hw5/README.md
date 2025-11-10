@@ -3,8 +3,8 @@
 一個使用 Next.js 全端框架打造的社交媒體應用，Echoo 重新詮釋即時社交平台的核心功能。
 目前全端部署在 Vercel，採用 serverless 模式，因此部分點擊行為可能需等待 5-10 秒才有效果，再請耐心等候
 
-線上連結：https://echoo-echoo.vercel.app/
-後端 openapi 可見：https://echoo-echoo.vercel.app/api-docs
+- 線上連結：https://echoo-echoo.vercel.app/
+- 後端 openapi 可見：https://echoo-echoo.vercel.app/api-docs
 
 進階功能設計：
 1. notification：當使用者被追蹤、貼文或留言收到按讚、回覆，或有人在貼文/留言中提及該使用者時，系統會透過 Pusher 即時推播通知並在「Notifications」頁面顯示
