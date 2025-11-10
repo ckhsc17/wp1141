@@ -31,8 +31,10 @@ function updatePostCollectionWithLike(
     const likesCount = post._count?.likes ?? 0
     const nextLikes = likesCount + (liked ? 1 : -1)
     const nextCount = {
-      ...post._count,
       likes: Math.max(0, nextLikes),
+      comments: post._count?.comments ?? 0,
+      repostRecords: post._count?.repostRecords ?? 0,
+      ...post._count,
     }
     const adjustedPost = { ...post, _count: nextCount }
     targetPost = adjustedPost
