@@ -15,6 +15,7 @@ export default function Home() {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou')
+  const postsEnabled = status === 'authenticated'
   const {
     data,
     isLoading,
@@ -25,6 +26,7 @@ export default function Home() {
     refetch,
   } = useInfinitePosts({
     following: activeTab === 'following',
+    enabled: postsEnabled,
   })
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()

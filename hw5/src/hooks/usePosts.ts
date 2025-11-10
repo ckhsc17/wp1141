@@ -9,6 +9,8 @@ interface GetPostsParams extends PaginationParams {
   following?: boolean
 }
 
+type InfinitePostsParams = Omit<GetPostsParams, 'page'> & { enabled?: boolean }
+
 export function usePosts(params?: GetPostsParams) {
   return useQuery({
     queryKey: ['posts', params?.userId, params?.following, params?.page, params?.limit],
@@ -43,23 +45,26 @@ interface PostsPage {
   }
 }
 
-export function useInfinitePosts(params?: Omit<GetPostsParams, 'page'>) {
+export function useInfinitePosts(params?: InfinitePostsParams) {
+  const { enabled = true, ...queryParams } = params ?? {}
+
   return useInfiniteQuery<PostsPage>({
-    queryKey: ['posts', params?.userId, params?.following, params?.limit],
+    queryKey: ['posts', queryParams.userId, queryParams.following, queryParams.limit],
     initialPageParam: 1,
+    enabled,
     queryFn: async ({ pageParam = 1 }) => {
       let url = '/api/posts'
 
-      if (params?.userId) {
-        url = `/api/users/${params.userId}/posts`
-      } else if (params?.following) {
+      if (queryParams?.userId) {
+        url = `/api/users/${queryParams.userId}/posts`
+      } else if (queryParams?.following) {
         url = '/api/posts/following'
       }
 
       const { data } = await axios.get(url, {
         params: {
           page: pageParam,
-          limit: params?.limit || 20,
+          limit: queryParams?.limit || 20,
         },
       })
 
