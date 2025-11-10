@@ -117,6 +117,9 @@ export default function Home() {
             <Typography variant="body2" sx={{ mb: 4, color: '#FFFFFF' }}>
               或登入您現有的帳號
             </Typography>
+            <Typography variant="body2" sx={{ mb: 4, color: '#FFFFFF' }}>
+              ！！！Vercel 上 Postgres 因 serverless 模式載入較慢（經測試需 3-5 分鐘），請耐心等候感謝！！！
+            </Typography>
             <Box sx={{ maxWidth: 400, mx: 'auto' }}>
               <AuthButtons />
             </Box>
