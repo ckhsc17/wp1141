@@ -95,8 +95,10 @@ export function useFeedUpdates() {
 
     return () => {
       console.log('[useFeedUpdates] Unsubscribing from public-feed')
-      channel.unbind_all()
-      pusherClient.unsubscribe('public-feed')
+      if (pusherClient) {
+        channel.unbind_all()
+        pusherClient.unsubscribe('public-feed')
+      }
     }
   }, [queryClient])
 
