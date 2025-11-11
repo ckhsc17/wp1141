@@ -69,8 +69,9 @@ export class PostRepository {
     skip: number
     take: number
     where?: Prisma.PostWhereInput
+    currentUserId?: string
   }) {
-    return prisma.post.findMany({
+    const posts = await prisma.post.findMany({
       skip: options.skip,
       take: options.take,
       where: options.where,
@@ -129,8 +130,27 @@ export class PostRepository {
             repostRecords: true,
           } as any,
         },
+        ...(options.currentUserId && {
+          likes: {
+            where: { userId: options.currentUserId },
+            select: { id: true },
+          },
+          repostRecords: {
+            where: { userId: options.currentUserId },
+            select: { id: true },
+          },
+        }),
       } as any,
     })
+
+    // Add isLikedByCurrentUser and isRepostedByCurrentUser fields
+    return posts.map((post: any) => ({
+      ...post,
+      isLikedByCurrentUser: options.currentUserId ? (post.likes?.length > 0) : false,
+      isRepostedByCurrentUser: options.currentUserId ? (post.repostRecords?.length > 0) : false,
+      likes: undefined,
+      repostRecords: post._count?.repostRecords || 0,
+    }))
   }
 
   async findById(id: string) {

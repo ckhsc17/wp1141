@@ -11,6 +11,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  return postController.getFollowingPosts(request, session.user.id)
+  return postController.getFollowingPosts(request, session.user.id, session.user.id)
 }
 

@@ -5,7 +5,8 @@ import { postController } from '@/server/controllers/postController'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
-  return postController.getPosts(request)
+  const session = await getServerSession(authOptions)
+  return postController.getPosts(request, session?.user?.id)
 }
 
 export async function POST(request: NextRequest) {

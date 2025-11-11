@@ -78,6 +78,7 @@ export class PostService {
       where: {
         originalCommentId: null,
       } as any,
+      currentUserId: userId,
     })
 
     const total = await postRepository.count({
@@ -125,7 +126,7 @@ export class PostService {
     return postRepository.delete(id)
   }
 
-  async getUserPosts(userId: string, pagination: PaginationInput) {
+  async getUserPosts(userId: string, pagination: PaginationInput, currentUserId?: string) {
     const { page, limit } = pagination
     const skip = (page - 1) * limit
 
@@ -139,6 +140,7 @@ export class PostService {
         originalPostId: null, // Exclude reposts from regular posts
         originalCommentId: null,
       } as any,
+      currentUserId,
     })
 
     const total = await postRepository.count({
@@ -160,7 +162,7 @@ export class PostService {
     }
   }
 
-  async getFollowingPosts(userId: string, pagination: PaginationInput) {
+  async getFollowingPosts(userId: string, pagination: PaginationInput, currentUserId?: string) {
     const { page, limit } = pagination
     const skip = (page - 1) * limit
 
@@ -201,6 +203,7 @@ export class PostService {
         },
         originalCommentId: null,
       } as any,
+      currentUserId,
     })
 
     const total = await postRepository.count({
@@ -273,6 +276,7 @@ export class PostService {
       skip: 0,
       take: candidateTake,
       where: baseWhere,
+      currentUserId: viewerId,
     })
 
     const scored = candidates.map((post) => ({

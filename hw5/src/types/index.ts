@@ -29,6 +29,8 @@ export interface Post {
   author?: User
   originalPost?: Post
   originalComment?: Comment
+  isLikedByCurrentUser?: boolean
+  isRepostedByCurrentUser?: boolean
   _count?: {
     likes: number
     comments: number

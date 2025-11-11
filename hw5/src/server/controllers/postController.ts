@@ -3,7 +3,7 @@ import { postService } from '../services/postService'
 import { createPostSchema, updatePostSchema, paginationSchema } from '@/schemas/post.schema'
 
 export class PostController {
-  async getPosts(request: NextRequest) {
+  async getPosts(request: NextRequest, currentUserId?: string) {
     try {
       const searchParams = request.nextUrl.searchParams
       const pagination = paginationSchema.parse({
@@ -11,7 +11,7 @@ export class PostController {
         limit: searchParams.get('limit'),
       })
 
-      const result = await postService.getPosts(pagination)
+      const result = await postService.getPosts(pagination, currentUserId)
       return NextResponse.json(result)
     } catch (error) {
       return NextResponse.json(
@@ -141,7 +141,7 @@ export class PostController {
     }
   }
 
-  async getUserPosts(userId: string, request: NextRequest) {
+  async getUserPosts(userId: string, request: NextRequest, currentUserId?: string) {
     try {
       const searchParams = request.nextUrl.searchParams
       const pagination = paginationSchema.parse({
@@ -149,7 +149,7 @@ export class PostController {
         limit: searchParams.get('limit'),
       })
 
-      const result = await postService.getUserPosts(userId, pagination)
+      const result = await postService.getUserPosts(userId, pagination, currentUserId)
       return NextResponse.json(result)
     } catch (error) {
       return NextResponse.json(
@@ -159,7 +159,7 @@ export class PostController {
     }
   }
 
-  async getFollowingPosts(request: NextRequest, userId: string) {
+  async getFollowingPosts(request: NextRequest, userId: string, currentUserId?: string) {
     try {
       const searchParams = request.nextUrl.searchParams
       const pagination = paginationSchema.parse({
@@ -177,7 +177,7 @@ export class PostController {
         )
       }
 
-      const result = await postService.getFollowingPosts(user.userId, pagination)
+      const result = await postService.getFollowingPosts(user.userId, pagination, currentUserId)
       return NextResponse.json(result)
     } catch (error) {
       return NextResponse.json(

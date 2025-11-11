@@ -38,7 +38,7 @@ export default function ExplorePage() {
     hasNextPage,
     isFetchingNextPage,
     refetch,
-  } = useExplorePosts()
+  } = useExplorePosts({ enabled: status === 'authenticated' })
 
   const toggleLike = useToggleLike()
   const toggleRepost = useToggleRepost()

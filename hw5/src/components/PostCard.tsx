@@ -13,8 +13,6 @@ import { Post } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 import MentionText from './MentionText'
-import { useRepostStatus, useCommentRepostStatus } from '@/hooks/useRepost'
-import { useLikeStatus } from '@/hooks/useLike'
 import { useDeletePost } from '@/hooks/usePosts'
 import { useSession } from 'next-auth/react'
 import UnrepostConfirmDialog from './UnrepostConfirmDialog'
@@ -73,16 +71,9 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
   // Check if current user is the author of the displayed post
   const isOwnPost = session?.user?.id === displayPost.authorId
   
-  const { data: postRepostStatus } = useRepostStatus(!isCommentTarget ? repostTargetId : '')
-  const { data: commentRepostStatus } = useCommentRepostStatus(isCommentTarget ? repostTargetId : '')
-  const resolvedReposted = isCommentTarget ? (commentRepostStatus?.reposted || false) : (postRepostStatus?.reposted || false)
-  const isReposted = isRepostedProp !== undefined ? isRepostedProp : resolvedReposted
-  
-  // Check like status only for post targets
-  const { data: likeStatus } = useLikeStatus(
-    !isCommentTarget && session?.user?.id ? repostTargetId : ''
-  )
-  const isLikedState = isLikedProp !== undefined ? isLikedProp : (likeStatus?.liked || false)
+  // Read like/repost status directly from post data (no API calls needed)
+  const isReposted = isRepostedProp !== undefined ? isRepostedProp : (displayPost.isRepostedByCurrentUser || false)
+  const isLikedState = isLikedProp !== undefined ? isLikedProp : (displayPost.isLikedByCurrentUser || false)
 
   const likesCount = isCommentTarget
     ? originalComment?._count?.likes ?? 0
@@ -95,29 +86,6 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
   const commentsCount = isCommentTarget
     ? originalComment?._count?.replies ?? 0
     : displayPost._count?.comments ?? 0
-  
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[PostCard] Like status:', {
-      postId: repostTargetId,
-      isLikedProp,
-      likeStatus,
-      isLikedState,
-      hasSession: !!session?.user?.id,
-    })
-  }
-  
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[PostCard] Repost status:', {
-      postId: repostTargetId,
-      isRepostedProp,
-      postRepostStatus,
-      commentRepostStatus,
-      isReposted,
-      repostCount,
-      hasCount: !!displayPost._count,
-      isCommentTarget,
-    })
-  }
 
   const handleRepostClick = () => {
     if (!onRepost) return

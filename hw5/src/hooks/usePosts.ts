@@ -81,9 +81,10 @@ export function useInfinitePosts(params?: InfinitePostsParams) {
   })
 }
 
-export function useExplorePosts(params?: { limit?: number }) {
+export function useExplorePosts(params?: { limit?: number; enabled?: boolean }) {
   return useInfiniteQuery<PostsPage>({
     queryKey: ['explore-posts', params?.limit],
+    enabled: params?.enabled !== false,
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
       const { data } = await axios.get('/api/posts/explore', {

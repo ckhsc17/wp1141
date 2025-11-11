@@ -35,7 +35,8 @@ export function useUnreadNotificationCount() {
       const { data } = await axios.get<{ count: number }>('/api/notifications/unread')
       return data.count
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   })
 }
 
