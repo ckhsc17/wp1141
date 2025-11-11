@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Paper, Button, Box, Avatar, Typography } from '@mui/material'
+import { Paper, Button, Box, Avatar, Typography, CircularProgress } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import { useCreatePost } from '@/hooks/usePosts'
 import { useSession } from 'next-auth/react'
@@ -68,9 +68,9 @@ export default function PostForm({ onPostCreated }: PostFormProps) {
               type="submit"
               variant="contained"
               disabled={!content.trim() || createPost.isPending || calculateEffectiveLength(content) > 280}
-              startIcon={<SendIcon />}
+              startIcon={createPost.isPending ? <CircularProgress size={20} /> : <SendIcon />}
             >
-              Post
+              {createPost.isPending ? 'Posting...' : 'Post'}
             </Button>
           </Box>
         </Box>

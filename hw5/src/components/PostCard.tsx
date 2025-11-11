@@ -72,8 +72,10 @@ export default function PostCard({ post, onLike, onRepost, onDelete, isLiked: is
   const isOwnPost = session?.user?.id === displayPost.authorId
   
   // Read like/repost status directly from post data (no API calls needed)
-  const isReposted = isRepostedProp !== undefined ? isRepostedProp : (displayPost.isRepostedByCurrentUser || false)
-  const isLikedState = isLikedProp !== undefined ? isLikedProp : (displayPost.isLikedByCurrentUser || false)
+  // If this is a repost, read status from originalPost/originalComment
+  const targetForStatus = originalPost || originalComment || displayPost
+  const isReposted = isRepostedProp !== undefined ? isRepostedProp : ((targetForStatus as any).isRepostedByCurrentUser || false)
+  const isLikedState = isLikedProp !== undefined ? isLikedProp : ((targetForStatus as any).isLikedByCurrentUser || false)
 
   const likesCount = isCommentTarget
     ? originalComment?._count?.likes ?? 0
