@@ -9,7 +9,7 @@ import NextLink from 'next/link'
 
 export default function AuthButtons() {
   const handleSignIn = (provider: string) => {
-    signIn(provider)
+    signIn(provider, { callbackUrl: '/' })
   }
 
   return (

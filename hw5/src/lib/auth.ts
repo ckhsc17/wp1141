@@ -32,41 +32,37 @@ export const authOptions: NextAuthOptions = {
     newUser: '/register/setup',
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      console.log('[Auth] signIn callback:', { 
+        userId: user.id, 
+        provider: account?.provider,
+        hasUserId: Boolean((user as any).userId)
+      })
+      // 允許所有 OAuth 登入
+      return true
+    },
     async session({ session, user }) {
       try {
         if (session.user && user) {
-          (session.user as any).id = user.id
-          
-          // 嘗試從 user 物件讀取 userId
-          let userId = (user as any).userId
-          
-          // 如果 user 物件中沒有 userId，查詢 database（fallback）
-          if (!userId) {
-            console.log('[Auth] userId not in user object, querying database')
-            try {
-              const dbUser = await prisma.user.findUnique({
-                where: { id: user.id },
-                select: { userId: true },
-              })
-              userId = dbUser?.userId
-            } catch (dbError) {
-              console.error('[Auth] Failed to query userId:', dbError)
-            }
-          }
-          
+          const userId = (user as any).userId || null
+          ;(session.user as any).id = user.id
           ;(session.user as any).userId = userId
           
           if (!userId) {
-            console.warn('[Auth] User has no userId set (new user?):', {
+            console.log('[Auth] User has no userId set (new user):', {
               id: user.id,
               email: user.email,
+            })
+          } else {
+            console.log('[Auth] Session created for user:', {
+              id: user.id,
+              userId: userId,
             })
           }
         }
         return session
       } catch (error) {
         console.error('[Auth] Error in session callback:', error)
-        // 即使出錯也返回 session，避免登出
         return session
       }
     },
