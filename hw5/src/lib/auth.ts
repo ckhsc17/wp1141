@@ -33,16 +33,26 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async session({ session, user }) {
-      if (session.user && user) {
-        (session.user as any).id = user.id
-        // 取得 userID
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { userId: true },
-        })
-        ;(session.user as any).userId = dbUser?.userId
+      try {
+        if (session.user && user) {
+          (session.user as any).id = user.id
+          // 直接從 user 物件讀取 userId，避免額外的 database 查詢
+          ;(session.user as any).userId = (user as any).userId
+          
+          // 如果 userId 不存在，記錄錯誤但不讓 session 失敗
+          if (!(user as any).userId) {
+            console.warn('[Auth] User object missing userId field:', {
+              userId: user.id,
+              email: user.email,
+            })
+          }
+        }
+        return session
+      } catch (error) {
+        console.error('[Auth] Error in session callback:', error)
+        // 即使出錯也返回 session，避免登出
+        return session
       }
-      return session
     },
   },
 }

@@ -9,8 +9,9 @@ export async function GET(
 ) {
   const session = await getServerSession(authOptions)
   
+  // 未登入時回傳預設值，不回 401
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ reposted: false })
   }
 
   const { id } = await params
