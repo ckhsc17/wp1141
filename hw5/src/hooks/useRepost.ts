@@ -44,6 +44,7 @@ function updatePostCollectionWithRepost(
         comments: existingCount.comments ?? 0,
         repostRecords: Math.max(0, nextCount),
       },
+      isRepostedByCurrentUser: reposted,  // 更新 repost 狀態
     }
   }
 

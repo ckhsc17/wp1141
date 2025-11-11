@@ -37,7 +37,11 @@ function updatePostCollectionWithLike(
       comments: existingCount.comments ?? 0,
       repostRecords: existingCount.repostRecords ?? 0,
     }
-    const adjustedPost = { ...post, _count: nextCount }
+    const adjustedPost = { 
+      ...post, 
+      _count: nextCount,
+      isLikedByCurrentUser: liked,  // 更新 like 狀態
+    }
     targetPost = adjustedPost
     return adjustedPost
   }
