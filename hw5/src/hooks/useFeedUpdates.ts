@@ -12,7 +12,7 @@ type InfinitePostsData = {
   pageParams: unknown[]
 }
 
-export function useFeedUpdates() {
+export function useFeedUpdates(currentUserId?: string) {
   const queryClient = useQueryClient()
   const [newPostCount, setNewPostCount] = useState(0)
 
@@ -28,7 +28,10 @@ export function useFeedUpdates() {
     // Handle new post events
     channel.bind('new-post', (data: any) => {
       console.log('[useFeedUpdates] New post event received:', data)
-      setNewPostCount((prev) => prev + 1)
+      // Only show banner if the post is not from current user
+      if (data.authorId !== currentUserId) {
+        setNewPostCount((prev) => prev + 1)
+      }
     })
 
     // Handle post stats updates (silent, no UI change except counts)
@@ -100,7 +103,7 @@ export function useFeedUpdates() {
         pusherClient.unsubscribe('public-feed')
       }
     }
-  }, [queryClient])
+  }, [queryClient, currentUserId])
 
   const resetNewPostCount = () => {
     setNewPostCount(0)

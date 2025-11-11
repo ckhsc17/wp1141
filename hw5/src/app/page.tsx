@@ -34,7 +34,7 @@ export default function Home() {
   const toggleRepost = useToggleRepost()
   const toggleCommentRepost = useToggleCommentRepost()
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
-  const { newPostCount, resetNewPostCount } = useFeedUpdates()
+  const { newPostCount, resetNewPostCount } = useFeedUpdates(session?.user?.id)
 
   const posts = useMemo(
     () => data?.pages.flatMap((page) => page.posts ?? []) ?? [],
