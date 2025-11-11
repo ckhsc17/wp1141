@@ -3,6 +3,7 @@ import { CreatePostInput, UpdatePostInput, PaginationInput } from '@/schemas/pos
 import { mentionService } from './mentionService'
 import { userRepository } from '../repositories/userRepository'
 import { calculateTrendingScore, extractTrendingInputFromPost } from '../utils/feedScore'
+import { pusherServer } from '@/lib/pusher-server'
 
 export class PostService {
   async createPost(data: CreatePostInput, authorId: string) {
@@ -37,6 +38,31 @@ export class PostService {
         stack: error instanceof Error ? error.stack : undefined,
       })
       // Don't throw - post creation should succeed even if mentions fail
+    }
+
+    // Broadcast new post event to all users
+    try {
+      if (pusherServer) {
+        // Fetch full post with author data
+        const fullPost: any = await postRepository.findById(post.id)
+        if (fullPost && fullPost.author) {
+          await pusherServer.trigger('public-feed', 'new-post', {
+            postId: fullPost.id,
+            authorId: fullPost.authorId,
+            author: {
+              userId: fullPost.author.userId,
+              name: fullPost.author.name,
+              image: fullPost.author.image,
+            },
+            contentPreview: data.content.substring(0, 100),
+            createdAt: fullPost.createdAt.toISOString(),
+          })
+          console.log('[PostService] New post event broadcasted:', fullPost.id)
+        }
+      }
+    } catch (error) {
+      console.error('[PostService] Failed to broadcast new post event:', error)
+      // Don't throw - post creation should succeed even if broadcast fails
     }
 
     return post

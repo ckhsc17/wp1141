@@ -1,6 +1,7 @@
 import { repostRepository } from '../repositories/repostRepository'
 import { postRepository } from '../repositories/postRepository'
 import { commentRepository } from '../repositories/commentRepository'
+import { pusherServer } from '@/lib/pusher-server'
 
 export class RepostService {
   async toggleRepost(postId: string, userId: string) {
@@ -42,6 +43,10 @@ export class RepostService {
       console.log('[RepostService] Deleting repost record')
       await repostRepository.delete(postId, null, userId)
       console.log('[RepostService] Unrepost successful')
+      
+      // Broadcast stats update
+      await this.broadcastStatsUpdate(postId)
+      
       return { reposted: false }
     } else {
       // 創建 repost - 創建新的 post 和 repost 記錄
@@ -64,7 +69,30 @@ export class RepostService {
       })
 
       console.log('[RepostService] Repost successful')
+      
+      // Broadcast stats update
+      await this.broadcastStatsUpdate(postId)
+      
       return { reposted: true, repostPostId: repostPost.id }
+    }
+  }
+
+  private async broadcastStatsUpdate(postId: string) {
+    try {
+      if (pusherServer) {
+        const updatedPost: any = await postRepository.findById(postId)
+        if (updatedPost && updatedPost._count) {
+          await pusherServer.trigger('public-feed', 'post-stats-updated', {
+            postId: postId,
+            likes: updatedPost._count.likes ?? 0,
+            comments: updatedPost._count.comments ?? 0,
+            reposts: updatedPost._count.repostRecords ?? 0,
+          })
+        }
+      }
+    } catch (error) {
+      console.error('[RepostService] Failed to broadcast stats update:', error)
+      // Don't throw - repost operation should succeed even if broadcast fails
     }
   }
 

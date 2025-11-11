@@ -2,6 +2,7 @@ import { likeRepository } from '../repositories/likeRepository'
 import { postRepository } from '../repositories/postRepository'
 import { commentRepository } from '../repositories/commentRepository'
 import { notificationService } from './notificationService'
+import { pusherServer } from '@/lib/pusher-server'
 
 export class LikeService {
   async toggleLike(postId: string, userId: string) {
@@ -14,10 +15,11 @@ export class LikeService {
     // 檢查是否已按讚
     const existingLike = await likeRepository.findUnique(postId, null, userId)
 
+    let result
     if (existingLike) {
       // 取消按讚
       await likeRepository.delete(postId, null, userId)
-      return { liked: false }
+      result = { liked: false }
     } else {
       // 按讚
       await likeRepository.create({ postId, commentId: null, userId })
@@ -48,8 +50,28 @@ export class LikeService {
         console.log('[LikeService] Skipping notification - user is post author')
       }
       
-      return { liked: true }
+      result = { liked: true }
     }
+
+    // Broadcast like/unlike event to all users for silent count update
+    try {
+      if (pusherServer) {
+        const updatedPost: any = await postRepository.findById(postId)
+        if (updatedPost && updatedPost._count) {
+          await pusherServer.trigger('public-feed', 'post-stats-updated', {
+            postId: postId,
+            likes: updatedPost._count.likes ?? 0,
+            comments: updatedPost._count.comments ?? 0,
+            reposts: updatedPost._count.repostRecords ?? 0,
+          })
+        }
+      }
+    } catch (error) {
+      console.error('[LikeService] Failed to broadcast stats update:', error)
+      // Don't throw - like operation should succeed even if broadcast fails
+    }
+
+    return result
   }
 
   async toggleCommentLike(commentId: string, userId: string) {

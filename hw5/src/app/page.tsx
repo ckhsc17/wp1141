@@ -8,6 +8,8 @@ import PostForm from '@/components/PostForm'
 import PostCard from '@/components/PostCard'
 import AuthButtons from '@/components/AuthButtons'
 import { useInfinitePosts, useToggleLike, useToggleRepost, useToggleCommentRepost, usePusherNotifications } from '@/hooks'
+import { useFeedUpdates } from '@/hooks/useFeedUpdates'
+import NewPostsBanner from '@/components/NewPostsBanner'
 import { useSession } from 'next-auth/react'
 import { signIn } from 'next-auth/react'
 
@@ -32,6 +34,7 @@ export default function Home() {
   const toggleRepost = useToggleRepost()
   const toggleCommentRepost = useToggleCommentRepost()
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const { newPostCount, resetNewPostCount } = useFeedUpdates()
 
   const posts = useMemo(
     () => data?.pages.flatMap((page) => page.posts ?? []) ?? [],
@@ -60,6 +63,12 @@ export default function Home() {
 
   const handlePostDelete = () => {
     refetch() // Refetch posts after deletion
+  }
+
+  const handleLoadNewPosts = () => {
+    resetNewPostCount()
+    refetch()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   useEffect(() => {
@@ -176,6 +185,8 @@ export default function Home() {
       </Box>
 
       {session && <PostForm />}
+
+      <NewPostsBanner count={newPostCount} onLoadNew={handleLoadNewPosts} />
 
       {isLoading && (
         <Box display="flex" justifyContent="center" py={4}>
