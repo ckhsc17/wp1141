@@ -134,8 +134,8 @@ export default function SetupUserIdPage() {
       // 設定 userID
       await axios.post('/api/users/setup', { userId: data.userId })
 
-      // 更新 session
-      await update()
+      // 更新 session（JWT token）
+      await update({ userId: data.userId })
       
       // 重新導向到首頁
       router.push('/')
