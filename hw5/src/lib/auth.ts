@@ -22,7 +22,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",  // 改用 JWT session
+    strategy: "database",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
@@ -41,51 +41,30 @@ export const authOptions: NextAuthOptions = {
       // 允許所有 OAuth 登入
       return true
     },
-    async jwt({ token, user, account, trigger, session }) {
-      // 首次登入時（user 存在），將資料存入 JWT token
-      if (user) {
-        console.log('[Auth JWT] First sign in, storing user data:', {
-          id: user.id,
-          userId: (user as any).userId,
-          email: user.email,
-        })
-        token.id = user.id
-        token.userId = (user as any).userId || null
-        token.email = user.email
-        token.name = user.name
-        token.picture = user.image
-      }
-      
-      // 處理 session update（例如用戶設定 userId 後）
-      if (trigger === 'update' && session) {
-        console.log('[Auth JWT] Session update triggered:', session)
-        // 從 session 更新 token
-        if (session.userId !== undefined) {
-          token.userId = session.userId
+    async session({ session, user }) {
+      try {
+        if (session.user && user) {
+          const userId = (user as any).userId || null
+          ;(session.user as any).id = user.id
+          ;(session.user as any).userId = userId
+          
+          if (!userId) {
+            console.log('[Auth] User has no userId set (new user):', {
+              id: user.id,
+              email: user.email,
+            })
+          } else {
+            console.log('[Auth] Session created for user:', {
+              id: user.id,
+              userId: userId,
+            })
+          }
         }
-        if (session.name !== undefined) {
-          token.name = session.name
-        }
+        return session
+      } catch (error) {
+        console.error('[Auth] Error in session callback:', error)
+        return session
       }
-      
-      return token
-    },
-    async session({ session, token }) {
-      // 從 JWT token 讀取資料到 session（無需查詢 DB）
-      if (session.user) {
-        (session.user as any).id = token.id as string
-        (session.user as any).userId = token.userId as string | null
-        session.user.email = token.email as string
-        session.user.name = token.name as string
-        session.user.image = token.picture as string
-        
-        console.log('[Auth Session] Session created from JWT:', {
-          id: token.id,
-          userId: token.userId,
-          hasUserId: Boolean(token.userId),
-        })
-      }
-      return session
     },
   },
 }
