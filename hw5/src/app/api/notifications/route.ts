@@ -6,19 +6,8 @@ import { notificationController } from '@/server/controllers/notificationControl
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
   
-  console.log('[Notifications API] GET called:', {
-    hasSession: !!session,
-    hasUserId: !!session?.user?.id,
-    userId: session?.user?.id,
-  })
-  
   if (!session?.user?.id) {
-    console.warn('[Notifications API] No session, returning empty notifications')
-    // 回傳空通知列表而不是 401，避免前端錯誤
-    return NextResponse.json({
-      notifications: [],
-      pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
-    })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   return notificationController.getNotifications(session.user.id, request)

@@ -92,20 +92,9 @@ export default function Home() {
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, activeTab])
 
-  // 檢查 URL 中的 error query
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const error = params.get('error')
-    if (error) {
-      console.error('[Auth] Login error:', error)
-      // 可選：顯示 toast 或 alert
-    }
-  }, [])
-
   // 檢查是否已登入但沒有 userId，需要設定
   useEffect(() => {
     if (status === 'authenticated' && session?.user && !(session.user as any).userId) {
-      console.log('[Page] Redirecting to setup page - user has no userId')
       router.push('/register/setup')
     }
   }, [status, session, router])
@@ -139,7 +128,6 @@ export default function Home() {
             </Typography>
             <Typography variant="body2" sx={{ mb: 4, color: '#FFFFFF' }}>
               ！！！Vercel 上 Postgres 因 serverless 模式載入較慢（經測試需 3-5 分鐘），請耐心等候感謝！！！
-              若還是一直遇到跳回登入頁，請檢查將 cookie next auth 相關 token 清除
             </Typography>
             <Box sx={{ maxWidth: 400, mx: 'auto' }}>
               <AuthButtons />
