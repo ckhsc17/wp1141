@@ -25,19 +25,21 @@ export function extractUrls(content: string): string[] {
 }
 
 /**
- * Parse content and split it into text segments, mention objects, and link objects
+ * Parse content and split it into text segments, mention objects, link objects, and hashtag objects
  * Returns an array of segments that can be rendered as JSX
  */
 export function parseMentions(content: string): Array<
   | { type: 'text'; content: string }
   | { type: 'mention'; userId: string }
   | { type: 'link'; url: string; originalUrl: string }
+  | { type: 'hashtag'; tag: string }
 > {
-  const segments: Array<{ type: 'text' | 'mention' | 'link'; content?: string; userId?: string; url?: string; originalUrl?: string }> = []
+  const segments: Array<{ type: 'text' | 'mention' | 'link' | 'hashtag'; content?: string; userId?: string; url?: string; originalUrl?: string; tag?: string }> = []
   
-  // First, find all mentions and URLs with their positions
+  // First, find all mentions, URLs, and hashtags with their positions
   const mentions: Array<{ type: 'mention'; start: number; end: number; userId: string }> = []
   const links: Array<{ type: 'link'; start: number; end: number; url: string; originalUrl: string }> = []
+  const hashtags: Array<{ type: 'hashtag'; start: number; end: number; tag: string }> = []
   
   // Find mentions
   const mentionRegex = /@(\w+)/g
@@ -48,6 +50,17 @@ export function parseMentions(content: string): Array<
       start: match.index,
       end: match.index + match[0].length,
       userId: match[1],
+    })
+  }
+  
+  // Find hashtags
+  const hashtagRegex = /#(\w+)/g
+  while ((match = hashtagRegex.exec(content)) !== null) {
+    hashtags.push({
+      type: 'hashtag',
+      start: match.index,
+      end: match.index + match[0].length,
+      tag: match[1],
     })
   }
   
@@ -73,6 +86,7 @@ export function parseMentions(content: string): Array<
   const allMatches = [
     ...mentions.map(m => ({ ...m, type: 'mention' as const })),
     ...links.map(m => ({ ...m, type: 'link' as const })),
+    ...hashtags.map(m => ({ ...m, type: 'hashtag' as const })),
   ].sort((a, b) => a.start - b.start)
   
   // Remove overlapping matches (prioritize mentions over links)
@@ -107,11 +121,16 @@ export function parseMentions(content: string): Array<
         type: 'mention',
         userId: match.userId,
       })
-    } else {
+    } else if (match.type === 'link') {
       segments.push({
         type: 'link',
         url: match.url,
         originalUrl: match.originalUrl,
+      })
+    } else if (match.type === 'hashtag') {
+      segments.push({
+        type: 'hashtag',
+        tag: match.tag,
       })
     }
     
@@ -138,6 +157,7 @@ export function parseMentions(content: string): Array<
     | { type: 'text'; content: string }
     | { type: 'mention'; userId: string }
     | { type: 'link'; url: string; originalUrl: string }
+    | { type: 'hashtag'; tag: string }
   >
 }
 

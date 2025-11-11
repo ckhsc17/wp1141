@@ -80,6 +80,21 @@ export default function MentionText({ content }: MentionTextProps) {
           )
         }
 
+        if (segment.type === 'hashtag') {
+          // Render hashtag in blue (not clickable for now)
+          return (
+            <Box
+              key={index}
+              component="span"
+              sx={{
+                color: 'primary.main',
+              }}
+            >
+              #{segment.tag}
+            </Box>
+          )
+        }
+
         return null
       })}
     </Box>

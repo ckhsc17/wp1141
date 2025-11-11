@@ -17,3 +17,4 @@ export async function PUT(
   return mentionController.markAsRead(id, session.user.id)
 }
 
+

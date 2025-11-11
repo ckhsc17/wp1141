@@ -31,3 +31,4 @@ export async function POST(
   return followController.toggleFollow(session.user.id, userId)
 }
 
+

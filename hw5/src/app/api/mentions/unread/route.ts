@@ -13,3 +13,4 @@ export async function GET(request: NextRequest) {
   return mentionController.getUnreadCount(session.user.id)
 }
 
+

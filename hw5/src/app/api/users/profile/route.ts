@@ -13,3 +13,4 @@ export async function PUT(request: NextRequest) {
   return userController.updateProfile(request, session.user.id)
 }
 
+
