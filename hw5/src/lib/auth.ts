@@ -36,29 +36,13 @@ export const authOptions: NextAuthOptions = {
       try {
         if (session.user && user) {
           (session.user as any).id = user.id
+          // 直接從 user 物件讀取 userId，避免額外的 database 查詢
+          ;(session.user as any).userId = (user as any).userId
           
-          // 嘗試從 user 物件讀取 userId
-          let userId = (user as any).userId
-          
-          // 如果 user 物件中沒有 userId，查詢 database（fallback）
-          if (!userId) {
-            console.log('[Auth] userId not in user object, querying database')
-            try {
-              const dbUser = await prisma.user.findUnique({
-                where: { id: user.id },
-                select: { userId: true },
-              })
-              userId = dbUser?.userId
-            } catch (dbError) {
-              console.error('[Auth] Failed to query userId:', dbError)
-            }
-          }
-          
-          ;(session.user as any).userId = userId
-          
-          if (!userId) {
-            console.warn('[Auth] User has no userId set (new user?):', {
-              id: user.id,
+          // 如果 userId 不存在，記錄錯誤但不讓 session 失敗
+          if (!(user as any).userId) {
+            console.warn('[Auth] User object missing userId field:', {
+              userId: user.id,
               email: user.email,
             })
           }
