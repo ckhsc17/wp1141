@@ -3,6 +3,7 @@ import { Agent as HttpsAgent } from 'node:https';
 import { setDefaultResultOrder } from 'node:dns';
 
 import { LineBot } from 'bottender';
+import { LineClient } from 'messaging-api-line';
 
 import { handleLineEvent } from '@/bot/eventHandler';
 
@@ -15,8 +16,18 @@ if (!accessToken || !channelSecret) {
   );
 }
 
-export const lineBot = new LineBot({
+const origin = process.env.LINE_API_ORIGIN ?? 'https://api.line.me';
+const dataOrigin = process.env.LINE_DATA_API_ORIGIN ?? 'https://api-data.line.me';
+
+const customLineClient = new LineClient({
   accessToken,
+  channelSecret,
+  origin,
+  dataOrigin,
+});
+
+export const lineBot = new LineBot({
+  client: customLineClient,
   channelSecret,
 });
 
@@ -40,14 +51,10 @@ const keepAliveHttpsAgent = new HttpsAgent({
   timeout: 45_000,
 });
 
-const lineClient = lineBot.connector.client;
-
-if (lineClient) {
-  lineClient.axios.defaults.httpAgent = keepAliveHttpAgent;
-  lineClient.axios.defaults.httpsAgent = keepAliveHttpsAgent;
-  lineClient.dataAxios.defaults.httpAgent = keepAliveHttpAgent;
-  lineClient.dataAxios.defaults.httpsAgent = keepAliveHttpsAgent;
-}
+customLineClient.axios.defaults.httpAgent = keepAliveHttpAgent;
+customLineClient.axios.defaults.httpsAgent = keepAliveHttpsAgent;
+customLineClient.dataAxios.defaults.httpAgent = keepAliveHttpAgent;
+customLineClient.dataAxios.defaults.httpsAgent = keepAliveHttpsAgent;
 
 lineBot.onEvent(handleLineEvent);
 
