@@ -64,3 +64,6 @@ yarn build
 - Vercel 預設使用 Node.js Runtime，已足以支援 Bottender webhook。
 - 建議在部署前於本機以 [ngrok](https://ngrok.com/) 等工具測試 webhook。
 - 部署後請在 LINE Developers 後台使用「發送測試事件」驗證是否能收到回覆。
+- 若部署在 Vercel 並遇到 `AxiosError: socket hang up`，請確認：
+  - 於專案環境變數中設定 `LINE_CHANNEL_ACCESS_TOKEN` 與 `LINE_CHANNEL_SECRET`。
+  - 重新部署後，Serverless Function 會自動將 DNS 解析策略設定為 `ipv4first`，並使用 keep-alive 連線。若仍有問題，可在 Vercel Project Settings > Environment Variables 另外加入 `DNS_RESULT_ORDER=ipv4first`。
