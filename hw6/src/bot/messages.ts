@@ -2,17 +2,25 @@ import type LineContext from 'bottender/dist/line/LineContext';
 
 import type { Insight, Reminder, SavedItem } from '@/domain/schemas';
 
+// 如果需要 LIFF admin 入口，改用 Flex/URI 按鈕，避免 QuickReply 型別限制
+const ADMIN_LIFF_URL = process.env.LIFF_ADMIN_URL ?? 'https://liff.line.me/YOUR_LIFF_ID';
+
 const quickReplyItems = [
   { label: '新增靈感', text: '新增靈感' },
   { label: '設定提醒', text: '設定提醒' },
   { label: '查看洞察', text: '查看洞察' },
+  { label: '開啟小幽面板', text: '開啟小幽面板' },
 ] as const;
 
 function buildQuickReplies() {
   return {
     items: quickReplyItems.map((item) => ({
       type: 'action' as const,
-      action: { type: 'message' as const, label: item.label, text: item.text },
+      action: {
+        type: 'message' as const,
+        label: item.label,
+        text: item.text,
+      },
     })),
   };
 }
@@ -85,6 +93,16 @@ export async function sendSavedItemMessage(
                   size: 'sm',
                   color: '#aaaaaa',
                 },
+            {
+              type: 'button',
+              style: 'link',
+              height: 'sm',
+              action: {
+                type: 'uri',
+                label: '開啟小幽面板',
+                uri: ADMIN_LIFF_URL,
+              },
+            },
           ],
         },
       },

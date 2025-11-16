@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SavedSourceType {
+  LINK
+  NOTE
+  CHAT
+  JOURNAL
+}
+
+enum SavedCategory {
+  INSPIRATION
+  KNOWLEDGE
+  PROJECT
+  TOOL
+  ENTERTAINMENT
+}
+
+enum TodoStatus {
+  PENDING
+  DONE
+  CANCELLED
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  CANCELLED
+}
+
+enum Sentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+model User {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  displayName   String?
+  email         String?  @unique
+  locale        String   @default("zh-TW")
+  timeZone      String   @default("Asia/Taipei")
+
+  lineAccounts  LineAccount[]
+  savedItems    SavedItem[]
+  reminders     Reminder[]
+  todos         Todo[]
+  journalEntries JournalEntry[]
+  insights      Insight[]
+}
+
+model LineAccount {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lineUserId  String   @unique
+  displayName String?
+  avatarUrl   String?
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model SavedItem {
+  id          String          @id @default(cuid())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+
+  sourceType  SavedSourceType
+  title       String?
+  content     String
+  rawText     String?
+  url         String?
+  category    SavedCategory
+  sentiment   Sentiment?      @default(NEUTRAL)
+
+  tags         ItemTag[]
+  linkMeta     LinkMetadata?
+  journalEntry JournalEntry?
+  todos        Todo[]
+}
+
+model LinkMetadata {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  savedItemId String   @unique
+  savedItem   SavedItem @relation(fields: [savedItemId], references: [id])
+
+  url         String
+  host        String
+  title       String?
+  description String?
+  imageUrl    String?
+  contentType String?
+  analysisJson String?
+}
+
+model Tag {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  name        String   @unique
+
+  items       ItemTag[]
+}
+
+model ItemTag {
+  savedItemId String
+  tagId       String
+
+  savedItem   SavedItem @relation(fields: [savedItemId], references: [id])
+  tag         Tag       @relation(fields: [tagId], references: [id])
+
+  @@id([savedItemId, tagId])
+}
+
+model Todo {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+
+  title         String
+  description   String?
+  status        TodoStatus  @default(PENDING)
+
+  savedItemId   String?
+  savedItem     SavedItem?  @relation(fields: [savedItemId], references: [id])
+
+  journalEntryId String?
+  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
+
+  reminders     Reminder[]
+}
+
+model Reminder {
+  id          String         @id @default(cuid())
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+
+  todoId      String?
+  todo        Todo?          @relation(fields: [todoId], references: [id])
+
+  title       String
+  triggerAt   DateTime
+  status      ReminderStatus @default(PENDING)
+
+  sentAt      DateTime?
+  channel     String?
+}
+
+model JournalEntry {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  content     String
+
+  savedItemId String?  @unique
+  savedItem   SavedItem? @relation(fields: [savedItemId], references: [id])
+
+  todos       Todo[]
+
+  analysisJson String?
+}
+
+model Insight {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  summary     String
+  sentiment   Sentiment @default(NEUTRAL)
+  detailsJson String?
+}
+
+

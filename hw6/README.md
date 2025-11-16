@@ -23,6 +23,8 @@ LINE_CHANNEL_ACCESS_TOKEN=your-line-token
 LINE_CHANNEL_SECRET=your-line-secret
 GEMINI_API_KEY=your-gemini-key
 DEBUG_API_TOKEN=local-debug-token
+DATABASE_URL=postgresql://user:password@localhost:5432/booboo_db
+LIFF_ADMIN_URL=https://liff.line.me/YOUR_LIFF_ID
 ```
 
 > 尚未接上正式資料庫前，可直接使用預設的 InMemory repository，或自行啟動 `podman-compose up -d` 連到測試資料庫。
@@ -51,7 +53,7 @@ yarn build    # 打包
 ## 架構重點
 
 - `src/domain/`：以 Zod 定義 `UserProfile`、`SavedItem`、`Reminder`、`Insight` 等資料模型。
-- `src/repositories/`：Repository pattern，目前提供 `InMemory*Repository`，日後可替換為 `Supabase*Repository`。
+- `src/repositories/`：Repository pattern，目前提供 `InMemory*Repository` 與 Prisma 雛形 (`Prisma*Repository`)，日後可替換為 Supabase adapter。
 - `src/services/`：
   - `contentService`：透過 Gemini 分類並儲存分享內容。
   - `reminderService`：負責提醒驗證與儲存。
@@ -61,6 +63,47 @@ yarn build    # 打包
 - `src/bot/messages.ts`：新的 Flex/Quick Reply 模板。
 - `src/utils/logger.ts`、`src/utils/errors.ts`：集中式結構化日誌與錯誤分類。
 - `/api/debug`：帶 `token` 的健康檢查（`DEBUG_API_TOKEN` 用於開發期）。
+
+## 資料庫與 Prisma
+
+- Prisma schema：位於 `prisma/schema.prisma`，使用 PostgreSQL provider，結構與 `src/domain/schemas.ts` 對齊。
+- 本地開發流程（範例）：
+
+```bash
+# 1. 啟動本地 Postgres（自行用 docker/podman-compose）
+# 2. 設好 .env.local 裡的 DATABASE_URL
+yarn prisma:generate
+yarn prisma:migrate --name init
+```
+
+- 將來接 Supabase 時，可直接：
+  - 在 Supabase 建專案並取得 Postgres 連線字串；
+  - 更新 `DATABASE_URL` 為 Supabase 提供的值；
+  - 重新執行 `prisma migrate deploy` 或用 Supabase SQL 匯入 schema。
+
+### Prisma Client 使用範例
+
+日後若在 repository 中使用 Prisma client，可參考 `src/repositories/prismaClient.ts`：
+
+```ts
+import { prisma } from '@/repositories/prismaClient';
+
+async function listUserItems(userId: string) {
+  return prisma.savedItem.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+```
+
+## LIFF Admin 入口
+
+- Quick Reply 中已有「開啟小幽面板」按鈕，會開啟 `LIFF_ADMIN_URL`（預設 `https://liff.line.me/YOUR_LIFF_ID`）。
+- 設置步驟（簡述）：
+  1. 在 LINE Developers > LIFF 建立 LIFF app，綁定同一個 Messaging API channel。
+  2. 將 LIFF 的 Endpoint URL 指向你的 Next.js admin 頁面（例如 `/admin`）。
+  3. 在 `.env.local` 設定 `LIFF_ADMIN_URL=https://liff.line.me/<你的 LIFF ID>`。
+  4. 在 admin 頁面前端使用 LIFF SDK (`liff.getProfile()` 等) 拿到 `userId`，用來對應 DB 中的 `LineAccount` / `User` 資料。
 
 ## 除錯
 
