@@ -343,6 +343,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@google/generative-ai@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@google/generative-ai@npm:0.6.0"
+  checksum: 10c0/96cded206fbc8c3f8060417d3af6adbd74e29930f916233e95951063d824e1ab1a9082e31bf4be2cbf784569b5f745ddb6d81b8dd08528c46df8d99b09125dda
+  languageName: node
+  linkType: hard
+
 "@hapi/address@npm:2.x.x":
   version: 2.1.4
   resolution: "@hapi/address@npm:2.1.4"
@@ -1553,6 +1560,13 @@ __metadata:
   version: 4.0.3
   resolution: "@types/url-join@npm:4.0.3"
   checksum: 10c0/7f0f86693070355ce731ec3861d47c03eaae09ab0ea1a72dde6b38a2a17089941acc59bac9ea2472376b6f96e189478da0a7ed29e2d282d1543382e92408d6ca
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "@types/uuid@npm:10.0.0"
+  checksum: 10c0/9a1404bf287164481cb9b97f6bb638f78f955be57c40c6513b7655160beb29df6f84c915aaf4089a1559c216557dc4d2f79b48d978742d3ae10b937420ddac60
   languageName: node
   linkType: hard
 
@@ -5390,10 +5404,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "line-course-bot@workspace:."
   dependencies:
+    "@google/generative-ai": "npm:^0.6.0"
     "@tailwindcss/postcss": "npm:^4"
     "@types/node": "npm:^20"
     "@types/react": "npm:^19"
     "@types/react-dom": "npm:^19"
+    "@types/uuid": "npm:^10.0.0"
     bottender: "npm:^1.5.5"
     eslint: "npm:^9"
     eslint-config-next: "npm:16.0.1"
@@ -5402,6 +5418,8 @@ __metadata:
     react-dom: "npm:19.2.0"
     tailwindcss: "npm:^4"
     typescript: "npm:^5"
+    uuid: "npm:^11.0.2"
+    zod: "npm:^3.23.8"
   languageName: unknown
   linkType: soft
 
@@ -8329,6 +8347,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"uuid@npm:^11.0.2":
+  version: 11.1.0
+  resolution: "uuid@npm:11.1.0"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 10c0/34aa51b9874ae398c2b799c88a127701408cd581ee89ec3baa53509dd8728cbb25826f2a038f9465f8b7be446f0fbf11558862965b18d21c993684297628d4d3
+  languageName: node
+  linkType: hard
+
 "uuid@npm:^3.3.2":
   version: 3.4.0
   resolution: "uuid@npm:3.4.0"
@@ -8575,6 +8602,13 @@ __metadata:
   peerDependencies:
     zod: ^3.25.0 || ^4.0.0
   checksum: 10c0/0ccfec48c46de1be440b719cd02044d4abb89ed0e14c13e637cd55bf29102f67ccdba373f25def0fc7130e5f15025be4d557a7edcc95d5a3811599aade689e1b
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.23.8":
+  version: 3.25.76
+  resolution: "zod@npm:3.25.76"
+  checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
   languageName: node
   linkType: hard
 

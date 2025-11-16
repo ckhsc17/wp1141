@@ -1,73 +1,57 @@
 import type LineContext from 'bottender/dist/line/LineContext';
 
 import {
-  sendCarouselTemplate,
-  sendLocaleSelectionMessage,
-  sendLocaleUpdatedMessage,
-  sendMainMenuTemplate,
-  sendSectionTextMessage,
+  sendInsightMessage,
+  sendReminderMessage,
+  sendSavedItemMessage,
+  sendWelcomeMessage,
 } from '@/bot/messages';
-import type { SectionId } from '@/lib/replyScripts';
-import { getUserLocale, setUserLocale } from '@/lib/locale';
-import {
-  detectLocaleCommand,
-  isCarouselCommand,
-  isLanguagePrompt,
-  isMenuCommand,
-} from '@/lib/commands';
-import { matchSectionFromText } from '@/lib/sectionMatcher';
-
-function resolveSectionFromText(text: string | undefined): SectionId {
-  const matched = matchSectionFromText(text);
-  return matched ?? 'welcome';
-}
+import { services } from '@/container';
+import { logger } from '@/utils/logger';
 
 export async function handleLineEvent(context: LineContext): Promise<void> {
   const userId = context.event.source?.userId;
-  const locale = getUserLocale(userId);
-  const text = context.event.isText ? context.event.text : undefined;
+  const text = context.event.isText ? context.event.text?.trim() ?? '' : '';
 
   if (context.event.isFollow || context.event.isJoin) {
-    await sendSectionTextMessage(context, 'welcome', locale);
+    await sendWelcomeMessage(context);
     return;
   }
 
-  const localeCommand = detectLocaleCommand(text);
-
-  if (localeCommand) {
-    setUserLocale(userId, localeCommand);
-    await sendLocaleUpdatedMessage(context, localeCommand);
+  if (!userId || !context.event.isText) {
+    await sendWelcomeMessage(context);
     return;
   }
 
-  if (isLanguagePrompt(text)) {
-    await sendLocaleSelectionMessage(context, locale);
-    return;
-  }
-
-  if (isMenuCommand(text)) {
-    await sendMainMenuTemplate(context, locale);
-    return;
-  }
-
-  if (isCarouselCommand(text)) {
-    await sendSectionTextMessage(context, 'schedule', locale);
-    await sendCarouselTemplate(context, locale);
-    return;
-  }
-
-  if (context.event.isText) {
-    const section = resolveSectionFromText(text);
-
-    await sendSectionTextMessage(context, section, locale);
-
-    if (section === 'schedule') {
-      await sendCarouselTemplate(context, locale);
+  try {
+    if (/提醒|remind/i.test(text)) {
+      const reminder = await services.reminders.createReminder(userId, {
+        title: text.replace(/提醒|remind/i, '').trim() || '生活提醒',
+        triggerAt: new Date(Date.now() + 60 * 60 * 1000),
+      });
+      await sendReminderMessage(context, reminder);
+      return;
     }
 
-    return;
-  }
+    if (/洞察|insight|分析/i.test(text)) {
+      const insight = await services.insight.generateDailyInsight(userId);
+      await sendInsightMessage(context, insight);
+      return;
+    }
 
-  await sendSectionTextMessage(context, 'welcome', locale);
+    const shared = await services.content.saveSharedContent(userId, {
+      text,
+      url: text.startsWith('http') ? text : undefined,
+    });
+    await sendSavedItemMessage(context, shared.item, shared.classification.summary);
+  } catch (error) {
+    logger.error('Handle event failed', { error, userId });
+    await context.reply([
+      {
+        type: 'text',
+        text: '小幽現在有點忙碌，請稍後再試一次 🙏',
+      },
+    ]);
+  }
 }
 

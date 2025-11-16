@@ -1,137 +1,139 @@
-import type { SectionId } from '@/lib/replyScripts';
-import { supportedLocales, type SupportedLocale } from '@/lib/locale';
-import { getCarousel, getMainMenu, getQuickReplies, getSectionContent } from '@/lib/replyScripts';
-
 import type LineContext from 'bottender/dist/line/LineContext';
 
-type QuickReplyItem = {
-  type: 'action';
-  action: {
-    type: 'message';
-    label: string;
-    text: string;
-  };
-};
+import type { Insight, Reminder, SavedItem } from '@/domain/schemas';
 
-function buildQuickReply(locale: SupportedLocale): QuickReplyItem[] | undefined {
-  const options = getQuickReplies(locale);
+const quickReplyItems = [
+  { label: '新增靈感', text: '新增靈感' },
+  { label: '設定提醒', text: '設定提醒' },
+  { label: '查看洞察', text: '查看洞察' },
+] as const;
 
-  if (options.length === 0) {
-    return undefined;
-  }
-
-  return options.map((option) => ({
-    type: 'action',
-    action: {
-      type: 'message',
-      label: option.label,
-      text: option.label,
-    },
-  }));
-}
-
-export async function sendSectionTextMessage(
-  context: LineContext,
-  section: SectionId,
-  locale: SupportedLocale,
-): Promise<void> {
-  const content = getSectionContent(locale, section);
-  const messageLines = [content.title, ...content.body];
-  const quickReply = buildQuickReply(locale);
-
-  await context.reply([
-    {
-      type: 'text',
-      text: messageLines.join('\n\n'),
-      ...(quickReply ? { quickReply: { items: quickReply } } : {}),
-    },
-  ]);
-}
-
-export async function sendMainMenuTemplate(
-  context: LineContext,
-  locale: SupportedLocale,
-): Promise<void> {
-  const template = getMainMenu(locale);
-  const altText = locale === 'zh-TW' ? '課程主選單' : 'Course main menu';
-
-  await context.replyTemplate(altText, {
-    type: 'buttons',
-    title: template.title,
-    text: template.text,
-    actions: template.actions.map((action) => ({
-      type: 'message',
-      label: action.label,
-      text: action.label,
-    })),
-  });
-}
-
-export async function sendCarouselTemplate(
-  context: LineContext,
-  locale: SupportedLocale,
-): Promise<void> {
-  const columns = getCarousel(locale);
-  const altText = locale === 'zh-TW' ? '課程進階資訊' : 'Course deep dive';
-
-  await context.replyTemplate(altText, {
-    type: 'carousel',
-    columns: columns.map((column) => ({
-      title: column.title,
-      text: column.text,
-      actions: column.actions.map((action) => ({
-        type: 'message',
-        label: action.label,
-        text: action.label,
-      })),
-    })),
-  });
-}
-
-export async function sendLocaleSelectionMessage(
-  context: LineContext,
-  currentLocale: SupportedLocale,
-): Promise<void> {
-  const text =
-    currentLocale === 'zh-TW'
-      ? '請選擇想使用的語言：'
-      : 'Please choose your preferred language:';
-
-  const quickReplyItems = (Object.entries(supportedLocales) as [SupportedLocale, string][]).map(
-    ([locale, label]) => ({
+function buildQuickReplies() {
+  return {
+    items: quickReplyItems.map((item) => ({
       type: 'action' as const,
-      action: {
-        type: 'message' as const,
-        label: locale === currentLocale ? `${label} ✅` : label,
-        text: label,
-      },
-    }),
-  );
+      action: { type: 'message' as const, label: item.label, text: item.text },
+    })),
+  };
+}
 
+export async function sendSavedItemMessage(
+  context: LineContext,
+  saved: SavedItem,
+  summary: string,
+): Promise<void> {
   await context.reply([
     {
-      type: 'text',
-      text,
-      quickReply: {
-        items: quickReplyItems,
+      type: 'flex',
+      altText: '已為你收藏生活紀錄',
+      contents: {
+        type: 'bubble',
+        hero: saved.url
+          ? {
+              type: 'image',
+              url: 'https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_2_restaurant.png',
+              size: 'full',
+              aspectRatio: '20:13',
+              aspectMode: 'cover',
+            }
+          : undefined,
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: '已收藏你的靈感 ✨',
+              weight: 'bold',
+              size: 'md',
+            },
+            {
+              type: 'text',
+              text: summary,
+              wrap: true,
+              margin: 'md',
+            },
+            {
+              type: 'text',
+              text: `分類：${saved.category}`,
+              size: 'sm',
+              color: '#aaaaaa',
+              margin: 'sm',
+            },
+          ],
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          contents: [
+            saved.url
+              ? {
+                  type: 'button',
+                  style: 'link',
+                  height: 'sm',
+                  action: {
+                    type: 'uri',
+                    label: '查看連結',
+                    uri: saved.url,
+                  },
+                }
+              : {
+                  type: 'text',
+                  text: '隨時輸入「查看洞察」讓我幫你整理。',
+                  wrap: true,
+                  size: 'sm',
+                  color: '#aaaaaa',
+                },
+          ],
+        },
       },
+      quickReply: buildQuickReplies(),
     },
   ]);
 }
 
-export async function sendLocaleUpdatedMessage(
+export async function sendReminderMessage(
   context: LineContext,
-  locale: SupportedLocale,
+  reminder: Reminder,
 ): Promise<void> {
-  const message =
-    locale === 'zh-TW' ? '已切換為繁體中文，以下為最新資訊。' : 'Language switched to English. Here is the updated info.';
-
   await context.reply([
     {
       type: 'text',
-      text: message,
+      text: `我會在 ${reminder.triggerAt.toLocaleString()} 提醒你：「${reminder.title}」`,
+      quickReply: buildQuickReplies(),
     },
   ]);
-  await sendSectionTextMessage(context, 'welcome', locale);
+}
+
+export async function sendInsightMessage(context: LineContext, insight: Insight): Promise<void> {
+  await context.reply([
+    {
+      type: 'flex',
+      altText: '今日洞察',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            { type: 'text', text: '小幽給你的提醒', weight: 'bold', size: 'md' },
+            { type: 'text', text: insight.summary, wrap: true, margin: 'md' },
+          ],
+        },
+      },
+      quickReply: buildQuickReplies(),
+    },
+  ]);
+}
+
+export async function sendWelcomeMessage(context: LineContext): Promise<void> {
+  await context.reply([
+    {
+      type: 'text',
+      text: '嗨，我是 Booboo 小幽 👋 想記錄靈感、設定提醒或聽聽建議，都可以跟我說！\n範例：\n- 「幫我記下今天看到的文章 https://...」\n- 「提醒我明天 9 點要寫日記」\n- 「幫我整理最近的想法」',
+      quickReply: buildQuickReplies(),
+    },
+  ]);
 }
 

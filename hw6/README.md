@@ -1,69 +1,77 @@
 ## 專案簡介
 
-`line-course-bot` 是以 Next.js App Router 為基礎、搭配 Bottender 打造的 LINE 課程諮詢助教。Bot 會依據台大電機系《Web Programming》課程資訊提供繁體中文與英文的課程簡介、作業與評分說明、期末專題重點等內容，並支援 quick reply、buttons 與 carousel 模板互動。
+**Booboo 小幽** 是一個幫你把生活中的連結、靈感、提醒與情緒整理成「可行動智慧」的 LINE 助理。把任何訊息丟給小幽，它會透過 Gemini API 分析內容、分類並存入個人資料庫，必要時主動提醒或給出洞察。專案採 Next.js App Router + Bottender，並以 Service Layer + Repository Pattern 撰寫，方便後續接入 Supabase。
 
 ## 環境需求
 
 - Node.js 18 以上
 - Yarn 1.x（請勿使用 npm / pnpm / bun）
-- LINE Developers 平台上的 Messaging API channel（取得 access token 與 channel secret）
+- LINE Developers 上的 Messaging API channel
+- Google Gemini API key
 
 ## 初始化步驟
 
 ```bash
-# 安裝相依套件
 yarn install
-
-# 建立環境變數檔
 cp env.example .env.local
 ```
 
-請在 `.env.local` 中填入下列變數：
+`.env.local` 內容範例：
 
 ```bash
-LINE_CHANNEL_ACCESS_TOKEN=你的LINE access token
-LINE_CHANNEL_SECRET=你的LINE channel secret
+LINE_CHANNEL_ACCESS_TOKEN=your-line-token
+LINE_CHANNEL_SECRET=your-line-secret
+GEMINI_API_KEY=your-gemini-key
+DEBUG_API_TOKEN=local-debug-token
 ```
+
+> 尚未接上正式資料庫前，可直接使用預設的 InMemory repository，或自行啟動 `podman-compose up -d` 連到測試資料庫。
 
 ## 開發流程
 
 ```bash
-# 啟動開發伺服器（http://localhost:3000）
-yarn dev
-
-# 靜態檢查
-yarn lint
-
-# 打包
-yarn build
+yarn dev      # 啟動 Next.js + Bottender
+yarn lint     # 靜態檢查
+yarn build    # 打包
 ```
 
 ## LINE Webhook 設定
 
-1. 將專案部署到 Vercel（或其他具備 Node.js Runtime 的平台），並確認部署網址。
-2. 在 LINE Developers 後台設定 webhook URL，格式為 `https://<你的網域>/api/line`。
-3. 啟用 webhook，並在「Messaging API」分頁中將 `LINE_CHANNEL_ACCESS_TOKEN` 與 `LINE_CHANNEL_SECRET` 填入 `.env.local` 或 Vercel 專案環境變數中。
+1. 啟動本機服務後，用 ngrok 將 `https://<隨機>.ngrok.io/api/line` 提供給 LINE。
+2. 在 LINE Developers 後台啟用 webhook 並填入 URL。
+3. 部署雲端時記得設定 `LINE_*` 和 `GEMINI_API_KEY` 環境變數。
 
-## Bot 互動功能
+## 互動功能
 
-- **文字內容**：依據使用者輸入回傳課程內容、作業、期末專題、評分方式、修課要求等資訊。
-- **快速回覆**：提供課程內容、作業說明、期末專題、評分方式、修課要求、更多資訊、切換語言等捷徑。
-- **Buttons 模板**：顯示課程主選單，快速導向常見問題。
-- **Carousel 模板**：提供期末專題、修課資源與授課教師等進階資訊。
-- **語系切換**：輸入「切換語言 / Language」或直接輸入「繁體中文 / English」即可在繁中與英文介面間切換。
+- **靈感/連結收藏**：貼上任何文字或網址，小幽會用 Gemini 分析分類並存入 `SavedItem`，回傳 Flex 氣泡摘要。
+- **提醒建立**：輸入「提醒我…」，即會建立提醒（目前預設 +1 小時，可再延伸成自訂時間）。
+- **生活洞察**：輸入「查看洞察／分析一下」，小幽會聚合近期紀錄並產出 actionable steps。
+- **Quick Reply**：提供「新增靈感 / 設定提醒 / 查看洞察」三個常用捷徑。
 
-## 專案結構重點
+## 架構重點
 
-- `src/app/api/line/route.ts`：Next.js Webhook 端點，將 LINE 請求交由 Bottender 處理。
-- `src/bot/`：封裝 LINE Bot 實例、事件處理與訊息模板。
-- `src/lib/`：儲存多語系內容、語系狀態、關鍵字對應等工具模組。
-- `bottender.config.ts`：Bottender 設定，採用記憶體 Session。
+- `src/domain/`：以 Zod 定義 `UserProfile`、`SavedItem`、`Reminder`、`Insight` 等資料模型。
+- `src/repositories/`：Repository pattern，目前提供 `InMemory*Repository`，日後可替換為 `Supabase*Repository`。
+- `src/services/`：
+  - `contentService`：透過 Gemini 分類並儲存分享內容。
+  - `reminderService`：負責提醒驗證與儲存。
+  - `insightService`：聚合紀錄並向 Gemini 生成洞察。
+  - `promptManager` / `geminiService`：集中管理 Prompt 與 Gemini 呼叫。
+- `src/container.ts`：簡易 Service Locator，統一初始化 repository & service。
+- `src/bot/messages.ts`：新的 Flex/Quick Reply 模板。
+- `src/utils/logger.ts`、`src/utils/errors.ts`：集中式結構化日誌與錯誤分類。
+- `/api/debug`：帶 `token` 的健康檢查（`DEBUG_API_TOKEN` 用於開發期）。
+
+## 除錯
+
+- `GET /api/debug?token=<DEBUG_API_TOKEN>` 可快速確認服務層是否正常。
+- `GeminiService` 若未設定 API key 會 fallback 並在 log 中警示。
+- 所有 LINE webhook 事件皆會寫入結構化 log，方便在 Vercel 或本機追蹤。
 
 ## 部署建議
 
-- Vercel 預設使用 Node.js Runtime，已足以支援 Bottender webhook。
-- 建議在部署前於本機以 [ngrok](https://ngrok.com/) 等工具測試 webhook。
-- 部署後請在 LINE Developers 後台使用「發送測試事件」驗證是否能收到回覆。
-- 若部署在 Vercel 並遇到 `AxiosError: socket hang up`，請確認：
-  - 於專案環境變數中設定 `LINE_CHANNEL_ACCESS_TOKEN` 與 `LINE_CHANNEL_SECRET`。
-  - 重新部署後，Serverless Function 會自動將 DNS 解析策略設定為 `ipv4first`，並使用 keep-alive 連線。若仍有問題，可在 Vercel Project Settings > Environment Variables 另外加入 `DNS_RESULT_ORDER=ipv4first`。
+- 可先部署在 Vercel Node.js Runtime；若仍遇到 `socket hang up`，可考慮 Edge Runtime 或將 `/api/line` 拆到長駐主機。
+- 未來接 Supabase 時，只需新增 Repository 實作並在 `container.ts` 切換注入。
+- 若需要更多可靠的提醒與排程，可外掛 Supabase cron、Cloud Scheduler 或專屬 worker。
+
+
