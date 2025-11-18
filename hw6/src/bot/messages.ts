@@ -381,3 +381,54 @@ export async function sendChatMessage(context: LineContext, response: string): P
   ]);
 }
 
+export async function sendTodosListMessage(context: LineContext, todos: Todo[]): Promise<void> {
+  if (todos.length === 0) {
+    await sendChatMessage(context, '目前沒有待辦事項呢！');
+    return;
+  }
+
+  if (todos.length === 1) {
+    await sendTodoMessage(context, todos[0], 'listed');
+    return;
+  }
+
+  // For multiple todos, send a carousel or formatted list
+  const todoList = todos
+    .map((todo, idx) => {
+      const statusText =
+        todo.status === 'pending' ? '待處理' : todo.status === 'done' ? '已完成' : '已取消';
+      return `${idx + 1}. ${todo.title} (${statusText})`;
+    })
+    .join('\n');
+
+  await context.reply([
+    {
+      type: 'flex',
+      altText: '待辦事項列表',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: `找到 ${todos.length} 個待辦事項`,
+              weight: 'bold',
+              size: 'md',
+            },
+            {
+              type: 'text',
+              text: todoList,
+              wrap: true,
+              margin: 'md',
+              size: 'sm',
+            },
+          ],
+        },
+      },
+      quickReply: buildQuickReplies(),
+    },
+  ]);
+}
+

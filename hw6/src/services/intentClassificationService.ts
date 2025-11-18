@@ -55,9 +55,23 @@ export class IntentClassificationService {
         };
       }
       if (lowerText.includes('待辦') || lowerText.includes('todo') || lowerText.includes('要做')) {
+        if (lowerText.includes('查') || lowerText.includes('看') || lowerText.includes('做了') || lowerText.includes('哪些')) {
+          return {
+            intent: 'todo',
+            subIntent: 'query',
+            confidence: 0.7,
+          };
+        }
+        if (lowerText.includes('完成') || lowerText.includes('寫完') || lowerText.includes('做完') || lowerText.includes('取消')) {
+          return {
+            intent: 'todo',
+            subIntent: 'update',
+            confidence: 0.7,
+          };
+        }
         return {
           intent: 'todo',
-          subIntent: lowerText.includes('查') || lowerText.includes('看') ? 'query' : 'create',
+          subIntent: 'create',
           confidence: 0.7,
         };
       }

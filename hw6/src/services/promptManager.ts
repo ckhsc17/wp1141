@@ -39,7 +39,10 @@ ${text}
 </訊息>
 
 意圖類型：
-1. todo - 待辦事項（建立、查詢、完成待辦）
+1. todo - 待辦事項
+   - create: 新增待辦（例如：「我要吃飯、取貨、寫作業」「待辦：買菜」）
+   - update: 更新待辦狀態（例如：「我寫完作業了！」「作業完成了」「取消吃飯」）
+   - query: 查詢待辦（例如：「我上禮拜做了哪些事？」「吃了什麼？」「查看待辦」）
 2. link - 資訊連結（分享連結）
 3. journal - 日常紀錄（記錄生活點滴）
 4. feedback - 回饋請求（要求生活建議或回饋）
@@ -47,13 +50,22 @@ ${text}
 6. chat_history - 對話紀錄請求（查詢過往對話）
 7. other - 其他聊天
 
+判斷規則：
+- create: 訊息包含待辦事項的列舉或描述（例如：「1. 吃飯 2. 取貨」「我要買菜」）
+- update: 訊息表示完成或取消某個待辦（例如：「寫完了」「完成了」「不做了」）
+- query: 訊息詢問待辦事項或已完成事項（例如：「做了什麼」「吃了什麼」「上禮拜做了哪些事」）
+
 輸出 JSON 格式（不能有其他文字）：
 <JSON>
 {
   "intent": "todo|link|journal|feedback|recommendation|chat_history|other",
-  "subIntent": "create|query" (僅 todo 時需要),
+  "subIntent": "create|update|query" (僅 todo 時需要),
   "confidence": 0.0-1.0,
-  "extractedData": {} (根據意圖提取的資料，如 todo 的 title、link 的 url 等)
+  "extractedData": {
+    "action": "完成|取消" (僅 update 時需要),
+    "timeRange": "上禮拜|昨天|這週|這個月" (僅 query 時需要),
+    "keywords": ["作業", "吃飯"] (僅 query 時需要)
+  }
 }
 </JSON>`;
     },
@@ -96,6 +108,88 @@ ${text}
 {
   "title": "待辦事項標題",
   "description": "詳細描述（可選）"
+}
+</JSON>`;
+    },
+  },
+  extractMultipleTodos: {
+    system:
+      '你是待辦事項提取助手。從用戶訊息中提取所有待辦事項，支援多個待辦（例如：1. 吃飯 2. 取貨 3. 寫作業），必須嚴格按照 JSON 格式輸出。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      return `請從以下訊息中提取所有待辦事項：
+<訊息>
+${text}
+</訊息>
+
+注意：
+- 如果訊息包含多個待辦（例如：「1. 吃飯 2. 取貨 3. 寫作業」），請全部提取
+- 如果只有一個待辦，也請用陣列格式輸出
+- 每個待辦事項應該有明確的標題
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "todos": [
+    { "title": "吃飯", "description": "" },
+    { "title": "取貨", "description": "" },
+    { "title": "寫作業", "description": "" }
+  ]
+}
+</JSON>`;
+    },
+  },
+  matchTodoForUpdate: {
+    system:
+      '你是待辦事項匹配助手。根據用戶的自然語言描述，匹配到最相關的待辦事項，並推斷要執行的動作（完成或取消），必須嚴格按照 JSON 格式輸出。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      const todos = typeof payload.todos === 'string' ? payload.todos : '';
+      return `用戶訊息：${text}
+
+現有待辦事項：
+${todos}
+
+請：
+1. 從現有待辦事項中找出最匹配的項目（使用關鍵字匹配、相似度判斷）
+2. 推斷用戶要執行的動作：
+   - "完成"：訊息包含「寫完」「做完」「完成了」「完成了」「完成」等
+   - "取消"：訊息包含「不做了」「取消」「不做」等
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "matchedTodoId": "todo-id" (如果找到匹配的待辦),
+  "action": "完成|取消",
+  "confidence": 0.0-1.0 (匹配信心度)
+}
+</JSON>
+
+如果找不到匹配的待辦，matchedTodoId 設為 null。`;
+    },
+  },
+  parseTodoQuery: {
+    system:
+      '你是待辦事項查詢解析助手。解析用戶的自然語言查詢，提取時間範圍、關鍵字、狀態等過濾條件，必須嚴格按照 JSON 格式輸出。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      return `用戶查詢：${text}
+
+請解析：
+1. 時間範圍：
+   - 過去：上禮拜、昨天、這週、這個月、上個月
+   - 未來：下禮拜、明天、下週、下個月
+   - 現在：今天、本週、本月
+2. 關鍵字：吃了什麼、做了哪些事、作業相關等
+3. 狀態：完成的、待辦的、已取消的（如果沒有明確指定，設為 null）
+   - 注意：如果查詢未來時間（下禮拜、明天等），預設狀態應為 "pending"（待辦的）
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "timeRange": "上禮拜|昨天|這週|這個月|上個月|下禮拜|明天|下週|下個月|今天|本週|本月|null",
+  "keywords": ["作業", "吃飯"] (從查詢中提取的關鍵字),
+  "status": "done|pending|cancelled|null" (如果查詢明確提到狀態，或未來時間預設為 pending)
 }
 </JSON>`;
     },

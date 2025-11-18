@@ -59,7 +59,7 @@ export type SharedContent = z.infer<typeof SharedContentSchema>;
 // Intent Classification
 export const IntentClassificationSchema = z.object({
   intent: z.enum(['todo', 'link', 'journal', 'feedback', 'recommendation', 'chat_history', 'other']),
-  subIntent: z.enum(['create', 'query']).optional(),
+  subIntent: z.enum(['create', 'update', 'query']).optional(),
   confidence: z.number().min(0).max(1).default(0.8),
   extractedData: z.record(z.string(), z.unknown()).optional(),
 });

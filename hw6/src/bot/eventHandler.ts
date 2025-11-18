@@ -10,6 +10,7 @@ import {
   sendReminderMessage,
   sendSavedItemMessage,
   sendTodoMessage,
+  sendTodosListMessage,
   sendWelcomeMessage,
 } from '@/bot/messages';
 import { lineClient } from '@/bot/lineBot';
@@ -54,26 +55,29 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
     switch (classification.intent) {
       case 'todo': {
         if (classification.subIntent === 'query') {
-          // Query todos
-          const todos = await services.todo.listTodos(userId, 'pending');
+          // Query todos by natural language
+          const todos = await services.todo.queryTodosByNaturalLanguage(userId, text);
           if (todos.length === 0) {
-            await sendChatMessage(context, '目前沒有待辦事項呢！');
+            await sendChatMessage(context, '找不到符合條件的待辦事項呢！');
           } else {
-            // Send first todo as example
-            await sendTodoMessage(context, todos[0], 'listed');
-            if (todos.length > 1) {
-              await context.reply([
-                {
-                  type: 'text',
-                  text: `還有 ${todos.length - 1} 個待辦事項，輸入「查看所有待辦」可以看到完整列表。`,
-                },
-              ]);
-            }
+            await sendTodosListMessage(context, todos);
+          }
+        } else if (classification.subIntent === 'update') {
+          // Update todo by natural language
+          const updated = await services.todo.updateTodoByNaturalLanguage(userId, text);
+          if (updated) {
+            await sendTodoMessage(context, updated, 'updated');
+          } else {
+            await sendChatMessage(context, '找不到要更新的待辦事項呢，請確認待辦事項的名稱。');
           }
         } else {
-          // Create todo
-          const todo = await services.todo.createTodo(userId, text);
-          await sendTodoMessage(context, todo, 'created');
+          // Create todos (support multiple)
+          const todos = await services.todo.createTodos(userId, text);
+          if (todos.length === 1) {
+            await sendTodoMessage(context, todos[0], 'created');
+          } else {
+            await sendChatMessage(context, `已為你建立 ${todos.length} 個待辦事項：\n${todos.map((t, i) => `${i + 1}. ${t.title}`).join('\n')}`);
+          }
         }
         break;
       }
