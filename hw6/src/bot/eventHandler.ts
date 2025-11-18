@@ -1,9 +1,15 @@
 import type LineContext from 'bottender/dist/line/LineContext';
 
 import {
+  sendChatMessage,
+  sendFeedbackMessage,
   sendInsightMessage,
+  sendJournalMessage,
+  sendLinkMessage,
+  sendRecommendationMessage,
   sendReminderMessage,
   sendSavedItemMessage,
+  sendTodoMessage,
   sendWelcomeMessage,
 } from '@/bot/messages';
 import { lineClient } from '@/bot/lineBot';
@@ -33,28 +39,96 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
   await ensureUser(userId, lineClient, repositories.userRepo);
 
   try {
-    if (/提醒|remind/i.test(text)) {
-      const reminder = await services.reminders.createReminder(userId, {
-        title: text.replace(/提醒|remind/i, '').trim() || '生活提醒',
-        triggerAt: new Date(Date.now() + 60 * 60 * 1000),
-      });
-      await sendReminderMessage(context, reminder);
-      return;
-    }
+    // Classify intent using LLM
+    const classification = await services.intentClassification.classify(userId, text);
 
-    if (/洞察|insight|分析/i.test(text)) {
-      const insight = await services.insight.generateDailyInsight(userId);
-      await sendInsightMessage(context, insight);
-      return;
-    }
-
-    const shared = await services.content.saveSharedContent(userId, {
-      text,
-      url: text.startsWith('http') ? text : undefined,
+    logger.debug('Intent classified', {
+      userId,
+      textPreview: text.slice(0, 100),
+      intent: classification.intent,
+      subIntent: classification.subIntent,
+      confidence: classification.confidence,
     });
-    await sendSavedItemMessage(context, shared.item, shared.classification.summary);
+
+    // Route to appropriate service based on intent
+    switch (classification.intent) {
+      case 'todo': {
+        if (classification.subIntent === 'query') {
+          // Query todos
+          const todos = await services.todo.listTodos(userId, 'pending');
+          if (todos.length === 0) {
+            await sendChatMessage(context, '目前沒有待辦事項呢！');
+          } else {
+            // Send first todo as example
+            await sendTodoMessage(context, todos[0], 'listed');
+            if (todos.length > 1) {
+              await context.reply([
+                {
+                  type: 'text',
+                  text: `還有 ${todos.length - 1} 個待辦事項，輸入「查看所有待辦」可以看到完整列表。`,
+                },
+              ]);
+            }
+          }
+        } else {
+          // Create todo
+          const todo = await services.todo.createTodo(userId, text);
+          await sendTodoMessage(context, todo, 'created');
+        }
+        break;
+      }
+
+      case 'link': {
+        // Extract URL from text or extractedData
+        const urlMatch = text.match(/https?:\/\/[^\s]+/);
+        const url = urlMatch?.[0] || (classification.extractedData?.url as string | undefined);
+
+        if (!url) {
+          await sendChatMessage(context, '我找不到連結呢，請確認訊息中包含有效的 URL。');
+          return;
+        }
+
+        const result = await services.link.analyzeAndSave(userId, url, text);
+        await sendLinkMessage(context, url, result.analysis);
+        break;
+      }
+
+      case 'journal': {
+        const entry = await services.journal.saveEntry(userId, text);
+        await sendJournalMessage(context, entry.content, 'saved');
+        break;
+      }
+
+      case 'feedback': {
+        const feedback = await services.feedback.generateFeedback(userId);
+        await sendFeedbackMessage(context, feedback);
+        break;
+      }
+
+      case 'recommendation': {
+        const recommendation = await services.recommendation.generateRecommendation(userId, text);
+        await sendRecommendationMessage(context, recommendation);
+        break;
+      }
+
+      case 'chat_history': {
+        // Extract query from text or use full text
+        const query = (classification.extractedData?.query as string | undefined) || text;
+        const response = await services.chat.searchHistory(userId, query);
+        await sendChatMessage(context, response);
+        break;
+      }
+
+      case 'other':
+      default: {
+        // General chat
+        const response = await services.chat.chat(userId, text);
+        await sendChatMessage(context, response);
+        break;
+      }
+    }
   } catch (error) {
-    logger.error('Handle event failed', { error, userId });
+    logger.error('Handle event failed', { error, userId, textPreview: text.slice(0, 100) });
     await context.reply([
       {
         type: 'text',
@@ -63,4 +137,3 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
     ]);
   }
 }
-

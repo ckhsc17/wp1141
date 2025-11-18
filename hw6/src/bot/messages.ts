@@ -1,6 +1,6 @@
 import type LineContext from 'bottender/dist/line/LineContext';
 
-import type { Insight, Reminder, SavedItem } from '@/domain/schemas';
+import type { Insight, LinkAnalysis, Reminder, SavedItem, Todo } from '@/domain/schemas';
 
 // 如果需要 LIFF admin 入口，改用 Flex/URI 按鈕，避免 QuickReply 型別限制
 const ADMIN_LIFF_URL = process.env.LIFF_ADMIN_URL ?? 'https://liff.line.me/YOUR_LIFF_ID';
@@ -150,6 +150,232 @@ export async function sendWelcomeMessage(context: LineContext): Promise<void> {
     {
       type: 'text',
       text: '嗨，我是 Booboo 小幽 👋 想記錄靈感、設定提醒或聽聽建議，都可以跟我說！\n範例：\n- 「幫我記下今天看到的文章 https://...」\n- 「提醒我明天 9 點要寫日記」\n- 「幫我整理最近的想法」',
+      quickReply: buildQuickReplies(),
+    },
+  ]);
+}
+
+export async function sendTodoMessage(
+  context: LineContext,
+  todo: Todo,
+  action: 'created' | 'listed' | 'updated',
+): Promise<void> {
+  if (action === 'listed') {
+    // For list, we'll send a simple text message
+    await context.reply([
+      {
+        type: 'text',
+        text: `待辦事項：${todo.title}${todo.description ? `\n${todo.description}` : ''}\n狀態：${todo.status === 'pending' ? '待處理' : todo.status === 'done' ? '已完成' : '已取消'}`,
+        quickReply: buildQuickReplies(),
+      },
+    ]);
+    return;
+  }
+
+  await context.reply([
+    {
+      type: 'flex',
+      altText: action === 'created' ? '已建立待辦事項' : '已更新待辦事項',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: action === 'created' ? '已建立待辦事項 ✅' : '已更新待辦事項',
+              weight: 'bold',
+              size: 'md',
+            },
+            {
+              type: 'text',
+              text: todo.title,
+              wrap: true,
+              margin: 'md',
+              weight: 'bold',
+            },
+            ...(todo.description
+              ? [
+                  {
+                    type: 'text' as const,
+                    text: todo.description,
+                    wrap: true,
+                    size: 'sm' as const,
+                    color: '#666666',
+                    margin: 'sm' as const,
+                  },
+                ]
+              : []),
+            {
+              type: 'text' as const,
+              text: `狀態：${todo.status === 'pending' ? '待處理' : todo.status === 'done' ? '已完成' : '已取消'}`,
+              size: 'sm' as const,
+              color: '#aaaaaa',
+              margin: 'md' as const,
+            },
+          ],
+        },
+      },
+      quickReply: buildQuickReplies(),
+    },
+  ]);
+}
+
+export async function sendLinkMessage(
+  context: LineContext,
+  url: string,
+  analysis: LinkAnalysis,
+): Promise<void> {
+  await context.reply([
+    {
+      type: 'flex',
+      altText: '連結分析結果',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: '已分析連結 📎',
+              weight: 'bold',
+              size: 'md',
+            },
+            {
+              type: 'text',
+              text: `類型：${analysis.type}`,
+              size: 'sm',
+              color: '#666666',
+              margin: 'md',
+            },
+            {
+              type: 'text',
+              text: analysis.summary,
+              wrap: true,
+              margin: 'md',
+            },
+            ...(analysis.location
+              ? [
+                  {
+                    type: 'text' as const,
+                    text: `📍 地點：${analysis.location}`,
+                    size: 'sm' as const,
+                    color: '#666666',
+                    margin: 'sm' as const,
+                  },
+                ]
+              : []),
+          ],
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          contents: [
+            {
+              type: 'button',
+              style: 'link',
+              height: 'sm',
+              action: {
+                type: 'uri',
+                label: '查看連結',
+                uri: url,
+              },
+            },
+          ],
+        },
+      },
+      quickReply: buildQuickReplies(),
+    },
+  ]);
+}
+
+export async function sendJournalMessage(
+  context: LineContext,
+  content: string,
+  action: 'saved',
+): Promise<void> {
+  await context.reply([
+    {
+      type: 'text',
+      text: `已為你記錄：${content}`,
+      quickReply: buildQuickReplies(),
+    },
+  ]);
+}
+
+export async function sendFeedbackMessage(context: LineContext, feedback: string): Promise<void> {
+  await context.reply([
+    {
+      type: 'flex',
+      altText: '生活回饋',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: '小幽的生活回饋 💫',
+              weight: 'bold',
+              size: 'md',
+            },
+            {
+              type: 'text',
+              text: feedback,
+              wrap: true,
+              margin: 'md',
+            },
+          ],
+        },
+      },
+      quickReply: buildQuickReplies(),
+    },
+  ]);
+}
+
+export async function sendRecommendationMessage(
+  context: LineContext,
+  recommendation: string,
+): Promise<void> {
+  await context.reply([
+    {
+      type: 'flex',
+      altText: '推薦內容',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: '小幽的推薦 ✨',
+              weight: 'bold',
+              size: 'md',
+            },
+            {
+              type: 'text',
+              text: recommendation,
+              wrap: true,
+              margin: 'md',
+            },
+          ],
+        },
+      },
+      quickReply: buildQuickReplies(),
+    },
+  ]);
+}
+
+export async function sendChatMessage(context: LineContext, response: string): Promise<void> {
+  await context.reply([
+    {
+      type: 'text',
+      text: response,
       quickReply: buildQuickReplies(),
     },
   ]);

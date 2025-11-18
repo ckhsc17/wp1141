@@ -56,4 +56,59 @@ export const SharedContentSchema = z.object({
 
 export type SharedContent = z.infer<typeof SharedContentSchema>;
 
+// Intent Classification
+export const IntentClassificationSchema = z.object({
+  intent: z.enum(['todo', 'link', 'journal', 'feedback', 'recommendation', 'chat_history', 'other']),
+  subIntent: z.enum(['create', 'query']).optional(),
+  confidence: z.number().min(0).max(1).default(0.8),
+  extractedData: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type IntentClassification = z.infer<typeof IntentClassificationSchema>;
+
+// Todo
+export const TodoSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  status: z.enum(['pending', 'done', 'cancelled']).default('pending'),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+
+export type Todo = z.infer<typeof TodoSchema>;
+
+// Journal Entry
+export const JournalEntrySchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  content: z.string(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+
+export type JournalEntry = z.infer<typeof JournalEntrySchema>;
+
+// Link Analysis
+export const LinkAnalysisSchema = z.object({
+  type: z.enum(['美食', '娛樂', '知識', '生活', '新聞', '工具', '其他']),
+  summary: z.string().max(150),
+  location: z.string().optional(),
+  tags: z.array(z.string()).default([]),
+});
+
+export type LinkAnalysis = z.infer<typeof LinkAnalysisSchema>;
+
+// Chat Message (for storing chat history)
+export const ChatMessageSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  content: z.string(),
+  role: z.enum(['user', 'assistant']).default('user'),
+  createdAt: z.date().default(() => new Date()),
+});
+
+export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
 

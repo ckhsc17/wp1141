@@ -1,13 +1,22 @@
 import {
   PrismaInsightRepository,
+  PrismaJournalRepository,
   PrismaReminderRepository,
   PrismaSavedItemRepository,
+  PrismaTodoRepository,
   PrismaUserRepository,
 } from '@/repositories';
+import { ChatService } from '@/services/chatService';
 import { ContentService } from '@/services/contentService';
+import { FeedbackService } from '@/services/feedbackService';
 import { GeminiService } from '@/services/geminiService';
 import { InsightService } from '@/services/insightService';
+import { IntentClassificationService } from '@/services/intentClassificationService';
+import { JournalService } from '@/services/journalService';
+import { LinkService } from '@/services/linkService';
+import { RecommendationService } from '@/services/recommendationService';
 import { ReminderService } from '@/services/reminderService';
+import { TodoService } from '@/services/todoService';
 import { logger } from '@/utils/logger';
 
 const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -22,12 +31,21 @@ const userRepo = new PrismaUserRepository();
 const savedItemRepo = new PrismaSavedItemRepository();
 const reminderRepo = new PrismaReminderRepository();
 const insightRepo = new PrismaInsightRepository();
+const todoRepo = new PrismaTodoRepository();
+const journalRepo = new PrismaJournalRepository();
 const gemini = new GeminiService(geminiApiKey);
 
 export const services = {
   content: new ContentService(savedItemRepo, gemini),
   reminders: new ReminderService(reminderRepo),
   insight: new InsightService(insightRepo, savedItemRepo, gemini),
+  intentClassification: new IntentClassificationService(gemini),
+  todo: new TodoService(todoRepo, gemini),
+  link: new LinkService(savedItemRepo, gemini),
+  journal: new JournalService(journalRepo),
+  feedback: new FeedbackService(journalRepo, savedItemRepo, gemini),
+  recommendation: new RecommendationService(savedItemRepo, gemini),
+  chat: new ChatService(savedItemRepo, gemini),
 };
 
 export const repositories = {
@@ -35,6 +53,8 @@ export const repositories = {
   savedItemRepo,
   reminderRepo,
   insightRepo,
+  todoRepo,
+  journalRepo,
 };
 
 
