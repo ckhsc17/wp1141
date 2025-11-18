@@ -169,11 +169,11 @@ export class PrismaSavedItemRepository implements SavedItemRepository {
       return {
         id: item.id,
         userId: item.userId,
-        sourceType: item.sourceType as any,
+        sourceType: item.sourceType.toLowerCase() as any, // Convert from uppercase Prisma enum to lowercase
         title: item.title ?? undefined,
         content: item.content,
         url: item.url ?? undefined,
-        category: item.category as any,
+        category: item.category.toLowerCase() as any, // Convert from uppercase Prisma enum to lowercase
         tags: [],
         createdAt: item.createdAt,
       };
@@ -184,12 +184,12 @@ export class PrismaSavedItemRepository implements SavedItemRepository {
     const record = await prisma.savedItem.create({
       data: {
         userId: item.userId,
-        sourceType: item.sourceType as any,
+        sourceType: item.sourceType.toUpperCase() as any, // Convert to uppercase for Prisma enum
         title: item.title,
         content: item.content,
         rawText: item.content,
         url: item.url,
-        category: item.category as any,
+        category: item.category.toUpperCase() as any, // Convert to uppercase for Prisma enum
         sentiment: 'NEUTRAL',
       },
     });
@@ -197,11 +197,11 @@ export class PrismaSavedItemRepository implements SavedItemRepository {
     return {
       id: record.id,
       userId: record.userId,
-      sourceType: record.sourceType as any,
+      sourceType: record.sourceType.toLowerCase() as any, // Convert from uppercase Prisma enum to lowercase
       title: record.title ?? undefined,
       content: record.content,
       url: record.url ?? undefined,
-      category: record.category as any,
+      category: record.category.toLowerCase() as any, // Convert from uppercase Prisma enum to lowercase
       tags: [],
       createdAt: record.createdAt,
     };

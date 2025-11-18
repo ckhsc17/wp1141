@@ -890,7 +890,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/client@npm:^5.22.0":
+"@prisma/client@npm:5.22.0":
   version: 5.22.0
   resolution: "@prisma/client@npm:5.22.0"
   peerDependencies:
@@ -5463,7 +5463,7 @@ __metadata:
   resolution: "line-course-bot@workspace:."
   dependencies:
     "@google/generative-ai": "npm:^0.6.0"
-    "@prisma/client": "npm:^5.22.0"
+    "@prisma/client": "npm:5.22.0"
     "@tailwindcss/postcss": "npm:^4"
     "@types/node": "npm:^20"
     "@types/react": "npm:^19"

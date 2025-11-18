@@ -26,6 +26,9 @@ const customLineClient = new LineClient({
   dataOrigin,
 });
 
+// Export LineClient for use in event handlers (e.g., to fetch user profiles)
+export const lineClient = customLineClient;
+
 export const lineBot = new LineBot({
   client: customLineClient,
   channelSecret,

@@ -13,11 +13,11 @@ services:
       - "5432:5432"
     volumes:
       - booboo-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U booboo"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U booboo"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
 
   # 可選：簡單的 DB 管理介面（在瀏覽器開 http://localhost:8080）
   adminer:

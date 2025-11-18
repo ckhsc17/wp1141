@@ -6,7 +6,9 @@ import {
   sendSavedItemMessage,
   sendWelcomeMessage,
 } from '@/bot/messages';
-import { services } from '@/container';
+import { lineClient } from '@/bot/lineBot';
+import { ensureUser } from '@/bot/userHelper';
+import { repositories, services } from '@/container';
 import { logger } from '@/utils/logger';
 
 export async function handleLineEvent(context: LineContext): Promise<void> {
@@ -14,6 +16,10 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
   const text = context.event.isText ? context.event.text?.trim() ?? '' : '';
 
   if (context.event.isFollow || context.event.isJoin) {
+    // Ensure user exists when they follow/join
+    if (userId) {
+      await ensureUser(userId, lineClient, repositories.userRepo);
+    }
     await sendWelcomeMessage(context);
     return;
   }
@@ -22,6 +28,9 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
     await sendWelcomeMessage(context);
     return;
   }
+
+  // Ensure user exists before processing any message
+  await ensureUser(userId, lineClient, repositories.userRepo);
 
   try {
     if (/提醒|remind/i.test(text)) {
