@@ -95,8 +95,8 @@ export type JournalEntry = z.infer<typeof JournalEntrySchema>;
 // Link Analysis
 export const LinkAnalysisSchema = z.object({
   type: z.enum(['美食', '娛樂', '知識', '生活', '新聞', '工具', '其他']),
-  summary: z.string().max(150),
-  location: z.string().optional(),
+  summary: z.string().max(300),
+  location: z.string().nullable().optional(), // Allow both null and undefined
   tags: z.array(z.string()).default([]),
 });
 

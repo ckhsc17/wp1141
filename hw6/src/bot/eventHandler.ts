@@ -14,6 +14,7 @@ import {
   sendWelcomeMessage,
 } from '@/bot/messages';
 import { lineClient } from '@/bot/lineBot';
+import { showTyping } from '@/bot/typingHelper';
 import { ensureUser } from '@/bot/userHelper';
 import { repositories, services } from '@/container';
 import { logger } from '@/utils/logger';
@@ -38,6 +39,9 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
 
   // Ensure user exists before processing any message
   await ensureUser(userId, lineClient, repositories.userRepo);
+
+  // Show typing indicator immediately when processing starts
+  await showTyping(context, userId);
 
   try {
     // Classify intent using LLM

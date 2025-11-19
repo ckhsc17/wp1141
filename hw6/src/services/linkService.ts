@@ -34,6 +34,10 @@ export class LinkService {
       }
 
       const parsed = JSON.parse(jsonStr) as LinkAnalysis;
+      // Convert null to undefined for location to match schema
+      if (parsed.location === null) {
+        parsed.location = undefined;
+      }
       analysis = LinkAnalysisSchema.parse(parsed);
     } catch (error) {
       logger.warn('Failed to parse link analysis, using fallback', {
@@ -43,7 +47,7 @@ export class LinkService {
       });
       analysis = {
         type: '其他',
-        summary: content?.slice(0, 150) || url,
+        summary: content?.slice(0, 300) || url,
         tags: [],
       };
     }
