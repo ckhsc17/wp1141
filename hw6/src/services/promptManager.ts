@@ -139,6 +139,54 @@ ${text}
 </JSON>`;
     },
   },
+  extractTodoDateTime: {
+    system:
+      '你是日期時間提取助手。從用戶訊息中提取待辦事項的日期和時間，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      const currentDate = typeof payload.currentDate === 'string' ? payload.currentDate : new Date().toISOString();
+      const now = new Date(currentDate);
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      
+      return `當前時間：${currentDate} (${year}-${month}-${day})
+
+請從以下訊息中提取日期和時間：
+<訊息>
+${text}
+</訊息>
+
+規則：
+1. **date（行程時間）**：如果訊息提到「在某個時間執行/做某事」（例如：「明天早上 8 點吃飯」「下禮拜三開會」「12/25 開會」），提取為 date
+   - 如果只提到日期沒有時間，使用格式：YYYY-MM-DD（例如：2024-12-25），系統會自動設為 08:00
+   - 如果提到日期和時間，使用格式：YYYY-MM-DDTHH:mm:ss（例如：2024-12-25T08:00:00）
+   - 如果完全沒有提到日期時間，設為 null（系統會自動設為今天 21:00）
+
+2. **due（截止時間）**：只有明確提到「截止」「前完成」「期限」「deadline」等關鍵字時才提取（例如：「12/25 前完成」「下週五截止」）
+   - 如果只提到日期沒有時間，使用格式：YYYY-MM-DD（例如：2024-12-25），系統會自動設為 23:59:59
+   - 如果提到日期和時間，使用格式：YYYY-MM-DDTHH:mm:ss（例如：2024-12-25T23:59:59）
+   - 如果沒有提到截止時間，設為 null
+
+3. 日期格式說明：
+   - 純日期：YYYY-MM-DD（例如：2024-12-25）
+   - 日期+時間：YYYY-MM-DDTHH:mm:ss（例如：2024-12-25T08:00:00）
+   - 不要使用時區資訊（不要加 Z 或 +08:00）
+   - null 值直接寫 null，不要加引號
+
+4. 範例：
+   - 「明天早上 8 點吃飯」→ {"date": "2024-12-26T08:00:00", "due": null}
+   - 「下禮拜三開會」→ {"date": "2024-12-25", "due": null}（假設下禮拜三是 12/25）
+   - 「12/25 前完成作業」→ {"date": null, "due": "2024-12-25"}
+   - 「吃飯」→ {"date": null, "due": null}
+
+輸出 JSON 格式（不能有其他文字，直接輸出 JSON）：
+{
+  "date": "2024-12-25T08:00:00" | "2024-12-25" | null,
+  "due": "2024-12-25T23:59:59" | "2024-12-25" | null
+}`;
+    },
+  },
   matchTodoForUpdate: {
     system:
       '你是待辦事項匹配助手。根據用戶的自然語言描述，匹配到最相關的待辦事項，並推斷要執行的動作（完成或取消），必須嚴格按照 JSON 格式輸出。',
@@ -170,24 +218,39 @@ ${todos}
   },
   parseTodoQuery: {
     system:
-      '你是待辦事項查詢解析助手。解析用戶的自然語言查詢，提取時間範圍、關鍵字、狀態等過濾條件，必須嚴格按照 JSON 格式輸出。',
+      '你是待辦事項查詢解析助手。解析用戶的自然語言查詢，提取時間範圍、特定日期、關鍵字、狀態等過濾條件，必須嚴格按照 JSON 格式輸出。',
     user: (payload: Record<string, unknown>) => {
       const text = typeof payload.text === 'string' ? payload.text : '';
-      return `用戶查詢：${text}
+      const currentDate = typeof payload.currentDate === 'string' ? payload.currentDate : new Date().toISOString();
+      const now = new Date(currentDate);
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      
+      return `當前時間：${currentDate} (${year}-${month}-${day})
+
+用戶查詢：${text}
 
 請解析：
-1. 時間範圍：
+1. **特定日期**：如果查詢提到特定日期（例如：「12/25 的待辦」「2024-12-25 要做什麼」「聖誕節的待辦」），提取為 specificDate
+   - 格式：YYYY-MM-DD（例如：2024-12-25）
+   - 如果沒有特定日期，設為 null
+
+2. **時間範圍**（如果沒有特定日期才使用）：
    - 過去：上禮拜、昨天、這週、這個月、上個月
    - 未來：下禮拜、明天、下週、下個月
    - 現在：今天、本週、本月
-2. 關鍵字：吃了什麼、做了哪些事、作業相關等
-3. 狀態：完成的、待辦的、已取消的（如果沒有明確指定，設為 null）
+
+3. **關鍵字**：吃了什麼、做了哪些事、作業相關等
+
+4. **狀態**：完成的、待辦的、已取消的（如果沒有明確指定，設為 null）
    - 注意：如果查詢未來時間（下禮拜、明天等），預設狀態應為 "pending"（待辦的）
 
 輸出 JSON 格式（不能有其他文字）：
 <JSON>
 {
-  "timeRange": "上禮拜|昨天|這週|這個月|上個月|下禮拜|明天|下週|下個月|今天|本週|本月|null",
+  "specificDate": "2024-12-25" | null (特定日期，格式：YYYY-MM-DD),
+  "timeRange": "上禮拜|昨天|這週|這個月|上個月|下禮拜|明天|下週|下個月|今天|本週|本月|null" (如果 specificDate 為 null 才使用),
   "keywords": ["作業", "吃飯"] (從查詢中提取的關鍵字),
   "status": "done|pending|cancelled|null" (如果查詢明確提到狀態，或未來時間預設為 pending)
 }

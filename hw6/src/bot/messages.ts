@@ -432,3 +432,28 @@ export async function sendTodosListMessage(context: LineContext, todos: Todo[]):
   ]);
 }
 
+export async function sendTodoNotificationMessage(
+  userId: string,
+  todo: Todo,
+): Promise<void> {
+  // This function is used by the cron job to send push notifications
+  // It uses lineClient directly instead of context
+  const { lineClient } = await import('@/bot/lineBot');
+  
+  const dateStr = todo.date ? new Date(todo.date).toLocaleString('zh-TW', { 
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }) : '';
+
+  await lineClient.pushMessages(userId, [
+    {
+      type: 'text',
+      text: `⏰ 提醒：${todo.title}${dateStr ? `\n時間：${dateStr}` : ''}${todo.description ? `\n${todo.description}` : ''}`,
+    },
+  ]);
+}
+

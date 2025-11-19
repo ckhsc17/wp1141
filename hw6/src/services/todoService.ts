@@ -1,4 +1,4 @@
-import type { TodoRepository } from '@/repositories';
+import type { TodoRepository, ReminderRepository } from '@/repositories';
 import { TodoSchema, type Todo } from '@/domain/schemas';
 import { GeminiService } from './geminiService';
 import { logger } from '@/utils/logger';
@@ -6,8 +6,141 @@ import { logger } from '@/utils/logger';
 export class TodoService {
   constructor(
     private readonly todoRepo: TodoRepository,
+    private readonly reminderRepo: ReminderRepository,
     private readonly gemini: GeminiService,
   ) {}
+
+  /**
+   * Extract date and time from natural language text
+   */
+  private async extractDateTime(text: string): Promise<{ date: Date | null; due: Date | null }> {
+    const response = await this.gemini.generate({
+      template: 'extractTodoDateTime',
+      payload: { text, currentDate: new Date().toISOString() },
+    });
+
+    let date: Date | null = null;
+    let due: Date | null = null;
+
+    try {
+      let jsonStr = response.trim();
+      // Remove markdown code blocks
+      if (jsonStr.startsWith('```json')) {
+        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      } else if (jsonStr.startsWith('```')) {
+        jsonStr = jsonStr.replace(/```\n?/g, '');
+      }
+      // Extract JSON from <JSON> tags
+      if (jsonStr.includes('<JSON>')) {
+        const match = jsonStr.match(/<JSON>([\s\S]*?)<\/JSON>/);
+        if (match) {
+          jsonStr = match[1].trim();
+        }
+      }
+
+      const parsed = JSON.parse(jsonStr) as {
+        date: string | null;
+        due: string | null;
+      };
+
+      // Parse date
+      if (parsed.date && parsed.date !== 'null' && parsed.date !== null) {
+        const dateStr = String(parsed.date).trim();
+        if (dateStr && dateStr !== 'null') {
+          // Check if it's just a date (YYYY-MM-DD) without time
+          if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            // Parse as date and set to 8:00
+            const [year, month, day] = dateStr.split('-').map(Number);
+            date = new Date(year, month - 1, day, 8, 0, 0, 0);
+          } else {
+            // Parse as ISO string
+            date = new Date(dateStr);
+            // Validate date
+            if (isNaN(date.getTime())) {
+              logger.warn('Invalid date parsed', { dateStr, textPreview: text.slice(0, 100) });
+              date = null;
+            }
+          }
+        }
+      }
+
+      // Parse due
+      if (parsed.due && parsed.due !== 'null' && parsed.due !== null) {
+        const dueStr = String(parsed.due).trim();
+        if (dueStr && dueStr !== 'null') {
+          // Check if it's just a date (YYYY-MM-DD) without time
+          if (dueStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            // Parse as date and set to 23:59:59
+            const [year, month, day] = dueStr.split('-').map(Number);
+            due = new Date(year, month - 1, day, 23, 59, 59, 999);
+          } else {
+            // Parse as ISO string
+            due = new Date(dueStr);
+            // Validate date
+            if (isNaN(due.getTime())) {
+              logger.warn('Invalid due date parsed', { dueStr, textPreview: text.slice(0, 100) });
+              due = null;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to parse date time extraction', {
+        textPreview: text.slice(0, 100),
+        rawResponse: response.slice(0, 500),
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    // Default: if no date specified, set to today 21:00
+    if (!date) {
+      const today = new Date();
+      today.setHours(21, 0, 0, 0);
+      date = today;
+    }
+
+    logger.debug('Date time extracted', {
+      textPreview: text.slice(0, 100),
+      date: date?.toISOString(),
+      due: due?.toISOString(),
+    });
+
+    return { date, due };
+  }
+
+  /**
+   * Create a reminder for a todo if it has a date
+   */
+  private async createReminderForTodo(todo: Todo): Promise<void> {
+    if (!todo.date) {
+      return;
+    }
+
+    try {
+      // Check if reminder already exists
+      const existingReminders = await this.reminderRepo.listPending(todo.userId);
+      const existingReminder = existingReminders.find((r) => r.title === todo.title && r.triggerAt.getTime() === todo.date!.getTime());
+
+      if (existingReminder) {
+        logger.debug('Reminder already exists for todo', { todoId: todo.id, reminderId: existingReminder.id });
+        return;
+      }
+
+      await this.reminderRepo.create({
+        userId: todo.userId,
+        title: todo.title,
+        description: todo.description ?? undefined,
+        triggerAt: todo.date,
+      });
+
+      logger.info('Reminder created for todo', { todoId: todo.id, triggerAt: todo.date });
+    } catch (error) {
+      logger.warn('Failed to create reminder for todo', {
+        todoId: todo.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   async createTodo(userId: string, text: string): Promise<Todo> {
     // Use LLM to extract todo from text
@@ -46,14 +179,24 @@ export class TodoService {
       title = text.slice(0, 100);
     }
 
+    // Extract date and time
+    const { date, due } = await this.extractDateTime(text);
+
     const todo = await this.todoRepo.create({
       userId,
       title,
       description,
       status: 'pending',
+      date: date ?? undefined,
+      due: due ?? undefined,
     });
 
-    logger.info('Todo created', { userId, todoId: todo.id, title });
+    // Create reminder if date is set
+    if (date) {
+      await this.createReminderForTodo(todo);
+    }
+
+    logger.info('Todo created', { userId, todoId: todo.id, title, date, due });
 
     return TodoSchema.parse(todo);
   }
@@ -97,6 +240,9 @@ export class TodoService {
       todos = [{ title: text.slice(0, 100) }];
     }
 
+    // Extract date and time from the original text (shared for all todos)
+    const { date, due } = await this.extractDateTime(text);
+
     // Create all todos
     const createdTodos: Todo[] = [];
     for (const todoData of todos) {
@@ -105,11 +251,19 @@ export class TodoService {
         title: todoData.title,
         description: todoData.description,
         status: 'pending',
+        date: date ?? undefined,
+        due: due ?? undefined,
       });
+
+      // Create reminder if date is set
+      if (date) {
+        await this.createReminderForTodo(todo);
+      }
+
       createdTodos.push(TodoSchema.parse(todo));
     }
 
-    logger.info('Multiple todos created', { userId, count: createdTodos.length });
+    logger.info('Multiple todos created', { userId, count: createdTodos.length, date, due });
 
     return createdTodos;
   }
@@ -204,9 +358,10 @@ export class TodoService {
     // Parse query using LLM
     const response = await this.gemini.generate({
       template: 'parseTodoQuery',
-      payload: { text },
+      payload: { text, currentDate: new Date().toISOString() },
     });
 
+    let specificDate: string | null = null;
     let timeRange: string | null = null;
     let keywords: string[] = [];
     let status: Todo['status'] | null = null;
@@ -226,11 +381,13 @@ export class TodoService {
       }
 
       const parsed = JSON.parse(jsonStr) as {
+        specificDate: string | null;
         timeRange: string | null;
         keywords: string[];
         status: 'done' | 'pending' | 'cancelled' | null;
       };
 
+      specificDate = parsed.specificDate;
       timeRange = parsed.timeRange;
       keywords = parsed.keywords || [];
       status = parsed.status || null;
@@ -238,6 +395,7 @@ export class TodoService {
       logger.warn('Failed to parse todo query, using fallback', {
         userId,
         textPreview: text.slice(0, 100),
+        rawResponse: response.slice(0, 500),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -245,9 +403,34 @@ export class TodoService {
     // Get all todos
     let todos = await this.todoRepo.listByUser(userId);
 
-    // Determine if this is a future time query
+    // Filter by specific date (priority: check date field first, then createdAt)
+    if (specificDate) {
+      try {
+        const [year, month, day] = specificDate.split('-').map(Number);
+        const targetDate = new Date(year, month - 1, day);
+        const nextDay = new Date(year, month - 1, day + 1);
+
+        todos = todos.filter((todo) => {
+          // Check if todo.date matches the specific date
+          if (todo.date) {
+            const todoDate = new Date(todo.date);
+            return todoDate >= targetDate && todoDate < nextDay;
+          }
+          // Fallback: check createdAt if date is not set
+          const todoCreatedAt = new Date(todo.createdAt);
+          return todoCreatedAt >= targetDate && todoCreatedAt < nextDay;
+        });
+      } catch (error) {
+        logger.warn('Failed to parse specific date', {
+          specificDate,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Determine if this is a future time query (only if no specific date)
     let isFutureTime = false;
-    if (timeRange) {
+    if (!specificDate && timeRange) {
       const futureTimeRanges = ['明天', '下禮拜', '下週', '下個月'];
       isFutureTime = futureTimeRanges.includes(timeRange);
       
@@ -270,10 +453,10 @@ export class TodoService {
       });
     }
 
-    // Filter by time range
-    if (timeRange && !isFutureTime) {
+    // Filter by time range (only if no specific date)
+    if (!specificDate && timeRange && !isFutureTime) {
       // Only filter by date for past/current time ranges
-      // For future time, we return all pending todos (since we don't have dueDate field)
+      // For future time, we return all pending todos
       const now = new Date();
       let startDate: Date | null = null;
       let endDate: Date | null = null;
@@ -321,9 +504,16 @@ export class TodoService {
 
       if (startDate !== null) {
         if (endDate !== null) {
-          todos = todos.filter((todo) => todo.createdAt >= startDate! && todo.createdAt < endDate!);
+          todos = todos.filter((todo) => {
+            // Prefer date field, fallback to createdAt
+            const todoDate = todo.date ? new Date(todo.date) : new Date(todo.createdAt);
+            return todoDate >= startDate! && todoDate < endDate!;
+          });
         } else {
-          todos = todos.filter((todo) => todo.createdAt >= startDate!);
+          todos = todos.filter((todo) => {
+            const todoDate = todo.date ? new Date(todo.date) : new Date(todo.createdAt);
+            return todoDate >= startDate!;
+          });
         }
       }
     }
@@ -331,6 +521,7 @@ export class TodoService {
     logger.debug('Todos queried by natural language', {
       userId,
       textPreview: text.slice(0, 100),
+      specificDate,
       timeRange,
       keywords,
       status,

@@ -330,7 +330,7 @@ export class PrismaReminderRepository implements ReminderRepository {
       id: record.id,
       userId: record.userId,
       title: record.title,
-      description: undefined,
+      description: reminder.description,
       triggerAt: record.triggerAt,
       status: 'pending',
       createdAt: record.createdAt,
@@ -386,6 +386,8 @@ export class InMemoryTodoRepository extends InMemoryStore<Todo> implements TodoR
     const created: Todo = {
       ...todo,
       id: this.generateId(),
+      date: todo.date ?? undefined,
+      due: todo.due ?? undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -430,6 +432,8 @@ export class PrismaTodoRepository implements TodoRepository {
         title: todo.title,
         description: todo.description,
         status: todo.status.toUpperCase() as any,
+        date: todo.date ?? null,
+        due: todo.due ?? null,
       },
     });
 
@@ -439,6 +443,8 @@ export class PrismaTodoRepository implements TodoRepository {
       title: record.title,
       description: record.description ?? undefined,
       status: record.status.toLowerCase() as any,
+      date: record.date ?? undefined,
+      due: record.due ?? undefined,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
@@ -454,6 +460,8 @@ export class PrismaTodoRepository implements TodoRepository {
       title: record.title,
       description: record.description ?? undefined,
       status: record.status.toLowerCase() as any,
+      date: record.date ?? undefined,
+      due: record.due ?? undefined,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
@@ -475,6 +483,8 @@ export class PrismaTodoRepository implements TodoRepository {
       title: record.title,
       description: record.description ?? undefined,
       status: record.status.toLowerCase() as any,
+      date: record.date ?? undefined,
+      due: record.due ?? undefined,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     }));

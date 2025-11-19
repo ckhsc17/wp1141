@@ -40,7 +40,7 @@ export const services = {
   reminders: new ReminderService(reminderRepo),
   insight: new InsightService(insightRepo, savedItemRepo, gemini),
   intentClassification: new IntentClassificationService(gemini),
-  todo: new TodoService(todoRepo, gemini),
+  todo: new TodoService(todoRepo, reminderRepo, gemini),
   link: new LinkService(savedItemRepo, gemini),
   journal: new JournalService(journalRepo),
   feedback: new FeedbackService(journalRepo, savedItemRepo, gemini),

@@ -73,6 +73,8 @@ export const TodoSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
   status: z.enum(['pending', 'done', 'cancelled']).default('pending'),
+  date: z.date().optional(), // 行程時間（與別人有約的時間）
+  due: z.date().optional(), // 截止時間（任務的截止日期）
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
 });

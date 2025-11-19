@@ -140,6 +140,9 @@ model Todo {
   description   String?
   status        TodoStatus  @default(PENDING)
 
+  date          DateTime?   // 行程時間（與別人有約的時間）
+  due           DateTime?   // 截止時間（任務的截止日期）
+
   savedItemId   String?
   savedItem     SavedItem?  @relation(fields: [savedItemId], references: [id])
 
