@@ -10,6 +10,7 @@ import {
   sendSavedItemMessage,
   sendTodoMessage,
   sendTodosListMessage,
+  sendUsageGuideMessage,
   sendWelcomeMessage,
 } from '@/bot/messages';
 import { lineClient } from '@/bot/lineBot';
@@ -39,6 +40,12 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
 
   // Ensure user exists before processing any message
   await ensureUser(userId, lineClient, repositories.userRepo);
+
+  // Handle usage guide quick reply
+  if (text === '使用教學') {
+    await sendUsageGuideMessage(context);
+    return;
+  }
 
   // Show typing indicator immediately when processing starts
   await showTyping(context, userId);

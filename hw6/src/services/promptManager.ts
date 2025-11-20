@@ -275,23 +275,33 @@ ${todos}
 1. **特定日期**：如果查詢提到特定日期（例如：「12/25 的待辦」「2024-12-25 要做什麼」「聖誕節的待辦」），提取為 specificDate
    - 格式：YYYY-MM-DD（例如：2024-12-25）
    - 如果沒有特定日期，設為 null
+   - 注意：「明天要幹嘛」「明天要做什麼」這類查詢應該提取 timeRange 為 "明天"，而不是 specificDate
 
 2. **時間範圍**（如果沒有特定日期才使用）：
    - 過去：上禮拜、昨天、這週、這個月、上個月
    - 未來：下禮拜、明天、下週、下個月
    - 現在：今天、本週、本月
+   - 重要：如果查詢包含「明天」「下禮拜」「下週」「下個月」等未來時間詞，必須提取為 timeRange
 
-3. **關鍵字**：吃了什麼、做了哪些事、作業相關等
+3. **關鍵字**：從查詢中提取的關鍵字（例如：「要幹嘛」「要做什麼」「吃了什麼」「做了哪些事」「作業」等）
+   - 如果查詢是「明天要幹嘛」「明天要做什麼」，關鍵字可以是空陣列或包含「要幹嘛」「要做什麼」
 
 4. **狀態**：完成的、待辦的、已取消的（如果沒有明確指定，設為 null）
    - 注意：如果查詢未來時間（下禮拜、明天等），預設狀態應為 "pending"（待辦的）
+   - 如果查詢過去時間（上禮拜、昨天等），狀態可以是 "done"（已完成的）或 null（所有狀態）
+
+範例：
+- 「明天要幹嘛」→ {"specificDate": null, "timeRange": "明天", "keywords": [], "status": "pending"}
+- 「明天要做什麼」→ {"specificDate": null, "timeRange": "明天", "keywords": [], "status": "pending"}
+- 「我上禮拜做了哪些事？」→ {"specificDate": null, "timeRange": "上禮拜", "keywords": ["做了哪些事"], "status": null}
+- 「12/25 的待辦」→ {"specificDate": "2024-12-25", "timeRange": null, "keywords": [], "status": "pending"}
 
 輸出 JSON 格式（不能有其他文字）：
 <JSON>
 {
   "specificDate": "2024-12-25" | null (特定日期，格式：YYYY-MM-DD),
   "timeRange": "上禮拜|昨天|這週|這個月|上個月|下禮拜|明天|下週|下個月|今天|本週|本月|null" (如果 specificDate 為 null 才使用),
-  "keywords": ["作業", "吃飯"] (從查詢中提取的關鍵字),
+  "keywords": ["作業", "吃飯"] (從查詢中提取的關鍵字，可以是空陣列),
   "status": "done|pending|cancelled|null" (如果查詢明確提到狀態，或未來時間預設為 pending)
 }
 </JSON>`;

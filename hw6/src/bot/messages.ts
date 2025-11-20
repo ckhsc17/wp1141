@@ -23,9 +23,14 @@ function truncateText(text: string, maxLength: number = 2000): string {
 
 const quickReplyItems = [
   {
+    label: '📚 使用教學',
+    text: '使用教學',
+  },
+  {
     label: '📖 小幽的身世',
     uri: 'https://bowenchen.vercel.app/files/novel.pdf',
   },
+
   {
     label: '👤 我的',
     uri: LIFF_DASHBOARD_URL,
@@ -38,15 +43,30 @@ const quickReplyItems = [
 
 function buildQuickReplies() {
   return {
-    items: quickReplyItems.map((item) => ({
-      type: 'action' as const,
-      action: {
-        type: 'uri' as const,
-        label: item.label,
-        uri: item.uri,
-      },
-    })),
-  } as any; // Bottender 的型別定義可能不支援 URI action，使用 as any 繞過型別檢查
+    items: quickReplyItems.map((item) => {
+      if ('text' in item) {
+        // Message action for usage guide
+        return {
+          type: 'action' as const,
+          action: {
+            type: 'message' as const,
+            label: item.label,
+            text: item.text,
+          },
+        };
+      } else {
+        // URI action
+        return {
+          type: 'action' as const,
+          action: {
+            type: 'uri' as const,
+            label: item.label,
+            uri: item.uri,
+          },
+        };
+      }
+    }),
+  } as any; // Bottender 的型別定義可能不支援所有 action 類型，使用 as any 繞過型別檢查
 }
 
 export async function sendSavedItemMessage(
@@ -75,13 +95,17 @@ export async function sendSavedItemMessage(
           contents: [
             {
               type: 'text',
-              text: '已收藏你的靈感 ✨',
+              text: summary || '已收藏你的內容 ✨',
               weight: 'bold',
               size: 'md',
             },
             {
+              type: 'separator',
+              margin: 'md',
+            },
+            {
               type: 'text',
-              text: truncateText(summary, 2000),
+              text: truncateText(saved.title || saved.content, 2000),
               wrap: true,
               margin: 'md',
             },
@@ -98,41 +122,41 @@ export async function sendSavedItemMessage(
               : []),
           ],
         },
-        footer: {
-          type: 'box',
-          layout: 'vertical',
-          spacing: 'sm',
-          contents: [
-            saved.url
-              ? {
-                  type: 'button',
-                  style: 'link',
-                  height: 'sm',
-                  action: {
-                    type: 'uri',
-                    label: '查看連結',
-                    uri: saved.url,
-                  },
-                }
-              : {
-                  type: 'text',
-                  text: '隨時輸入「查看洞察」讓我幫你整理。',
-                  wrap: true,
-                  size: 'sm',
-                  color: '#aaaaaa',
-                },
-            {
-              type: 'button',
-              style: 'link',
-              height: 'sm',
-              action: {
-                type: 'uri',
-                label: '開啟小幽面板',
-                uri: LIFF_DASHBOARD_URL,
-              },
-            },
-          ],
-        },
+        // footer: {
+        //   type: 'box',
+        //   layout: 'vertical',
+        //   spacing: 'sm',
+        //   contents: [
+        //     saved.url
+        //       ? {
+        //           type: 'button',
+        //           style: 'link',
+        //           height: 'sm',
+        //           action: {
+        //             type: 'uri',
+        //             label: '查看連結',
+        //             uri: saved.url,
+        //           },
+        //         }
+        //       : {
+        //           type: 'text',
+        //           text: '隨時輸入「查看洞察」讓我幫你整理。',
+        //           wrap: true,
+        //           size: 'sm',
+        //           color: '#aaaaaa',
+        //         },
+        //     {
+        //       type: 'button',
+        //       style: 'link',
+        //       height: 'sm',
+        //       action: {
+        //         type: 'uri',
+        //         label: '開啟小幽面板',
+        //         uri: LIFF_DASHBOARD_URL,
+        //       },
+        //     },
+        //   ],
+        // },
       },
       quickReply: buildQuickReplies(),
     },
@@ -164,6 +188,7 @@ export async function sendInsightMessage(context: LineContext, item: SavedItem):
           layout: 'vertical',
           contents: [
             { type: 'text', text: '已儲存靈感 ✨', weight: 'bold', size: 'md' },
+            { type: 'separator', margin: 'md' },
             { type: 'text', text: truncateText(item.title || item.content, 2000), wrap: true, margin: 'md' },
             ...(item.tags.length > 0
               ? [
@@ -189,6 +214,273 @@ export async function sendWelcomeMessage(context: LineContext): Promise<void> {
     {
       type: 'text',
       text: '嗨，我是 Booboo 小幽 👋 想記錄靈感、設定提醒或聽聽建議，都可以跟我說！\n範例：\n- 「幫我記下今天看到的文章 https://...」\n- 「提醒我明天 9 點要寫日記」\n- 「幫我整理最近的想法」',
+      quickReply: buildQuickReplies(),
+    },
+  ]);
+}
+
+export async function sendUsageGuideMessage(context: LineContext): Promise<void> {
+  await context.reply([
+    {
+      type: 'flex',
+      altText: 'Booboo 小幽使用教學',
+      contents: {
+        type: 'carousel',
+        contents: [
+          // Page 1: Introduction and Todo
+          {
+            type: 'bubble',
+            hero: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: '📚 使用教學',
+                  weight: 'bold',
+                  size: 'xl',
+                  color: '#FFFFFF',
+                  align: 'center',
+                },
+              ],
+              backgroundColor: '#FF6B6B',
+              paddingAll: '20px',
+            },
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: 'Booboo 小幽',
+                  weight: 'bold',
+                  size: 'lg',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '個人生活記錄與 AI 助手 - 直接和小幽用自然語言對話！',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'sm',
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '1️⃣ 待辦事項',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '新增：我要吃飯、取貨、寫作業',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '更新：我寫完作業了！',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '查詢：明天要幹嘛？',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+              ],
+            },
+          },
+          // Page 2: Content Saving
+          {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: '2️⃣ 記錄內容',
+                  weight: 'bold',
+                  size: 'lg',
+                  margin: 'md',
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '🔗 資訊連結',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '分享連結自動分析儲存',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '💡 靈感',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '記錄頓悟和啟發',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '📖 知識',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '記錄技術、學術、常識',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '💭 記憶',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '記錄個人經驗、日記',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+              ],
+            },
+          },
+          // Page 3: Music, Life, and Query Features
+          {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: '3️⃣ 更多功能',
+                  weight: 'bold',
+                  size: 'lg',
+                  margin: 'md',
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '🎵 音樂',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '記錄想練習的歌曲',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '🎬 生活活動',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '記錄展覽、電影、活動',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '💬 回饋請求',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '給我一些生活建議',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '✨ 推薦請求',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '推薦一些技術文章',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '🔍 對話紀錄查詢',
+                  weight: 'bold',
+                  size: 'md',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '我有沒有聊過 XXX？',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+              ],
+            },
+          },
+        ],
+      },
       quickReply: buildQuickReplies(),
     },
   ]);
@@ -226,6 +518,10 @@ export async function sendTodoMessage(
               text: action === 'created' ? '已建立待辦事項 ✅' : '已更新待辦事項',
               weight: 'bold',
               size: 'md',
+            },
+            {
+              type: 'separator',
+              margin: 'md',
             },
             {
               type: 'text',
@@ -281,6 +577,10 @@ export async function sendLinkMessage(
               text: '已分析連結 📎',
               weight: 'bold',
               size: 'md',
+            },
+            {
+              type: 'separator',
+              margin: 'md',
             },
             {
               type: 'text',
@@ -363,6 +663,10 @@ export async function sendFeedbackMessage(context: LineContext, feedback: string
               size: 'md',
             },
             {
+              type: 'separator',
+              margin: 'md',
+            },
+            {
               type: 'text',
               text: truncateText(feedback, 2000),
               wrap: true,
@@ -395,6 +699,10 @@ export async function sendRecommendationMessage(
               text: '小幽的推薦 ✨',
               weight: 'bold',
               size: 'md',
+            },
+            {
+              type: 'separator',
+              margin: 'md',
             },
             {
               type: 'text',
@@ -455,6 +763,10 @@ export async function sendTodosListMessage(context: LineContext, todos: Todo[]):
               text: `找到 ${todos.length} 個待辦事項`,
               weight: 'bold',
               size: 'md',
+            },
+            {
+              type: 'separator',
+              margin: 'md',
             },
             {
               type: 'text',

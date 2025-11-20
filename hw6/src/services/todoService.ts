@@ -401,66 +401,122 @@ export class TodoService {
     }
 
     // Filter by time range (only if no specific date)
-    if (!specificDate && timeRange && !isFutureTime) {
-      // Only filter by date for past/current time ranges
-      // For future time, we return all pending todos
+    if (!specificDate && timeRange) {
       const now = new Date();
       let startDate: Date | null = null;
       let endDate: Date | null = null;
 
-      switch (timeRange) {
-        case '昨天': {
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          break;
+      if (isFutureTime) {
+        // Handle future time ranges
+        switch (timeRange) {
+          case '明天': {
+            // Tomorrow: from tomorrow 00:00:00 to day after tomorrow 00:00:00
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 0, 0, 0, 0);
+            break;
+          }
+          case '下禮拜':
+          case '下週': {
+            // Next week: from next Monday 00:00:00 to next Sunday 23:59:59
+            const dayOfWeek = now.getDay();
+            const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const daysToNextMonday = 7 - daysToMonday;
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysToNextMonday, 0, 0, 0, 0);
+            // End of next week (next Sunday 23:59:59)
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysToNextMonday + 7, 0, 0, 0, 0);
+            break;
+          }
+          case '下個月': {
+            // Next month: from first day of next month 00:00:00 to last day of next month 23:59:59
+            startDate = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
+            break;
+          }
+          default:
+            // Unknown future time range, return all
+            break;
         }
-        case '這週':
-        case '本週': {
-          const dayOfWeek = now.getDay();
-          const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday);
-          break;
-        }
-        case '上禮拜':
-        case '上週': {
-          const dayOfWeek = now.getDay();
-          const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday - 7);
-          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday);
-          break;
-        }
-        case '這個月':
-        case '本月': {
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        }
-        case '上個月': {
-          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-          break;
-        }
-        case '今天': {
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-          break;
-        }
-        default:
-          // Unknown time range, return all
-          break;
-      }
 
-      if (startDate !== null) {
-        if (endDate !== null) {
-          todos = todos.filter((todo) => {
-            // Prefer date field, fallback to createdAt
-            const todoDate = todo.date ? new Date(todo.date) : new Date(todo.createdAt);
-            return todoDate >= startDate! && todoDate < endDate!;
-          });
-        } else {
-          todos = todos.filter((todo) => {
-            const todoDate = todo.date ? new Date(todo.date) : new Date(todo.createdAt);
-            return todoDate >= startDate!;
-          });
+        // For future time queries, only filter todos that have a date field
+        // (todos without date cannot be determined if they're in the future range)
+        if (startDate !== null) {
+          if (endDate !== null) {
+            todos = todos.filter((todo) => {
+              // Only include todos with date field for future queries
+              if (!todo.date) {
+                return false;
+              }
+              const todoDate = new Date(todo.date);
+              // Compare dates: todo.date should be >= startDate and < endDate
+              return todoDate >= startDate! && todoDate < endDate!;
+            });
+          } else {
+            todos = todos.filter((todo) => {
+              // Only include todos with date field for future queries
+              if (!todo.date) {
+                return false;
+              }
+              const todoDate = new Date(todo.date);
+              return todoDate >= startDate!;
+            });
+          }
+        }
+      } else {
+        // Handle past/current time ranges
+        switch (timeRange) {
+          case '昨天': {
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+          }
+          case '這週':
+          case '本週': {
+            const dayOfWeek = now.getDay();
+            const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday);
+            break;
+          }
+          case '上禮拜':
+          case '上週': {
+            const dayOfWeek = now.getDay();
+            const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday - 7);
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday);
+            break;
+          }
+          case '這個月':
+          case '本月': {
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          }
+          case '上個月': {
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+            break;
+          }
+          case '今天': {
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            break;
+          }
+          default:
+            // Unknown time range, return all
+            break;
+        }
+
+        if (startDate !== null) {
+          if (endDate !== null) {
+            todos = todos.filter((todo) => {
+              // Prefer date field, fallback to createdAt for past/current queries
+              const todoDate = todo.date ? new Date(todo.date) : new Date(todo.createdAt);
+              return todoDate >= startDate! && todoDate < endDate!;
+            });
+          } else {
+            todos = todos.filter((todo) => {
+              const todoDate = todo.date ? new Date(todo.date) : new Date(todo.createdAt);
+              return todoDate >= startDate!;
+            });
+          }
         }
       }
     }
