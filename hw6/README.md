@@ -115,6 +115,10 @@ async function listUserItems(userId: string) {
 
 - 可先部署在 Vercel Node.js Runtime；若仍遇到 `socket hang up`，可考慮 Edge Runtime 或將 `/api/line` 拆到長駐主機。
 - 未來接 Supabase 時，只需新增 Repository 實作並在 `container.ts` 切換注入。
-- 若需要更多可靠的提醒與排程，可外掛 Supabase cron、Cloud Scheduler 或專屬 worker。
+- **提醒功能限制**：Vercel Hobby 計劃每天只能執行一次 cron job（目前設定為每天 08:00 執行）。
+  - 若需要更頻繁的提醒（例如每 5 分鐘檢查一次），可考慮：
+    - 升級到 Vercel Pro 計劃
+    - 使用外部 cron 服務（如 [cron-job.org](https://cron-job.org)、[EasyCron](https://www.easycron.com)）
+    - 使用 Supabase cron、Cloud Scheduler 或專屬 worker
 
 

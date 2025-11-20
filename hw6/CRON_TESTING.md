@@ -1,5 +1,14 @@
 # Cron Job 本地測試指南
 
+## ⚠️ Vercel Hobby 計劃限制
+
+**重要**：Vercel Hobby 計劃每天只能執行一次 cron job。目前的設定為每天 08:00 (Asia/Taipei, UTC+8) 執行一次。
+
+若需要更頻繁的提醒檢查（例如每 5 分鐘），請考慮：
+- 升級到 Vercel Pro 計劃
+- 使用外部 cron 服務（如 [cron-job.org](https://cron-job.org)、[EasyCron](https://www.easycron.com)）
+- 使用 Supabase cron 或其他雲端排程服務
+
 ## 方法 1：直接調用本地 Endpoint（最簡單）
 
 ### 如果沒有設置 CRON_SECRET
