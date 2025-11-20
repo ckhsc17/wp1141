@@ -468,7 +468,9 @@ export async function sendTodoNotificationMessage(
 ): Promise<void> {
   // This function is used by the cron job to send push notifications
   // It uses lineClient directly instead of context
+  // messaging-api-line will automatically call POST /v2/bot/message/push
   const { lineClient } = await import('@/bot/lineBot');
+  const { logger } = await import('@/utils/logger');
   
   const dateStr = todo.date ? new Date(todo.date).toLocaleString('zh-TW', { 
     timeZone: 'Asia/Taipei',
@@ -479,11 +481,31 @@ export async function sendTodoNotificationMessage(
     minute: '2-digit',
   }) : '';
 
-  await lineClient.pushMessages(userId, [
-    {
-      type: 'text',
-      text: `⏰ 提醒：${todo.title}${dateStr ? `\n時間：${dateStr}` : ''}${todo.description ? `\n${todo.description}` : ''}`,
-    },
-  ]);
+  const notificationText = `⏰ 提醒：${todo.title}${dateStr ? `\n時間：${dateStr}` : ''}${todo.description ? `\n${todo.description}` : ''}`;
+
+  try {
+    await lineClient.pushMessages(userId, [
+      {
+        type: 'text',
+        text: notificationText,
+      },
+    ]);
+
+    logger.info('Todo notification message sent', {
+      userId,
+      todoId: todo.id,
+      title: todo.title,
+      notificationText: notificationText.slice(0, 100), // Log first 100 chars
+    });
+  } catch (error) {
+    logger.error('Failed to send todo notification message', {
+      userId,
+      todoId: todo.id,
+      title: todo.title,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error; // Re-throw to allow caller to handle
+  }
 }
 

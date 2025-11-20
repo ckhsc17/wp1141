@@ -41,12 +41,45 @@ export async function GET(req: NextRequest): Promise<Response> {
 
     for (const reminder of remindersToSend) {
       try {
+        // Get todo information if reminder is linked to a todo
+        let todo = null;
+        if (reminder.todoId) {
+          todo = await prisma.todo.findUnique({
+            where: { id: reminder.todoId },
+          });
+        }
+
+        // Build notification message
+        let notificationText = `⏰ 提醒：${reminder.title}`;
+        // if (reminder.description) {
+        //   notificationText += `\n${reminder.description}`;
+        // }
+        if (todo) {
+          const dateStr = todo.date
+            ? new Date(todo.date).toLocaleString('zh-TW', {
+                timeZone: 'Asia/Taipei',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '';
+          if (dateStr) {
+            notificationText += `\n時間：${dateStr}`;
+          }
+          if (todo.description) {
+            notificationText += `\n${todo.description}`;
+          }
+        }
+
         // Send push message to LINE user
         // Note: reminder.userId is the LINE user ID (User.id = LINE user ID)
+        // messaging-api-line will automatically call POST /v2/bot/message/push
         await lineClient.pushMessages(reminder.userId, [
           {
             type: 'text',
-            text: `⏰ 提醒：${reminder.title}`,
+            text: notificationText,
           },
         ]);
 
@@ -64,13 +97,16 @@ export async function GET(req: NextRequest): Promise<Response> {
           reminderId: reminder.id,
           userId: reminder.userId,
           title: reminder.title,
+          notificationText: notificationText.slice(0, 100), // Log first 100 chars
         });
       } catch (error) {
         errorCount++;
         logger.error('Failed to send todo notification', {
           reminderId: reminder.id,
           userId: reminder.userId,
+          title: reminder.title,
           error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
         });
       }
     }
