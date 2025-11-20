@@ -2,8 +2,9 @@ import type LineContext from 'bottender/dist/line/LineContext';
 
 import type { LinkAnalysis, Reminder, SavedItem, Todo } from '@/domain/schemas';
 
-// 如果需要 LIFF admin 入口，改用 Flex/URI 按鈕，避免 QuickReply 型別限制
-const ADMIN_LIFF_URL = process.env.LIFF_ADMIN_URL ?? 'https://liff.line.me/YOUR_LIFF_ID';
+// LIFF URLs for dashboard and settings
+const LIFF_DASHBOARD_URL = process.env.LIFF_DASHBOARD_URL ?? 'https://liff.line.me/YOUR_DASHBOARD_LIFF_ID';
+const LIFF_SETTINGS_URL = process.env.LIFF_SETTINGS_URL ?? 'https://liff.line.me/YOUR_SETTINGS_LIFF_ID';
 
 /**
  * Truncate text to fit LINE Flex Message limits
@@ -21,10 +22,18 @@ function truncateText(text: string, maxLength: number = 2000): string {
 }
 
 const quickReplyItems = [
-  { label: '新增靈感', text: '新增靈感' },
-  { label: '設定提醒', text: '設定提醒' },
-  { label: '查看洞察', text: '查看洞察' },
-  { label: '開啟小幽面板', text: '開啟小幽面板' },
+  {
+    label: '📖 小幽的身世',
+    uri: 'https://bowenchen.vercel.app/files/novel.pdf',
+  },
+  {
+    label: '👤 我的',
+    uri: LIFF_DASHBOARD_URL,
+  },
+  {
+    label: '⚙️ 設定',
+    uri: LIFF_SETTINGS_URL,
+  },
 ] as const;
 
 function buildQuickReplies() {
@@ -32,12 +41,12 @@ function buildQuickReplies() {
     items: quickReplyItems.map((item) => ({
       type: 'action' as const,
       action: {
-        type: 'message' as const,
+        type: 'uri' as const,
         label: item.label,
-        text: item.text,
+        uri: item.uri,
       },
     })),
-  };
+  } as any; // Bottender 的型別定義可能不支援 URI action，使用 as any 繞過型別檢查
 }
 
 export async function sendSavedItemMessage(
@@ -119,7 +128,7 @@ export async function sendSavedItemMessage(
               action: {
                 type: 'uri',
                 label: '開啟小幽面板',
-                uri: ADMIN_LIFF_URL,
+                uri: LIFF_DASHBOARD_URL,
               },
             },
           ],
