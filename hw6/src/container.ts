@@ -1,6 +1,4 @@
 import {
-  PrismaInsightRepository,
-  PrismaJournalRepository,
   PrismaReminderRepository,
   PrismaSavedItemRepository,
   PrismaTodoRepository,
@@ -12,8 +10,11 @@ import { FeedbackService } from '@/services/feedbackService';
 import { GeminiService } from '@/services/geminiService';
 import { InsightService } from '@/services/insightService';
 import { IntentClassificationService } from '@/services/intentClassificationService';
-import { JournalService } from '@/services/journalService';
+import { KnowledgeService } from '@/services/knowledgeService';
+import { LifeService } from '@/services/lifeService';
 import { LinkService } from '@/services/linkService';
+import { MemoryService } from '@/services/memoryService';
+import { MusicService } from '@/services/musicService';
 import { RecommendationService } from '@/services/recommendationService';
 import { ReminderService } from '@/services/reminderService';
 import { TodoService } from '@/services/todoService';
@@ -30,20 +31,21 @@ if (!geminiApiKey) {
 const userRepo = new PrismaUserRepository();
 const savedItemRepo = new PrismaSavedItemRepository();
 const reminderRepo = new PrismaReminderRepository();
-const insightRepo = new PrismaInsightRepository();
 const todoRepo = new PrismaTodoRepository();
-const journalRepo = new PrismaJournalRepository();
 const gemini = new GeminiService(geminiApiKey);
 
 export const services = {
   content: new ContentService(savedItemRepo, gemini),
   reminders: new ReminderService(reminderRepo),
-  insight: new InsightService(insightRepo, savedItemRepo, gemini),
+  insight: new InsightService(savedItemRepo, gemini),
+  knowledge: new KnowledgeService(savedItemRepo, gemini),
+  memory: new MemoryService(savedItemRepo, gemini),
+  music: new MusicService(savedItemRepo, gemini),
+  life: new LifeService(savedItemRepo, gemini),
   intentClassification: new IntentClassificationService(gemini),
   todo: new TodoService(todoRepo, reminderRepo, gemini),
   link: new LinkService(savedItemRepo, gemini),
-  journal: new JournalService(journalRepo),
-  feedback: new FeedbackService(journalRepo, savedItemRepo, gemini),
+  feedback: new FeedbackService(savedItemRepo, gemini),
   recommendation: new RecommendationService(savedItemRepo, gemini),
   chat: new ChatService(savedItemRepo, gemini),
 };
@@ -52,9 +54,7 @@ export const repositories = {
   userRepo,
   savedItemRepo,
   reminderRepo,
-  insightRepo,
   todoRepo,
-  journalRepo,
 };
 
 

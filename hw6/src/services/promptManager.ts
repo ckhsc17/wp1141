@@ -44,21 +44,42 @@ ${text}
    - update: 更新待辦狀態（例如：「我寫完作業了！」「作業完成了」「取消吃飯」）
    - query: 查詢待辦（例如：「我上禮拜做了哪些事？」「吃了什麼？」「查看待辦」）
 2. link - 資訊連結（分享連結）
-3. journal - 日常紀錄（記錄生活點滴）
-4. feedback - 回饋請求（要求生活建議或回饋）
-5. recommendation - 推薦請求（要求推薦內容）
-6. chat_history - 對話紀錄請求（查詢過往對話）
-7. other - 其他聊天
+3. insight - 靈感（文學上、生活上的頓悟和啟發）
+   - 範例：「今天突然理解了一個人生道理」「這本書給我的啟發是...」「突然想到...」
+4. knowledge - 知識（資訊技術、學術、常識等）
+   - 範例：「React Hooks 的用法」「量子力學的基本概念」「學到一個新技巧...」
+5. memory - 記憶（個人經驗、日記、與某人的對話等，不屬於靈感或知識）
+   - 範例：「今天跟朋友聊到...」「記得上次去...」「今天發生了一件有趣的事...」
+6. music - 音樂（儲存最近覺得好聽，想拿來練彈唱 / solo 的歌）
+   - 範例：「在 solo」「陶喆 蝴蝶」「1. 館青 青少年觀察日記」「2. 方大同 love song」
+   - 注意：這是「儲存」音樂內容，不是「詢問」推薦
+7. life - 展覽、電影、想從事的活動（儲存想從事的活動）
+   - 範例：「小巨蛋溜冰！」「左撇子女孩金馬獎」「人也太好了吧展」
+   - 注意：這是「儲存」活動內容，不是「詢問」推薦
+8. feedback - 回饋請求（要求生活建議或回饋）
+   - 範例：「給我一些生活建議」「幫我分析時間管理」「我需要一些回饋」
+9. recommendation - 推薦請求（要求推薦內容）
+   - 範例：「今天可以聽什麼歌」「推薦一些技術文章」「有什麼好聽的音樂？」「推薦一些展覽」
+   - 注意：這是「詢問」推薦，不是「儲存」內容。如果訊息包含「可以」「推薦」「有什麼」「建議」等詢問詞，應分類為 recommendation
+10. chat_history - 對話紀錄請求（查詢過往對話）
+11. other - 其他聊天
 
 判斷規則：
 - create: 訊息包含待辦事項的列舉或描述（例如：「1. 吃飯 2. 取貨」「我要買菜」）
 - update: 訊息表示完成或取消某個待辦（例如：「寫完了」「完成了」「不做了」）
 - query: 訊息詢問待辦事項或已完成事項（例如：「做了什麼」「吃了什麼」「上禮拜做了哪些事」）
+- insight: 訊息表達頓悟、啟發、人生道理等（例如：「突然理解」「啟發」「領悟」）
+- knowledge: 訊息表達學習到的技術、學術、常識等（例如：「學到」「技術」「概念」）
+- memory: 訊息表達個人經驗、對話、回憶等（例如：「聊到」「記得」「發生」）
+- music: 訊息「儲存」歌曲、音樂、solo、彈唱等（例如：「在 solo」「陶喆 蝴蝶」），注意：如果是「詢問」推薦（例如：「可以聽什麼歌」），應分類為 recommendation
+- life: 訊息「儲存」展覽、電影、活動等（例如：「小巨蛋溜冰！」），注意：如果是「詢問」推薦（例如：「有什麼展覽？」），應分類為 recommendation
+- recommendation: 訊息「詢問」推薦內容（例如：「可以聽什麼歌」「推薦一些音樂」「有什麼好聽的？」「推薦一些技術文章」）
+- feedback: 訊息「詢問」生活建議或回饋（例如：「給我一些建議」「幫我分析」）
 
 輸出 JSON 格式（不能有其他文字）：
 <JSON>
 {
-  "intent": "todo|link|journal|feedback|recommendation|chat_history|other",
+  "intent": "todo|link|insight|knowledge|memory|music|life|feedback|recommendation|chat_history|other",
   "subIntent": "create|update|query" (僅 todo 時需要),
   "confidence": 0.0-1.0,
   "extractedData": {
@@ -82,13 +103,17 @@ ${url}
 </連結>
 ${content ? `<內容>\n${content}\n</內容>` : ''}
 
+規則：
+- tags: 統一使用英文小寫（例如：food, entertainment, knowledge, life, news, tool）
+- location: 僅美食/娛樂類型需要
+
 輸出 JSON 格式（不能有其他文字）：
 <JSON>
 {
   "type": "美食|娛樂|知識|生活|新聞|工具|其他",
   "summary": "150字內的摘要",
-  "location": "地點" (僅美食/娛樂類型需要),
-  "tags": ["tag1", "tag2"]
+  "location": "地點" (僅美食/娛樂類型需要，可為 null),
+  "tags": ["food", "restaurant"] (統一使用英文小寫)
 }
 </JSON>`;
     },
@@ -283,6 +308,233 @@ ${links}
 ${context ? `用戶的請求或情境：\n${context}\n` : ''}
 
 請根據以上資訊提供 2-3 個相關推薦，每個推薦包含標題和簡短說明（50字內）。`;
+    },
+  },
+  analyzeInsight: {
+    system:
+      '你是靈感內容分析助手。分析用戶分享的靈感內容，提取摘要和標籤，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      return `請分析以下靈感內容：
+<內容>
+${text}
+</內容>
+
+規則：
+- summary: 150 字內的摘要，捕捉靈感的核心
+- tags: 必須包含 "insight"，可選 "literature", "life", "philosophy", "inspiration" 等（統一使用英文小寫）
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "summary": "摘要（150字內）",
+  "tags": ["insight", "literature", "life"]
+}
+</JSON>`;
+    },
+  },
+  analyzeKnowledge: {
+    system:
+      '你是知識內容分析助手。分析用戶分享的知識內容，提取摘要和標籤，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      return `請分析以下知識內容：
+<內容>
+${text}
+</內容>
+
+規則：
+- summary: 150 字內的摘要，捕捉知識的核心
+- tags: 必須包含 "knowledge"，可選 "technology", "academic", "common-sense", "info" 等（統一使用英文小寫）
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "summary": "摘要（150字內）",
+  "tags": ["knowledge", "technology", "react"]
+}
+</JSON>`;
+    },
+  },
+  analyzeMemory: {
+    system:
+      '你是記憶內容分析助手。分析用戶分享的記憶內容，提取摘要和標籤，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      return `請分析以下記憶內容：
+<內容>
+${text}
+</內容>
+
+規則：
+- summary: 150 字內的摘要，捕捉記憶的核心
+- tags: 必須包含 "memory"，可選 "diary", "conversation", "experience", "recollection" 等（統一使用英文小寫）
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "summary": "摘要（150字內）",
+  "tags": ["memory", "conversation", "friend"]
+}
+</JSON>`;
+    },
+  },
+  analyzeMusic: {
+    system:
+      '你是音樂內容分析助手。分析用戶分享的音樂內容，提取歌曲資訊和標籤，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      return `請分析以下音樂內容：
+<內容>
+${text}
+</內容>
+
+規則：
+- summary: 150 字內的摘要，包含歌曲名稱、歌手等資訊
+- tags: 必須包含 "music"，可選 "solo", "cover", "practice" 等（統一使用英文小寫）
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "summary": "摘要（150字內，包含歌曲名稱、歌手）",
+  "tags": ["music", "solo", "artist-name"]
+}
+</JSON>`;
+    },
+  },
+  analyzeLife: {
+    system:
+      '你是生活活動內容分析助手。分析用戶分享的展覽、電影、活動等內容，提取摘要和標籤，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      return `請分析以下生活活動內容：
+<內容>
+${text}
+</內容>
+
+規則：
+- summary: 150 字內的摘要，包含活動名稱、類型等資訊
+- tags: 必須包含 "life"，可選 "exhibition", "movie", "activity", "event" 等（統一使用英文小寫）
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "summary": "摘要（150字內，包含活動名稱、類型）",
+  "tags": ["life", "exhibition", "art"]
+}
+</JSON>`;
+    },
+  },
+  extractRecommendationTags: {
+    system:
+      '你是推薦標籤提取助手。從用戶的推薦查詢中提取相關標籤，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+    user: (payload: Record<string, unknown>) => {
+      const query = typeof payload.query === 'string' ? payload.query : '';
+      return `請從以下推薦查詢中提取相關標籤：
+<查詢>
+${query}
+</查詢>
+
+規則：
+- 提取 3-5 個最相關的 tags（統一使用英文小寫）
+- tags 應該是具體的主題或領域（例如：technology, music, life, knowledge）
+- 如果查詢不明確，返回通用 tags（例如：["recommendation"]）
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "tags": ["technology", "ai", "machine-learning"]
+}
+</JSON>`;
+    },
+  },
+  extractFeedbackTags: {
+    system:
+      '你是回饋標籤提取助手。從用戶的回饋查詢中提取相關標籤（生活、時間管理等），必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+    user: (payload: Record<string, unknown>) => {
+      const query = typeof payload.query === 'string' ? payload.query : '';
+      return `請從以下回饋查詢中提取相關標籤：
+<查詢>
+${query}
+</查詢>
+
+規則：
+- 識別回饋的主題領域（life, time-management, work, study, health 等）
+- 提取 2-4 個相關 tags（統一使用英文小寫）
+- 如果查詢不明確，返回 ["life"] 作為預設
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "tags": ["life", "time-management", "work"]
+}
+</JSON>`;
+    },
+  },
+  extractSearchKeywords: {
+    system:
+      '你是搜尋關鍵字提取助手。從用戶的對話紀錄查詢中產生 3 個模糊搜尋關鍵字，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+    user: (payload: Record<string, unknown>) => {
+      const query = typeof payload.query === 'string' ? payload.query : '';
+      return `請從以下查詢中提取 3 個搜尋關鍵字：
+<查詢>
+${query}
+</查詢>
+
+規則：
+- 提取 3 個最具代表性的關鍵字
+- 關鍵字應該是名詞、動詞或重要概念
+- 排除停用詞（的、了、是、在等）
+- 關鍵字使用中文或英文（保持原樣）
+
+輸出 JSON 格式（不能有其他文字）：
+<JSON>
+{
+  "keywords": ["作業", "上禮拜", "完成"]
+}
+</JSON>`;
+    },
+  },
+  generateRecommendationWithRAG: {
+    system:
+      '你是推薦生成助手。基於用戶的查詢和相關內容，生成具體、可執行的推薦，語氣溫暖、有行動力。',
+    user: (payload: Record<string, unknown>) => {
+      const query = typeof payload.query === 'string' ? payload.query : '';
+      const items = typeof payload.items === 'string' ? payload.items : '';
+      return `用戶查詢：${query}
+
+相關內容：
+${items || '（暫無相關內容）'}
+
+請基於以上內容，提供具體、可執行的推薦。語氣溫暖、有行動力，直接回答用戶的問題。`;
+    },
+  },
+  generateFeedbackWithRAG: {
+    system:
+      '你是生活回饋生成助手。基於用戶的查詢和相關內容，分析用戶的生活模式，提供建設性建議，語氣溫暖、支持性。',
+    user: (payload: Record<string, unknown>) => {
+      const query = typeof payload.query === 'string' ? payload.query : '';
+      const items = typeof payload.items === 'string' ? payload.items : '';
+      return `用戶查詢：${query}
+
+相關內容：
+${items || '（暫無相關內容）'}
+
+請基於以上內容，分析用戶的生活模式，提供建設性建議。語氣溫暖、支持性，直接回答用戶的問題。`;
+    },
+  },
+  answerChatHistoryWithRAG: {
+    system:
+      '你是對話紀錄回答助手。基於用戶的查詢和相關內容，直接回答用戶的問題，引用相關內容。',
+    user: (payload: Record<string, unknown>) => {
+      const query = typeof payload.query === 'string' ? payload.query : '';
+      const items = typeof payload.items === 'string' ? payload.items : '';
+      return `用戶查詢：${query}
+
+相關內容：
+${items || '（暫無相關內容）'}
+
+請基於以上內容，直接回答用戶的問題。如果找到相關內容，請引用；如果找不到，請誠實告知。`;
     },
   },
   searchChatHistory: {

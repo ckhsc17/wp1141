@@ -1,6 +1,7 @@
 import type { TodoRepository, ReminderRepository } from '@/repositories';
 import { TodoSchema, type Todo } from '@/domain/schemas';
 import { GeminiService } from './geminiService';
+import { extractJsonString, nullToUndefined } from '@/utils/jsonParser';
 import { logger } from '@/utils/logger';
 
 export class TodoService {
@@ -23,29 +24,16 @@ export class TodoService {
     let due: Date | null = null;
 
     try {
-      let jsonStr = response.trim();
-      // Remove markdown code blocks
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '');
-      }
-      // Extract JSON from <JSON> tags
-      if (jsonStr.includes('<JSON>')) {
-        const match = jsonStr.match(/<JSON>([\s\S]*?)<\/JSON>/);
-        if (match) {
-          jsonStr = match[1].trim();
-        }
-      }
-
+      const jsonStr = extractJsonString(response);
       const parsed = JSON.parse(jsonStr) as {
         date: string | null;
         due: string | null;
       };
+      const cleaned = nullToUndefined(parsed);
 
       // Parse date
-      if (parsed.date && parsed.date !== 'null' && parsed.date !== null) {
-        const dateStr = String(parsed.date).trim();
+      if (cleaned.date && cleaned.date !== 'null' && cleaned.date !== null) {
+        const dateStr = String(cleaned.date).trim();
         if (dateStr && dateStr !== 'null') {
           // Check if it's just a date (YYYY-MM-DD) without time
           if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -65,8 +53,8 @@ export class TodoService {
       }
 
       // Parse due
-      if (parsed.due && parsed.due !== 'null' && parsed.due !== null) {
-        const dueStr = String(parsed.due).trim();
+      if (cleaned.due && cleaned.due !== 'null' && cleaned.due !== null) {
+        const dueStr = String(cleaned.due).trim();
         if (dueStr && dueStr !== 'null') {
           // Check if it's just a date (YYYY-MM-DD) without time
           if (dueStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -153,22 +141,11 @@ export class TodoService {
     let description: string | undefined;
 
     try {
-      let jsonStr = response.trim();
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '');
-      }
-      if (jsonStr.includes('<JSON>')) {
-        const match = jsonStr.match(/<JSON>([\s\S]*?)<\/JSON>/);
-        if (match) {
-          jsonStr = match[1].trim();
-        }
-      }
-
-      const parsed = JSON.parse(jsonStr) as { title: string; description?: string };
-      title = parsed.title || text;
-      description = parsed.description;
+      const jsonStr = extractJsonString(response);
+      const parsed = JSON.parse(jsonStr) as { title: string; description?: string | null };
+      const cleaned = nullToUndefined(parsed);
+      title = cleaned.title || text;
+      description = cleaned.description || undefined;
     } catch (error) {
       logger.warn('Failed to parse todo extraction, using fallback', {
         userId,
@@ -211,21 +188,13 @@ export class TodoService {
     let todos: Array<{ title: string; description?: string }> = [];
 
     try {
-      let jsonStr = response.trim();
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '');
-      }
-      if (jsonStr.includes('<JSON>')) {
-        const match = jsonStr.match(/<JSON>([\s\S]*?)<\/JSON>/);
-        if (match) {
-          jsonStr = match[1].trim();
-        }
-      }
-
-      const parsed = JSON.parse(jsonStr) as { todos: Array<{ title: string; description?: string }> };
-      todos = parsed.todos || [];
+      const jsonStr = extractJsonString(response);
+      const parsed = JSON.parse(jsonStr) as { todos: Array<{ title: string; description?: string | null }> };
+      const cleaned = nullToUndefined(parsed);
+      todos = (cleaned.todos || []).map((todo) => ({
+        title: todo.title,
+        description: todo.description || undefined,
+      }));
     } catch (error) {
       logger.warn('Failed to parse multiple todos extraction, using fallback', {
         userId,
@@ -286,42 +255,31 @@ export class TodoService {
     });
 
     try {
-      let jsonStr = response.trim();
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '');
-      }
-      if (jsonStr.includes('<JSON>')) {
-        const match = jsonStr.match(/<JSON>([\s\S]*?)<\/JSON>/);
-        if (match) {
-          jsonStr = match[1].trim();
-        }
-      }
-
+      const jsonStr = extractJsonString(response);
       const parsed = JSON.parse(jsonStr) as {
         matchedTodoId: string | null;
         action: '完成' | '取消';
         confidence: number;
       };
+      const cleaned = nullToUndefined(parsed);
 
-      if (!parsed.matchedTodoId || parsed.confidence < 0.5) {
+      if (!cleaned.matchedTodoId || cleaned.confidence < 0.5) {
         logger.warn('No matching todo found or low confidence', {
           userId,
           textPreview: text.slice(0, 100),
-          confidence: parsed.confidence,
+          confidence: cleaned.confidence,
         });
         return null;
       }
 
       // Map action to status
-      const status: Todo['status'] = parsed.action === '完成' ? 'done' : 'cancelled';
+      const status: Todo['status'] = cleaned.action === '完成' ? 'done' : 'cancelled';
 
-      const updated = await this.todoRepo.updateStatus(parsed.matchedTodoId, status);
+      const updated = await this.todoRepo.updateStatus(cleaned.matchedTodoId, status);
       logger.info('Todo updated by natural language', {
         userId,
         todoId: updated.id,
-        action: parsed.action,
+        action: cleaned.action,
         status,
       });
 
@@ -367,30 +325,19 @@ export class TodoService {
     let status: Todo['status'] | null = null;
 
     try {
-      let jsonStr = response.trim();
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '');
-      }
-      if (jsonStr.includes('<JSON>')) {
-        const match = jsonStr.match(/<JSON>([\s\S]*?)<\/JSON>/);
-        if (match) {
-          jsonStr = match[1].trim();
-        }
-      }
-
+      const jsonStr = extractJsonString(response);
       const parsed = JSON.parse(jsonStr) as {
         specificDate: string | null;
         timeRange: string | null;
         keywords: string[];
         status: 'done' | 'pending' | 'cancelled' | null;
       };
+      const cleaned = nullToUndefined(parsed);
 
-      specificDate = parsed.specificDate;
-      timeRange = parsed.timeRange;
-      keywords = parsed.keywords || [];
-      status = parsed.status || null;
+      specificDate = cleaned.specificDate || null;
+      timeRange = cleaned.timeRange || null;
+      keywords = cleaned.keywords || [];
+      status = cleaned.status || null;
     } catch (error) {
       logger.warn('Failed to parse todo query, using fallback', {
         userId,

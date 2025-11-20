@@ -4,21 +4,21 @@ import { GeminiService } from './geminiService';
 import { extractJsonString, nullToUndefined } from '@/utils/jsonParser';
 import { logger } from '@/utils/logger';
 
-export class InsightService {
+export class MusicService {
   constructor(
     private readonly savedItemRepo: SavedItemRepository,
     private readonly gemini: GeminiService,
   ) {}
 
-  async saveInsight(userId: string, text: string): Promise<SavedItem> {
-    // Use LLM to analyze insight content
+  async saveMusic(userId: string, text: string): Promise<SavedItem> {
+    // Use LLM to analyze music content
     const response = await this.gemini.generate({
-      template: 'analyzeInsight',
+      template: 'analyzeMusic',
       payload: { text },
     });
 
     let summary = text.slice(0, 150);
-    let tags: string[] = ['insight'];
+    let tags: string[] = ['music'];
 
     try {
       const jsonStr = extractJsonString(response);
@@ -27,7 +27,7 @@ export class InsightService {
       summary = cleaned.summary || summary;
       tags = cleaned.tags || tags;
     } catch (error) {
-      logger.warn('Failed to parse insight analysis, using fallback', {
+      logger.warn('Failed to parse music analysis, using fallback', {
         userId,
         textPreview: text.slice(0, 100),
         error: error instanceof Error ? error.message : String(error),
@@ -44,10 +44,9 @@ export class InsightService {
       tags,
     });
 
-    logger.info('Insight saved', { userId, itemId: item.id, tags });
+    logger.info('Music saved', { userId, itemId: item.id, tags });
 
     return SavedItemSchema.parse(item);
   }
 }
-
 

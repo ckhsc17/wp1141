@@ -1,36 +1,64 @@
-import type { JournalRepository, SavedItemRepository } from '@/repositories';
+import type { SavedItemRepository } from '@/repositories';
 import { GeminiService } from './geminiService';
+import { extractJsonString, nullToUndefined } from '@/utils/jsonParser';
 import { logger } from '@/utils/logger';
 
 export class FeedbackService {
   constructor(
-    private readonly journalRepo: JournalRepository,
     private readonly savedItemRepo: SavedItemRepository,
     private readonly gemini: GeminiService,
   ) {}
 
-  async generateFeedback(userId: string): Promise<string> {
-    // Get recent journal entries and saved items
-    const recentJournals = await this.journalRepo.listByUser(userId, 5);
-    const recentItems = await this.savedItemRepo.listByUser(userId, 5);
+  private async extractFeedbackTags(query: string): Promise<string[]> {
+    const response = await this.gemini.generate({
+      template: 'extractFeedbackTags',
+      payload: { query },
+    });
 
-    const entries = [
-      ...recentJournals.map((j) => `[日記] ${j.content}`),
-      ...recentItems.map((i) => `[${i.category}] ${i.title || i.content}`),
-    ].join('\n');
+    let tags: string[] = ['life'];
 
-    if (!entries.trim()) {
+    try {
+      const jsonStr = extractJsonString(response);
+      const parsed = JSON.parse(jsonStr) as { tags: string[] | null };
+      const cleaned = nullToUndefined(parsed);
+      tags = cleaned.tags || tags;
+    } catch (error) {
+      logger.warn('Failed to parse feedback tags, using fallback', {
+        query,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    // Ensure tags are lowercase
+    return tags.map((tag) => tag.toLowerCase());
+  }
+
+  async generateFeedback(userId: string, context?: string): Promise<string> {
+    // Extract tags from query
+    const query = context || '生活回饋';
+    const tags = await this.extractFeedbackTags(query);
+
+    // RAG query: search by tags
+    const relevantItems = await this.savedItemRepo.searchByTags(userId, tags, 10);
+
+    if (relevantItems.length === 0) {
       return '你還沒有記錄任何內容呢！開始記錄你的生活點滴，我會根據你的紀錄提供回饋和建議 💫';
     }
 
+    // Format items for RAG context
+    const itemsText = relevantItems
+      .map((item) => `- ${item.title || item.content}${item.tags.length > 0 ? ` [${item.tags.join(', ')}]` : ''}`)
+      .join('\n');
+
     const response = await this.gemini.generate({
-      template: 'generateFeedback',
-      payload: { entries },
+      template: 'generateFeedbackWithRAG',
+      payload: { query, items: itemsText },
     });
 
-    logger.debug('Feedback generated', {
+    logger.debug('Feedback generated with RAG', {
       userId,
-      entriesCount: recentJournals.length + recentItems.length,
+      tags,
+      itemsCount: relevantItems.length,
       responsePreview: response.slice(0, 200),
     });
 

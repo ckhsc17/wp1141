@@ -1,6 +1,6 @@
 import type LineContext from 'bottender/dist/line/LineContext';
 
-import type { Insight, LinkAnalysis, Reminder, SavedItem, Todo } from '@/domain/schemas';
+import type { LinkAnalysis, Reminder, SavedItem, Todo } from '@/domain/schemas';
 
 // 如果需要 LIFF admin 入口，改用 Flex/URI 按鈕，避免 QuickReply 型別限制
 const ADMIN_LIFF_URL = process.env.LIFF_ADMIN_URL ?? 'https://liff.line.me/YOUR_LIFF_ID';
@@ -61,13 +61,17 @@ export async function sendSavedItemMessage(
               wrap: true,
               margin: 'md',
             },
-            {
-              type: 'text',
-              text: `分類：${saved.category}`,
-              size: 'sm',
-              color: '#aaaaaa',
-              margin: 'sm',
-            },
+            ...(saved.tags.length > 0
+              ? [
+                  {
+                    type: 'text' as const,
+                    text: `標籤：${saved.tags.join(', ')}`,
+                    size: 'sm' as const,
+                    color: '#aaaaaa',
+                    margin: 'sm' as const,
+                  },
+                ]
+              : []),
           ],
         },
         footer: {
@@ -124,19 +128,30 @@ export async function sendReminderMessage(
   ]);
 }
 
-export async function sendInsightMessage(context: LineContext, insight: Insight): Promise<void> {
+export async function sendInsightMessage(context: LineContext, item: SavedItem): Promise<void> {
   await context.reply([
     {
       type: 'flex',
-      altText: '今日洞察',
+      altText: '已儲存靈感',
       contents: {
         type: 'bubble',
         body: {
           type: 'box',
           layout: 'vertical',
           contents: [
-            { type: 'text', text: '小幽給你的提醒', weight: 'bold', size: 'md' },
-            { type: 'text', text: insight.summary, wrap: true, margin: 'md' },
+            { type: 'text', text: '已儲存靈感 ✨', weight: 'bold', size: 'md' },
+            { type: 'text', text: item.title || item.content.slice(0, 100), wrap: true, margin: 'md' },
+            ...(item.tags.length > 0
+              ? [
+                  {
+                    type: 'text' as const,
+                    text: `標籤：${item.tags.join(', ')}`,
+                    size: 'sm' as const,
+                    color: '#aaaaaa',
+                    margin: 'sm' as const,
+                  },
+                ]
+              : []),
           ],
         },
       },

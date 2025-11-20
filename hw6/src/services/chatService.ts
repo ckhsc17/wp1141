@@ -1,5 +1,6 @@
 import type { SavedItemRepository } from '@/repositories';
 import { GeminiService } from './geminiService';
+import { extractJsonString, nullToUndefined } from '@/utils/jsonParser';
 import { logger } from '@/utils/logger';
 
 export class ChatService {
@@ -8,27 +9,82 @@ export class ChatService {
     private readonly gemini: GeminiService,
   ) {}
 
-  async searchHistory(userId: string, query: string): Promise<string> {
-    // Search in saved items (including chat history stored as SavedItem with sourceType: 'chat')
-    const results = await this.savedItemRepo.searchByText(userId, query, 10);
+  private async extractSearchKeywords(query: string): Promise<string[]> {
+    const response = await this.gemini.generate({
+      template: 'extractSearchKeywords',
+      payload: { query },
+    });
 
-    if (results.length === 0) {
+    let keywords: string[] = [];
+
+    try {
+      const jsonStr = extractJsonString(response);
+      const parsed = JSON.parse(jsonStr) as { keywords: string[] | null };
+      const cleaned = nullToUndefined(parsed);
+      keywords = cleaned.keywords || [];
+    } catch (error) {
+      logger.warn('Failed to parse search keywords, using fallback', {
+        query,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Fallback: use query as keyword
+      keywords = [query];
+    }
+
+    return keywords;
+  }
+
+  async searchHistory(userId: string, query: string): Promise<string> {
+    // Extract tags and keywords
+    const keywords = await this.extractSearchKeywords(query);
+    
+    // Try to extract tags if query involves specific topics
+    const lowerQuery = query.toLowerCase();
+    const potentialTags: string[] = [];
+    if (lowerQuery.includes('生活') || lowerQuery.includes('life')) potentialTags.push('life');
+    if (lowerQuery.includes('知識') || lowerQuery.includes('knowledge')) potentialTags.push('knowledge');
+    if (lowerQuery.includes('靈感') || lowerQuery.includes('insight')) potentialTags.push('insight');
+    if (lowerQuery.includes('記憶') || lowerQuery.includes('memory')) potentialTags.push('memory');
+    if (lowerQuery.includes('音樂') || lowerQuery.includes('music')) potentialTags.push('music');
+
+    // Mixed query: search by tags and keywords
+    const tagResults = potentialTags.length > 0
+      ? await this.savedItemRepo.searchByTags(userId, potentialTags, 5)
+      : [];
+    
+    const textResults = await Promise.all(
+      keywords.map((keyword) => this.savedItemRepo.searchByText(userId, keyword, 3))
+    );
+    const textResultsFlat = Array.from(new Set(textResults.flat().map((item) => item.id)))
+      .map((id) => textResults.flat().find((item) => item.id === id)!)
+      .slice(0, 5);
+
+    // Combine and deduplicate results
+    const allResults = [...tagResults, ...textResultsFlat];
+    const uniqueResults = Array.from(
+      new Map(allResults.map((item) => [item.id, item])).values()
+    ).slice(0, 10);
+
+    if (uniqueResults.length === 0) {
       return '我找不到相關的對話紀錄呢 😅 試試看用不同的關鍵字搜尋？';
     }
 
-    const history = results
-      .map((item, idx) => `${idx + 1}. ${item.title || item.content}${item.url ? ` (${item.url})` : ''}`)
+    // Format items for RAG context
+    const itemsText = uniqueResults
+      .map((item, idx) => `${idx + 1}. ${item.title || item.content}${item.url ? ` (${item.url})` : ''}${item.tags.length > 0 ? ` [${item.tags.join(', ')}]` : ''}`)
       .join('\n');
 
     const response = await this.gemini.generate({
-      template: 'searchChatHistory',
-      payload: { query, history },
+      template: 'answerChatHistoryWithRAG',
+      payload: { query, items: itemsText },
     });
 
-    logger.debug('Chat history searched', {
+    logger.debug('Chat history searched with RAG', {
       userId,
       query,
-      resultsCount: results.length,
+      keywords,
+      potentialTags,
+      resultsCount: uniqueResults.length,
       responsePreview: response.slice(0, 200),
     });
 

@@ -14,13 +14,14 @@ export type UserProfile = z.infer<typeof UserProfileSchema>;
 export const SavedItemSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  sourceType: z.enum(['link', 'note', 'chat']),
   title: z.string().optional(),
   content: z.string(),
   url: z.string().url().optional(),
-  category: z.enum(['inspiration', 'knowledge', 'project', 'tool', 'entertainment']),
   tags: z.array(z.string()).default([]),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  location: z.string().optional(),
   createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
 });
 
 export type SavedItem = z.infer<typeof SavedItemSchema>;
@@ -37,17 +38,6 @@ export const ReminderSchema = z.object({
 
 export type Reminder = z.infer<typeof ReminderSchema>;
 
-export const InsightSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  summary: z.string(),
-  actionItems: z.array(z.string()).default([]),
-  sentiment: z.enum(['positive', 'neutral', 'negative']).default('neutral'),
-  createdAt: z.date().default(() => new Date()),
-});
-
-export type Insight = z.infer<typeof InsightSchema>;
-
 export const SharedContentSchema = z.object({
   text: z.string().optional(),
   url: z.string().url().optional(),
@@ -58,7 +48,7 @@ export type SharedContent = z.infer<typeof SharedContentSchema>;
 
 // Intent Classification
 export const IntentClassificationSchema = z.object({
-  intent: z.enum(['todo', 'link', 'journal', 'feedback', 'recommendation', 'chat_history', 'other']),
+  intent: z.enum(['todo', 'link', 'insight', 'knowledge', 'memory', 'music', 'life', 'feedback', 'recommendation', 'chat_history', 'other']),
   subIntent: z.enum(['create', 'update', 'query']).optional(),
   confidence: z.number().min(0).max(1).default(0.8),
   extractedData: z.record(z.string(), z.unknown()).optional(),
@@ -80,17 +70,6 @@ export const TodoSchema = z.object({
 });
 
 export type Todo = z.infer<typeof TodoSchema>;
-
-// Journal Entry
-export const JournalEntrySchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  content: z.string(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
-});
-
-export type JournalEntry = z.infer<typeof JournalEntrySchema>;
 
 // Link Analysis
 export const LinkAnalysisSchema = z.object({

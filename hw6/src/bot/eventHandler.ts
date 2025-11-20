@@ -4,7 +4,6 @@ import {
   sendChatMessage,
   sendFeedbackMessage,
   sendInsightMessage,
-  sendJournalMessage,
   sendLinkMessage,
   sendRecommendationMessage,
   sendReminderMessage,
@@ -101,14 +100,38 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
         break;
       }
 
-      case 'journal': {
-        const entry = await services.journal.saveEntry(userId, text);
-        await sendJournalMessage(context, entry.content, 'saved');
+      case 'insight': {
+        const item = await services.insight.saveInsight(userId, text);
+        await sendInsightMessage(context, item);
+        break;
+      }
+
+      case 'knowledge': {
+        const item = await services.knowledge.saveKnowledge(userId, text);
+        await sendSavedItemMessage(context, item, '已儲存知識');
+        break;
+      }
+
+      case 'memory': {
+        const item = await services.memory.saveMemory(userId, text);
+        await sendSavedItemMessage(context, item, '已儲存記憶');
+        break;
+      }
+
+      case 'music': {
+        const item = await services.music.saveMusic(userId, text);
+        await sendSavedItemMessage(context, item, '已儲存音樂');
+        break;
+      }
+
+      case 'life': {
+        const item = await services.life.saveLife(userId, text);
+        await sendSavedItemMessage(context, item, '已儲存活動');
         break;
       }
 
       case 'feedback': {
-        const feedback = await services.feedback.generateFeedback(userId);
+        const feedback = await services.feedback.generateFeedback(userId, text);
         await sendFeedbackMessage(context, feedback);
         break;
       }

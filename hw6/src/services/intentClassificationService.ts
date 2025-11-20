@@ -1,5 +1,6 @@
 import { GeminiService } from './geminiService';
 import { IntentClassificationSchema, type IntentClassification } from '@/domain/schemas';
+import { extractJsonString, nullToUndefined } from '@/utils/jsonParser';
 import { logger } from '@/utils/logger';
 
 export class IntentClassificationService {
@@ -13,21 +14,11 @@ export class IntentClassificationService {
 
     try {
       // Try to extract JSON from response (might be wrapped in markdown code blocks)
-      let jsonStr = response.trim();
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/```\n?/g, '');
-      }
-      if (jsonStr.includes('<JSON>')) {
-        const match = jsonStr.match(/<JSON>([\s\S]*?)<\/JSON>/);
-        if (match) {
-          jsonStr = match[1].trim();
-        }
-      }
-
-      const parsed = JSON.parse(jsonStr) as IntentClassification;
-      const validated = IntentClassificationSchema.parse(parsed);
+      const jsonStr = extractJsonString(response);
+      const parsed = JSON.parse(jsonStr) as any;
+      // Convert null to undefined for optional fields
+      const cleaned = nullToUndefined(parsed);
+      const validated = IntentClassificationSchema.parse(cleaned);
 
       logger.debug('Intent classified', {
         userId,
@@ -90,6 +81,61 @@ export class IntentClassificationService {
       if (lowerText.includes('對話') || lowerText.includes('聊過') || lowerText.includes('說過')) {
         return {
           intent: 'chat_history',
+          confidence: 0.7,
+        };
+      }
+      // Check for recommendation first (詢問推薦)
+      if (
+        lowerText.includes('推薦') ||
+        lowerText.includes('可以') ||
+        lowerText.includes('有什麼') ||
+        lowerText.includes('建議') ||
+        lowerText.includes('recommend')
+      ) {
+        return {
+          intent: 'recommendation',
+          confidence: 0.7,
+        };
+      }
+      // Check for music storage (儲存音樂)
+      if (
+        (lowerText.includes('solo') || lowerText.includes('音樂') || lowerText.includes('歌') || lowerText.includes('music')) &&
+        !lowerText.includes('可以') &&
+        !lowerText.includes('推薦') &&
+        !lowerText.includes('有什麼')
+      ) {
+        return {
+          intent: 'music',
+          confidence: 0.7,
+        };
+      }
+      // Check for life activity storage (儲存活動)
+      if (
+        (lowerText.includes('展覽') || lowerText.includes('電影') || lowerText.includes('活動') || lowerText.includes('展')) &&
+        !lowerText.includes('可以') &&
+        !lowerText.includes('推薦') &&
+        !lowerText.includes('有什麼')
+      ) {
+        return {
+          intent: 'life',
+          confidence: 0.7,
+        };
+      }
+      if (lowerText.includes('靈感') || lowerText.includes('啟發') || lowerText.includes('頓悟')) {
+        return {
+          intent: 'insight',
+          confidence: 0.7,
+        };
+      }
+      if (lowerText.includes('知識') || lowerText.includes('技術') || lowerText.includes('學到') || lowerText.includes('知識')) {
+        return {
+          intent: 'knowledge',
+          confidence: 0.7,
+        };
+      }
+      if (lowerText.includes('記憶') || lowerText.includes('記得') || lowerText.includes('聊到') || lowerText.includes('發生')) {
+        return {
+          intent: 'memory',
           confidence: 0.7,
         };
       }

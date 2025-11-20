@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import type { Insight, Reminder, SavedItem, UserProfile, Todo, JournalEntry } from '@/domain/schemas';
+import type { Reminder, SavedItem, UserProfile, Todo } from '@/domain/schemas';
 import { prisma } from '@/repositories/prismaClient';
 
 export interface UserRepository {
@@ -9,19 +9,15 @@ export interface UserRepository {
 
 export interface SavedItemRepository {
   listByUser(userId: string, limit?: number): Promise<SavedItem[]>;
-  create(item: Omit<SavedItem, 'id' | 'createdAt'>): Promise<SavedItem>;
-  listByCategory(userId: string, category: SavedItem['category'], limit?: number): Promise<SavedItem[]>;
+  create(item: Omit<SavedItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedItem>;
+  listByTags(userId: string, tags: string[], limit?: number): Promise<SavedItem[]>;
+  searchByTags(userId: string, tags: string[], limit?: number): Promise<SavedItem[]>;
   searchByText(userId: string, query: string, limit?: number): Promise<SavedItem[]>;
 }
 
 export interface ReminderRepository {
   listPending(userId: string): Promise<Reminder[]>;
   create(reminder: Omit<Reminder, 'id' | 'createdAt' | 'status'>): Promise<Reminder>;
-}
-
-export interface InsightRepository {
-  listRecent(userId: string, limit?: number): Promise<Insight[]>;
-  create(insight: Omit<Insight, 'id' | 'createdAt'>): Promise<Insight>;
 }
 
 export interface TodoRepository {
@@ -32,11 +28,6 @@ export interface TodoRepository {
   delete(id: string): Promise<void>;
 }
 
-export interface JournalRepository {
-  create(entry: Omit<JournalEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<JournalEntry>;
-  getById(id: string): Promise<JournalEntry | undefined>;
-  listByUser(userId: string, limit?: number): Promise<JournalEntry[]>;
-}
 
 class InMemoryStore<T extends { id: string }> {
   protected items = new Map<string, T>();
@@ -78,9 +69,24 @@ export class InMemorySavedItemRepository
       .slice(0, limit);
   }
 
-  async listByCategory(userId: string, category: SavedItem['category'], limit = 10): Promise<SavedItem[]> {
+  async listByTags(userId: string, tags: string[], limit = 10): Promise<SavedItem[]> {
     return Array.from(this.items.values())
-      .filter((item) => item.userId === userId && item.category === category)
+      .filter(
+        (item) =>
+          item.userId === userId && tags.some((tag) => item.tags.includes(tag.toLowerCase())),
+      )
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async searchByTags(userId: string, tags: string[], limit = 10): Promise<SavedItem[]> {
+    const lowerTags = tags.map((t) => t.toLowerCase());
+    return Array.from(this.items.values())
+      .filter(
+        (item) =>
+          item.userId === userId &&
+          lowerTags.some((tag) => item.tags.some((itemTag) => itemTag.toLowerCase().includes(tag))),
+      )
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
   }
@@ -97,11 +103,12 @@ export class InMemorySavedItemRepository
       .slice(0, limit);
   }
 
-  async create(item: Omit<SavedItem, 'id' | 'createdAt'>): Promise<SavedItem> {
+  async create(item: Omit<SavedItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedItem> {
     const saved: SavedItem = {
       ...item,
       id: this.generateId(),
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
     return this.save(saved);
   }
@@ -128,26 +135,6 @@ export class InMemoryReminderRepository
   }
 }
 
-export class InMemoryInsightRepository
-  extends InMemoryStore<Insight>
-  implements InsightRepository
-{
-  async listRecent(userId: string, limit = 3): Promise<Insight[]> {
-    return Array.from(this.items.values())
-      .filter((insight) => insight.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
-  }
-
-  async create(insight: Omit<Insight, 'id' | 'createdAt'>): Promise<Insight> {
-    const created: Insight = {
-      ...insight,
-      id: this.generateId(),
-      createdAt: new Date(),
-    };
-    return this.save(created);
-  }
-}
 
 // Prisma-based skeleton repositories（未連線也不會被使用，只作型別與未來實作的雛形）
 
@@ -204,22 +191,23 @@ export class PrismaSavedItemRepository implements SavedItemRepository {
       return {
         id: item.id,
         userId: item.userId,
-        sourceType: item.sourceType.toLowerCase() as any, // Convert from uppercase Prisma enum to lowercase
         title: item.title ?? undefined,
         content: item.content,
         url: item.url ?? undefined,
-        category: item.category.toLowerCase() as any, // Convert from uppercase Prisma enum to lowercase
-        tags: [],
+        tags: item.tags || [],
+        metadata: item.metadata ? (item.metadata as Record<string, unknown>) : undefined,
+        location: item.location ?? undefined,
         createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       };
     });
   }
 
-  async listByCategory(userId: string, category: SavedItem['category'], limit = 10): Promise<SavedItem[]> {
+  async listByTags(userId: string, tags: string[], limit = 10): Promise<SavedItem[]> {
     const records = await prisma.savedItem.findMany({
       where: {
         userId,
-        category: category.toUpperCase() as any,
+        tags: { hasEvery: tags },
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -229,13 +217,40 @@ export class PrismaSavedItemRepository implements SavedItemRepository {
       return {
         id: item.id,
         userId: item.userId,
-        sourceType: item.sourceType.toLowerCase() as any,
         title: item.title ?? undefined,
         content: item.content,
         url: item.url ?? undefined,
-        category: item.category.toLowerCase() as any,
-        tags: [],
+        tags: item.tags || [],
+        metadata: item.metadata ? (item.metadata as Record<string, unknown>) : undefined,
+        location: item.location ?? undefined,
         createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      };
+    });
+  }
+
+  async searchByTags(userId: string, tags: string[], limit = 10): Promise<SavedItem[]> {
+    const records = await prisma.savedItem.findMany({
+      where: {
+        userId,
+        tags: { hasSome: tags },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return records.map<SavedItem>((item: any): SavedItem => {
+      return {
+        id: item.id,
+        userId: item.userId,
+        title: item.title ?? undefined,
+        content: item.content,
+        url: item.url ?? undefined,
+        tags: item.tags || [],
+        metadata: item.metadata ? (item.metadata as Record<string, unknown>) : undefined,
+        location: item.location ?? undefined,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       };
     });
   }
@@ -257,27 +272,29 @@ export class PrismaSavedItemRepository implements SavedItemRepository {
       return {
         id: item.id,
         userId: item.userId,
-        sourceType: item.sourceType.toLowerCase() as any,
         title: item.title ?? undefined,
         content: item.content,
         url: item.url ?? undefined,
-        category: item.category.toLowerCase() as any,
-        tags: [],
+        tags: item.tags || [],
+        metadata: item.metadata ? (item.metadata as Record<string, unknown>) : undefined,
+        location: item.location ?? undefined,
         createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       };
     });
   }
 
-  async create(item: Omit<SavedItem, 'id' | 'createdAt'>): Promise<SavedItem> {
+  async create(item: Omit<SavedItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedItem> {
     const record = await prisma.savedItem.create({
       data: {
         userId: item.userId,
-        sourceType: item.sourceType.toUpperCase() as any, // Convert to uppercase for Prisma enum
         title: item.title,
         content: item.content,
         rawText: item.content,
         url: item.url,
-        category: item.category.toUpperCase() as any, // Convert to uppercase for Prisma enum
+        tags: item.tags || [],
+        metadata: item.metadata ? (item.metadata as any) : undefined,
+        location: item.location,
         sentiment: 'NEUTRAL',
       },
     });
@@ -285,13 +302,14 @@ export class PrismaSavedItemRepository implements SavedItemRepository {
     return {
       id: record.id,
       userId: record.userId,
-      sourceType: record.sourceType.toLowerCase() as any, // Convert from uppercase Prisma enum to lowercase
       title: record.title ?? undefined,
       content: record.content,
       url: record.url ?? undefined,
-      category: record.category.toLowerCase() as any, // Convert from uppercase Prisma enum to lowercase
-      tags: [],
+      tags: record.tags || [],
+      metadata: record.metadata ? (record.metadata as Record<string, unknown>) : undefined,
+      location: record.location ?? undefined,
       createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
     };
   }
 }
@@ -338,46 +356,6 @@ export class PrismaReminderRepository implements ReminderRepository {
   }
 }
 
-export class PrismaInsightRepository implements InsightRepository {
-  async listRecent(userId: string, limit = 3): Promise<Insight[]> {
-    const records = await prisma.insight.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
-
-    return records.map<Insight>((insight: any): Insight => {
-      return {
-        id: insight.id,
-        userId: insight.userId,
-        summary: insight.summary,
-        actionItems: [],
-        sentiment: (insight.sentiment?.toLowerCase() as any) ?? 'neutral',
-        createdAt: insight.createdAt,
-      };
-    });
-  }
-
-  async create(insight: Omit<Insight, 'id' | 'createdAt'>): Promise<Insight> {
-    const record = await prisma.insight.create({
-      data: {
-        userId: insight.userId,
-        summary: insight.summary,
-        sentiment: 'NEUTRAL',
-        detailsJson: insight.actionItems?.join('\n') ?? undefined,
-      },
-    });
-
-    return {
-      id: record.id,
-      userId: record.userId,
-      summary: record.summary,
-      actionItems: insight.actionItems ?? [],
-      sentiment: 'neutral',
-      createdAt: record.createdAt,
-    };
-  }
-}
 
 // Todo Repository Implementations
 
@@ -512,77 +490,5 @@ export class PrismaTodoRepository implements TodoRepository {
   }
 }
 
-// Journal Repository Implementations
-
-export class InMemoryJournalRepository extends InMemoryStore<JournalEntry> implements JournalRepository {
-  async create(entry: Omit<JournalEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<JournalEntry> {
-    const created: JournalEntry = {
-      ...entry,
-      id: this.generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    return this.save(created);
-  }
-
-  async getById(id: string): Promise<JournalEntry | undefined> {
-    return this.items.get(id);
-  }
-
-  async listByUser(userId: string, limit = 10): Promise<JournalEntry[]> {
-    return Array.from(this.items.values())
-      .filter((entry) => entry.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
-  }
-}
-
-export class PrismaJournalRepository implements JournalRepository {
-  async create(entry: Omit<JournalEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<JournalEntry> {
-    const record = await prisma.journalEntry.create({
-      data: {
-        userId: entry.userId,
-        content: entry.content,
-      },
-    });
-
-    return {
-      id: record.id,
-      userId: record.userId,
-      content: record.content,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
-    };
-  }
-
-  async getById(id: string): Promise<JournalEntry | undefined> {
-    const record = await prisma.journalEntry.findUnique({ where: { id } });
-    if (!record) return undefined;
-
-    return {
-      id: record.id,
-      userId: record.userId,
-      content: record.content,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
-    };
-  }
-
-  async listByUser(userId: string, limit = 10): Promise<JournalEntry[]> {
-    const records = await prisma.journalEntry.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
-
-    return records.map((record) => ({
-      id: record.id,
-      userId: record.userId,
-      content: record.content,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
-    }));
-  }
-}
 
 
