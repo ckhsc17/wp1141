@@ -17,6 +17,7 @@ import { showTyping } from '@/bot/typingHelper';
 import { ensureUser } from '@/bot/userHelper';
 import { repositories, services } from '@/container';
 import { logger } from '@/utils/logger';
+import { isQuestion, classifyQuestionIntent } from '@/utils/questionDetector';
 
 export async function handleLineEvent(context: LineContext): Promise<void> {
   const userId = context.event.source?.userId;
@@ -53,6 +54,26 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
       subIntent: classification.subIntent,
       confidence: classification.confidence,
     });
+
+    // Check if a storage intent was incorrectly classified for a question
+    // Storage intents: insight, knowledge, memory, music, life
+    const storageIntents = ['insight', 'knowledge', 'memory', 'music', 'life'] as const;
+    if (storageIntents.includes(classification.intent as any) && isQuestion(text)) {
+      // Reclassify question to appropriate query intent
+      const questionIntent = classifyQuestionIntent(text);
+      if (questionIntent) {
+        const originalIntent = classification.intent;
+        classification.intent = questionIntent;
+        classification.confidence = 0.6; // Lower confidence since it's a reclassification
+        
+        logger.warn('Reclassified question as query intent', {
+          userId,
+          originalIntent,
+          newIntent: questionIntent,
+          textPreview: text.slice(0, 100),
+        });
+      }
+    }
 
     // Route to appropriate service based on intent
     switch (classification.intent) {

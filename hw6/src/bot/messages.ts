@@ -5,6 +5,21 @@ import type { LinkAnalysis, Reminder, SavedItem, Todo } from '@/domain/schemas';
 // 如果需要 LIFF admin 入口，改用 Flex/URI 按鈕，避免 QuickReply 型別限制
 const ADMIN_LIFF_URL = process.env.LIFF_ADMIN_URL ?? 'https://liff.line.me/YOUR_LIFF_ID';
 
+/**
+ * Truncate text to fit LINE Flex Message limits
+ * LINE Flex Message Bubble JSON size limit is 10KB
+ * For safety, we limit individual text components to 2000 characters
+ * @param text - Text to truncate
+ * @param maxLength - Maximum length (default: 2000)
+ * @returns Truncated text with ellipsis if needed
+ */
+function truncateText(text: string, maxLength: number = 2000): string {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return text.slice(0, maxLength - 3) + '...';
+}
+
 const quickReplyItems = [
   { label: '新增靈感', text: '新增靈感' },
   { label: '設定提醒', text: '設定提醒' },
@@ -57,7 +72,7 @@ export async function sendSavedItemMessage(
             },
             {
               type: 'text',
-              text: summary,
+              text: truncateText(summary, 2000),
               wrap: true,
               margin: 'md',
             },
@@ -65,7 +80,7 @@ export async function sendSavedItemMessage(
               ? [
                   {
                     type: 'text' as const,
-                    text: `標籤：${saved.tags.join(', ')}`,
+                    text: truncateText(`標籤：${saved.tags.join(', ')}`, 500),
                     size: 'sm' as const,
                     color: '#aaaaaa',
                     margin: 'sm' as const,
@@ -140,12 +155,12 @@ export async function sendInsightMessage(context: LineContext, item: SavedItem):
           layout: 'vertical',
           contents: [
             { type: 'text', text: '已儲存靈感 ✨', weight: 'bold', size: 'md' },
-            { type: 'text', text: item.title || item.content.slice(0, 100), wrap: true, margin: 'md' },
+            { type: 'text', text: truncateText(item.title || item.content, 2000), wrap: true, margin: 'md' },
             ...(item.tags.length > 0
               ? [
                   {
                     type: 'text' as const,
-                    text: `標籤：${item.tags.join(', ')}`,
+                    text: truncateText(`標籤：${item.tags.join(', ')}`, 500),
                     size: 'sm' as const,
                     color: '#aaaaaa',
                     margin: 'sm' as const,
@@ -205,7 +220,7 @@ export async function sendTodoMessage(
             },
             {
               type: 'text',
-              text: todo.title,
+              text: truncateText(todo.title, 2000),
               wrap: true,
               margin: 'md',
               weight: 'bold',
@@ -214,7 +229,7 @@ export async function sendTodoMessage(
               ? [
                   {
                     type: 'text' as const,
-                    text: todo.description,
+                    text: truncateText(todo.description, 2000),
                     wrap: true,
                     size: 'sm' as const,
                     color: '#666666',
@@ -267,7 +282,7 @@ export async function sendLinkMessage(
             },
             {
               type: 'text',
-              text: analysis.summary,
+              text: truncateText(analysis.summary, 2000),
               wrap: true,
               margin: 'md',
             },
@@ -340,7 +355,7 @@ export async function sendFeedbackMessage(context: LineContext, feedback: string
             },
             {
               type: 'text',
-              text: feedback,
+              text: truncateText(feedback, 2000),
               wrap: true,
               margin: 'md',
             },
@@ -374,7 +389,7 @@ export async function sendRecommendationMessage(
             },
             {
               type: 'text',
-              text: recommendation,
+              text: truncateText(recommendation, 2000),
               wrap: true,
               margin: 'md',
             },
@@ -434,7 +449,7 @@ export async function sendTodosListMessage(context: LineContext, todos: Todo[]):
             },
             {
               type: 'text',
-              text: todoList,
+              text: truncateText(todoList, 2000),
               wrap: true,
               margin: 'md',
               size: 'sm',

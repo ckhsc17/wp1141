@@ -33,12 +33,16 @@ export class IntentClassificationService {
 
       // Fallback: simple heuristics
       const lowerText = text.toLowerCase();
+      
+      // Priority 1: Check for links
       if (lowerText.includes('http') || lowerText.includes('www.') || lowerText.startsWith('https://')) {
         return {
           intent: 'link',
           confidence: 0.7,
         };
       }
+      
+      // Priority 2: Check for todos
       if (lowerText.includes('待辦') || lowerText.includes('todo') || lowerText.includes('要做')) {
         if (lowerText.includes('查') || lowerText.includes('看') || lowerText.includes('做了') || lowerText.includes('哪些')) {
           return {
@@ -60,34 +64,56 @@ export class IntentClassificationService {
           confidence: 0.7,
         };
       }
-      if (lowerText.includes('回饋') || lowerText.includes('建議') || lowerText.includes('feedback')) {
+      
+      // Priority 3: Check for query intents (feedback, recommendation, chat_history) BEFORE storage intents
+      // Check feedback: 回饋、建議、分析、評估、狀況、如何、怎樣、幫我、給我
+      if (
+        lowerText.includes('回饋') ||
+        lowerText.includes('feedback') ||
+        (lowerText.includes('建議') && !lowerText.includes('推薦')) ||
+        lowerText.includes('分析') ||
+        lowerText.includes('評估') ||
+        (lowerText.includes('狀況') && (lowerText.includes('如何') || lowerText.includes('怎樣'))) ||
+        (lowerText.includes('如何') && (lowerText.includes('生活') || lowerText.includes('時間') || lowerText.includes('狀態') || lowerText.includes('狀況'))) ||
+        (lowerText.includes('怎樣') && (lowerText.includes('生活') || lowerText.includes('時間') || lowerText.includes('狀態'))) ||
+        (lowerText.includes('幫我') && (lowerText.includes('分析') || lowerText.includes('建議'))) ||
+        (lowerText.includes('給我') && (lowerText.includes('建議') || lowerText.includes('回饋') || lowerText.includes('分析')))
+      ) {
         return {
           intent: 'feedback',
           confidence: 0.7,
         };
       }
-      if (lowerText.includes('推薦') || lowerText.includes('recommend')) {
-        return {
-          intent: 'recommendation',
-          confidence: 0.7,
-        };
-      }
-      if (lowerText.includes('對話') || lowerText.includes('聊過') || lowerText.includes('說過')) {
-        return {
-          intent: 'chat_history',
-          confidence: 0.7,
-        };
-      }
-      // Check for recommendation first (詢問推薦)
+      
+      // Check recommendation: 推薦、可以、有什麼、給我推薦
       if (
         lowerText.includes('推薦') ||
-        lowerText.includes('可以') ||
+        lowerText.includes('recommend') ||
+        (lowerText.includes('可以') && (lowerText.includes('聽') || lowerText.includes('看') || lowerText.includes('讀'))) ||
         lowerText.includes('有什麼') ||
-        lowerText.includes('建議') ||
-        lowerText.includes('recommend')
+        (lowerText.includes('給我') && lowerText.includes('推薦'))
       ) {
         return {
           intent: 'recommendation',
+          confidence: 0.7,
+        };
+      }
+      
+      // Check chat_history: 對話、聊過、說過、之前、過往、紀錄、記得、有沒有、查詢、搜尋
+      if (
+        lowerText.includes('對話') ||
+        lowerText.includes('聊過') ||
+        lowerText.includes('說過') ||
+        (lowerText.includes('之前') && (lowerText.includes('聊') || lowerText.includes('說') || lowerText.includes('提到'))) ||
+        lowerText.includes('過往') ||
+        (lowerText.includes('紀錄') && (lowerText.includes('對話') || lowerText.includes('過往'))) ||
+        (lowerText.includes('記得') && (lowerText.includes('之前') || lowerText.includes('聊'))) ||
+        (lowerText.includes('有沒有') && (lowerText.includes('聊') || lowerText.includes('說'))) ||
+        (lowerText.includes('查詢') && (lowerText.includes('對話') || lowerText.includes('紀錄'))) ||
+        (lowerText.includes('搜尋') && (lowerText.includes('對話') || lowerText.includes('紀錄')))
+      ) {
+        return {
+          intent: 'chat_history',
           confidence: 0.7,
         };
       }

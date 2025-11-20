@@ -38,8 +38,13 @@ export class FeedbackService {
     const query = context || '生活回饋';
     const tags = await this.extractFeedbackTags(query);
 
-    // RAG query: search by tags
-    const relevantItems = await this.savedItemRepo.searchByTags(userId, tags, 10);
+    // Always include 'memory' tag for feedback to consider user's memories/diary entries
+    const searchTags = [...tags, 'memory'];
+    // Remove duplicates
+    const uniqueTags = Array.from(new Set(searchTags));
+
+    // RAG query: search by tags (including memory)
+    const relevantItems = await this.savedItemRepo.searchByTags(userId, uniqueTags, 10);
 
     if (relevantItems.length === 0) {
       return '你還沒有記錄任何內容呢！開始記錄你的生活點滴，我會根據你的紀錄提供回饋和建議 💫';
@@ -57,7 +62,7 @@ export class FeedbackService {
 
     logger.debug('Feedback generated with RAG', {
       userId,
-      tags,
+      tags: uniqueTags,
       itemsCount: relevantItems.length,
       responsePreview: response.slice(0, 200),
     });
