@@ -38,16 +38,36 @@ export class RecommendationService {
     const query = context || '';
     const tags = await this.extractTagsFromQuery(query);
 
-    // RAG query: search by tags
-    const relevantItems = await this.savedItemRepo.searchByTags(userId, tags, 10);
+    // RAG query: combine tags search and text search for better relevance
+    // 1. Search by tags (broader match)
+    const tagResults = await this.savedItemRepo.searchByTags(userId, tags, 5);
+    
+    // 2. Search by text (more specific match, extract keywords from query)
+    const keywords = query
+      .split(/\s+/)
+      .filter((word) => word.length > 1 && !['的', '是', '誰', '什麼', '可以', '推薦'].includes(word))
+      .slice(0, 3);
+    
+    const textResults = keywords.length > 0
+      ? await Promise.all(keywords.map((keyword) => this.savedItemRepo.searchByText(userId, keyword, 3)))
+      : [];
+    const textResultsFlat = Array.from(new Set(textResults.flat().map((item) => item.id)))
+      .map((id) => textResults.flat().find((item) => item.id === id)!)
+      .slice(0, 5);
 
-    if (relevantItems.length === 0) {
+    // 3. Combine and deduplicate results (prioritize text search results)
+    const allResults = [...textResultsFlat, ...tagResults];
+    const uniqueResults = Array.from(
+      new Map(allResults.map((item) => [item.id, item])).values()
+    ).slice(0, 10);
+
+    if (uniqueResults.length === 0) {
       return '你還沒有儲存相關內容呢！分享一些你感興趣的內容，我會根據你的喜好提供推薦 ✨';
     }
 
     // Format items for RAG context
-    const itemsText = relevantItems
-      .map((item) => `- ${item.title || item.content}${item.url ? ` (${item.url})` : ''}${item.tags.length > 0 ? ` [${item.tags.join(', ')}]` : ''}`)
+    const itemsText = uniqueResults
+      .map((item) => `- ${item.title || item.content.slice(0, 100)}${item.url ? ` (${item.url})` : ''}${item.tags.length > 0 ? ` [${item.tags.join(', ')}]` : ''}`)
       .join('\n');
 
     const response = await this.gemini.generate({
@@ -57,8 +77,10 @@ export class RecommendationService {
 
     logger.debug('Recommendation generated with RAG', {
       userId,
+      query,
       tags,
-      itemsCount: relevantItems.length,
+      keywords,
+      itemsCount: uniqueResults.length,
       responsePreview: response.slice(0, 200),
     });
 

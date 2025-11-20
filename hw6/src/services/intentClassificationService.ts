@@ -20,13 +20,7 @@ export class IntentClassificationService {
       const cleaned = nullToUndefined(parsed);
       const validated = IntentClassificationSchema.parse(cleaned);
 
-      logger.debug('Intent classified', {
-        userId,
-        textPreview: text.slice(0, 100),
-        intent: validated.intent,
-        subIntent: validated.subIntent,
-        confidence: validated.confidence,
-      });
+      // Note: Debug log is handled in eventHandler.ts to avoid duplication
 
       return validated;
     } catch (error) {

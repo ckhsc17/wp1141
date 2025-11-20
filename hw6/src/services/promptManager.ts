@@ -427,10 +427,10 @@ ${text}
   },
   extractRecommendationTags: {
     system:
-      '你是推薦標籤提取助手。從用戶的推薦查詢中提取相關標籤，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
+      '你是推薦標籤提取助手。從用戶的推薦查詢中提取相關標籤和關鍵字，必須嚴格按照 JSON 格式輸出，不能有其他文字。',
     user: (payload: Record<string, unknown>) => {
       const query = typeof payload.query === 'string' ? payload.query : '';
-      return `請從以下推薦查詢中提取相關標籤：
+      return `請從以下推薦查詢中提取相關標籤和關鍵字：
 <查詢>
 ${query}
 </查詢>
@@ -438,12 +438,13 @@ ${query}
 規則：
 - 提取 3-5 個最相關的 tags（統一使用英文小寫）
 - tags 應該是具體的主題或領域（例如：technology, music, life, knowledge）
+- 如果查詢提到具體的歌曲、歌手、電影、展覽等名稱，提取為 tags（例如：如果查詢「盛夏光年」，提取 ["music", "mayday", "summer-light-year"]）
 - 如果查詢不明確，返回通用 tags（例如：["recommendation"]）
 
 輸出 JSON 格式（不能有其他文字）：
 <JSON>
 {
-  "tags": ["technology", "ai", "machine-learning"]
+  "tags": ["music", "mayday", "summer-light-year"]
 }
 </JSON>`;
     },
