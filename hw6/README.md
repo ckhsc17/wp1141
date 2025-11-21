@@ -67,6 +67,7 @@ yarn build    # 打包
 ## 資料庫與 Prisma
 
 - Prisma schema：位於 `prisma/schema.prisma`，使用 PostgreSQL provider，結構與 `src/domain/schemas.ts` 對齊。
+- **Vercel 部署注意**：`package.json` 中的 `build` 腳本已包含 `prisma generate`，確保在構建時自動生成 Prisma Client。
 - 本地開發流程（範例）：
 
 ```bash

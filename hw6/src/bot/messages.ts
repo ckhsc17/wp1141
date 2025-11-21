@@ -8,13 +8,20 @@ const LIFF_SETTINGS_URL = process.env.LIFF_SETTINGS_URL ?? 'https://liff.line.me
 
 /**
  * Truncate text to fit LINE Flex Message limits
- * LINE Flex Message Bubble JSON size limit is 10KB
- * For safety, we limit individual text components to 2000 characters
+ * 
+ * LINE Flex Message limits:
+ * - Single Bubble JSON size: 10KB
+ * - Carousel JSON size: 50KB
+ * - Text component: No explicit character limit, but must fit within JSON size limit
+ * 
+ * We use 4000 characters as default to leave buffer for JSON structure overhead.
+ * For shorter content like tags, use a smaller limit (e.g., 500).
+ * 
  * @param text - Text to truncate
- * @param maxLength - Maximum length (default: 2000)
+ * @param maxLength - Maximum length (default: 4000)
  * @returns Truncated text with ellipsis if needed
  */
-function truncateText(text: string, maxLength: number = 2000): string {
+function truncateText(text: string, maxLength: number = 4000): string {
   if (text.length <= maxLength) {
     return text;
   }
@@ -105,7 +112,7 @@ export async function sendSavedItemMessage(
             },
             {
               type: 'text',
-              text: truncateText(saved.title || saved.content, 2000),
+              text: truncateText(saved.title || saved.content),
               wrap: true,
               margin: 'md',
             },
@@ -189,7 +196,7 @@ export async function sendInsightMessage(context: LineContext, item: SavedItem):
           contents: [
             { type: 'text', text: '已儲存靈感 ✨', weight: 'bold', size: 'md' },
             { type: 'separator', margin: 'md' },
-            { type: 'text', text: truncateText(item.title || item.content, 2000), wrap: true, margin: 'md' },
+            { type: 'text', text: truncateText(item.title || item.content), wrap: true, margin: 'md' },
             ...(item.tags.length > 0
               ? [
                   {
@@ -525,7 +532,7 @@ export async function sendTodoMessage(
             },
             {
               type: 'text',
-              text: truncateText(todo.title, 2000),
+              text: truncateText(todo.title),
               wrap: true,
               margin: 'md',
               weight: 'bold',
@@ -534,7 +541,7 @@ export async function sendTodoMessage(
               ? [
                   {
                     type: 'text' as const,
-                    text: truncateText(todo.description, 2000),
+                    text: truncateText(todo.description),
                     wrap: true,
                     size: 'sm' as const,
                     color: '#666666',
@@ -591,7 +598,7 @@ export async function sendLinkMessage(
             },
             {
               type: 'text',
-              text: truncateText(analysis.summary, 2000),
+              text: truncateText(analysis.summary),
               wrap: true,
               margin: 'md',
             },
@@ -668,7 +675,7 @@ export async function sendFeedbackMessage(context: LineContext, feedback: string
             },
             {
               type: 'text',
-              text: truncateText(feedback, 2000),
+              text: truncateText(feedback),
               wrap: true,
               margin: 'md',
             },
@@ -706,7 +713,7 @@ export async function sendRecommendationMessage(
             },
             {
               type: 'text',
-              text: truncateText(recommendation, 2000),
+              text: truncateText(recommendation),
               wrap: true,
               margin: 'md',
             },
@@ -770,7 +777,7 @@ export async function sendTodosListMessage(context: LineContext, todos: Todo[]):
             },
             {
               type: 'text',
-              text: truncateText(todoList, 2000),
+              text: truncateText(todoList),
               wrap: true,
               margin: 'md',
               size: 'sm',
