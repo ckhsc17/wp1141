@@ -2,10 +2,7 @@ import { Agent as HttpAgent } from 'node:http';
 import { Agent as HttpsAgent } from 'node:https';
 import { setDefaultResultOrder } from 'node:dns';
 
-import { LineBot } from 'bottender';
 import { LineClient } from 'messaging-api-line';
-
-import { handleLineEvent } from '@/bot/eventHandler';
 
 const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 const channelSecret = process.env.LINE_CHANNEL_SECRET;
@@ -19,21 +16,15 @@ if (!accessToken || !channelSecret) {
 const origin = process.env.LINE_API_ORIGIN ?? 'https://api.line.me';
 const dataOrigin = process.env.LINE_DATA_API_ORIGIN ?? 'https://api-data.line.me';
 
-const customLineClient = new LineClient({
+// Create LineClient instance for direct LINE Messaging API calls
+export const lineClient = new LineClient({
   accessToken,
   channelSecret,
   origin,
   dataOrigin,
 });
 
-// Export LineClient for use in event handlers (e.g., to fetch user profiles)
-export const lineClient = customLineClient;
-
-export const lineBot = new LineBot({
-  client: customLineClient,
-  channelSecret,
-});
-
+// Force IPv4 resolution to mitigate connection issues
 try {
   if (typeof setDefaultResultOrder === 'function') {
     setDefaultResultOrder('ipv4first');
@@ -42,6 +33,7 @@ try {
   console.warn('[lineBot] Failed to set DNS result order to ipv4first:', error);
 }
 
+// Configure keep-alive agents for better connection reuse
 const keepAliveHttpAgent = new HttpAgent({
   keepAlive: true,
   keepAliveMsecs: 30_000,
@@ -54,10 +46,8 @@ const keepAliveHttpsAgent = new HttpsAgent({
   timeout: 45_000,
 });
 
-customLineClient.axios.defaults.httpAgent = keepAliveHttpAgent;
-customLineClient.axios.defaults.httpsAgent = keepAliveHttpsAgent;
-customLineClient.dataAxios.defaults.httpAgent = keepAliveHttpAgent;
-customLineClient.dataAxios.defaults.httpsAgent = keepAliveHttpsAgent;
-
-lineBot.onEvent(handleLineEvent);
+lineClient.axios.defaults.httpAgent = keepAliveHttpAgent;
+lineClient.axios.defaults.httpsAgent = keepAliveHttpsAgent;
+lineClient.dataAxios.defaults.httpAgent = keepAliveHttpAgent;
+lineClient.dataAxios.defaults.httpsAgent = keepAliveHttpsAgent;
 

@@ -1,4 +1,21 @@
-import type LineContext from 'bottender/dist/line/LineContext';
+// LINE webhook event type (from LINE Messaging API)
+type LineWebhookEvent = {
+  type: string;
+  source?: {
+    userId?: string;
+    type: string;
+    [key: string]: any;
+  };
+  message?: {
+    type: string;
+    text?: string;
+    [key: string]: any;
+  };
+  replyToken?: string;
+  webhookEventId?: string;
+  timestamp?: number;
+  [key: string]: any;
+};
 
 import {
   sendChatMessage,
@@ -6,7 +23,6 @@ import {
   sendInsightMessage,
   sendLinkMessage,
   sendRecommendationMessage,
-  sendReminderMessage,
   sendSavedItemMessage,
   sendTodoMessage,
   sendTodosListMessage,
@@ -20,35 +36,40 @@ import { repositories, services } from '@/container';
 import { logger } from '@/utils/logger';
 import { isQuestion, classifyQuestionIntent } from '@/utils/questionDetector';
 
-export async function handleLineEvent(context: LineContext): Promise<void> {
-  const userId = context.event.source?.userId;
-  const text = context.event.isText ? context.event.text?.trim() ?? '' : '';
+export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
+  const userId = event.source?.userId;
+  const replyToken = (event as any).replyToken; // replyToken is in the event object
 
-  if (context.event.isFollow || context.event.isJoin) {
-    // Ensure user exists when they follow/join
+  // Handle Follow/Join events
+  if (event.type === 'follow' || event.type === 'join') {
     if (userId) {
       await ensureUser(userId, lineClient, repositories.userRepo);
+      await sendWelcomeMessage(userId, replyToken);
     }
-    await sendWelcomeMessage(context);
     return;
   }
 
-  if (!userId || !context.event.isText) {
-    await sendWelcomeMessage(context);
+  // Only process text messages
+  if (event.type !== 'message' || event.message?.type !== 'text' || !userId) {
+    if (userId) {
+      await sendWelcomeMessage(userId, replyToken);
+    }
     return;
   }
+
+  const text = event.message?.text?.trim() ?? '';
 
   // Ensure user exists before processing any message
   await ensureUser(userId, lineClient, repositories.userRepo);
 
   // Handle usage guide quick reply
   if (text === '使用教學') {
-    await sendUsageGuideMessage(context);
+    await sendUsageGuideMessage(userId, replyToken);
     return;
   }
 
   // Show typing indicator immediately when processing starts
-  await showTyping(context, userId);
+  await showTyping(userId);
 
   try {
     // Classify intent using LLM
@@ -89,25 +110,25 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
           // Query todos by natural language
           const todos = await services.todo.queryTodosByNaturalLanguage(userId, text);
           if (todos.length === 0) {
-            await sendChatMessage(context, '找不到符合條件的待辦事項呢！');
+            await sendChatMessage(userId, '找不到符合條件的待辦事項呢！', replyToken);
           } else {
-            await sendTodosListMessage(context, todos);
+            await sendTodosListMessage(userId, todos, replyToken);
           }
         } else if (classification.subIntent === 'update') {
           // Update todo by natural language
           const updated = await services.todo.updateTodoByNaturalLanguage(userId, text);
           if (updated) {
-            await sendTodoMessage(context, updated, 'updated');
+            await sendTodoMessage(userId, updated, 'updated', replyToken);
           } else {
-            await sendChatMessage(context, '找不到要更新的待辦事項呢，請確認待辦事項的名稱。');
+            await sendChatMessage(userId, '找不到要更新的待辦事項呢，請確認待辦事項的名稱。', replyToken);
           }
         } else {
           // Create todos (support multiple)
           const todos = await services.todo.createTodos(userId, text);
           if (todos.length === 1) {
-            await sendTodoMessage(context, todos[0], 'created');
+            await sendTodoMessage(userId, todos[0], 'created', replyToken);
           } else {
-            await sendChatMessage(context, `已為你建立 ${todos.length} 個待辦事項：\n${todos.map((t, i) => `${i + 1}. ${t.title}`).join('\n')}`);
+            await sendChatMessage(userId, `已為你建立 ${todos.length} 個待辦事項：\n${todos.map((t, i) => `${i + 1}. ${t.title}`).join('\n')}`, replyToken);
           }
         }
         break;
@@ -119,54 +140,54 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
         const url = urlMatch?.[0] || (classification.extractedData?.url as string | undefined);
 
         if (!url) {
-          await sendChatMessage(context, '我找不到連結呢，請確認訊息中包含有效的 URL。');
+          await sendChatMessage(userId, '我找不到連結呢，請確認訊息中包含有效的 URL。', replyToken);
           return;
         }
 
         const result = await services.link.analyzeAndSave(userId, url, text);
-        await sendLinkMessage(context, url, result.analysis);
+        await sendLinkMessage(userId, url, result.analysis, replyToken);
         break;
       }
 
       case 'insight': {
         const item = await services.insight.saveInsight(userId, text);
-        await sendInsightMessage(context, item);
+        await sendInsightMessage(userId, item, replyToken);
         break;
       }
 
       case 'knowledge': {
         const item = await services.knowledge.saveKnowledge(userId, text);
-        await sendSavedItemMessage(context, item, '已儲存知識');
+        await sendSavedItemMessage(userId, item, '已儲存知識', replyToken);
         break;
       }
 
       case 'memory': {
         const item = await services.memory.saveMemory(userId, text);
-        await sendSavedItemMessage(context, item, '已儲存記憶');
+        await sendSavedItemMessage(userId, item, '已儲存記憶', replyToken);
         break;
       }
 
       case 'music': {
         const item = await services.music.saveMusic(userId, text);
-        await sendSavedItemMessage(context, item, '已儲存音樂');
+        await sendSavedItemMessage(userId, item, '已儲存音樂', replyToken);
         break;
       }
 
       case 'life': {
         const item = await services.life.saveLife(userId, text);
-        await sendSavedItemMessage(context, item, '已儲存活動');
+        await sendSavedItemMessage(userId, item, '已儲存活動', replyToken);
         break;
       }
 
       case 'feedback': {
         const feedback = await services.feedback.generateFeedback(userId, text);
-        await sendFeedbackMessage(context, feedback);
+        await sendFeedbackMessage(userId, feedback, replyToken);
         break;
       }
 
       case 'recommendation': {
         const recommendation = await services.recommendation.generateRecommendation(userId, text);
-        await sendRecommendationMessage(context, recommendation);
+        await sendRecommendationMessage(userId, recommendation, replyToken);
         break;
       }
 
@@ -174,7 +195,7 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
         // Extract query from text or use full text
         const query = (classification.extractedData?.query as string | undefined) || text;
         const response = await services.chat.searchHistory(userId, query);
-        await sendChatMessage(context, response);
+        await sendChatMessage(userId, response, replyToken);
         break;
       }
 
@@ -182,17 +203,17 @@ export async function handleLineEvent(context: LineContext): Promise<void> {
       default: {
         // General chat
         const response = await services.chat.chat(userId, text);
-        await sendChatMessage(context, response);
+        await sendChatMessage(userId, response, replyToken);
         break;
       }
     }
   } catch (error) {
-    logger.error('Handle event failed', { error, userId, textPreview: text.slice(0, 100) });
-    await context.reply([
-      {
-        type: 'text',
-        text: '小幽現在有點忙碌，請稍後再試一次 🙏',
-      },
-    ]);
+    logger.error('Handle event failed', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      userId,
+      textPreview: text.slice(0, 100),
+    });
+    await sendChatMessage(userId, '小幽現在有點忙碌，請稍後再試一次 🙏', replyToken);
   }
 }

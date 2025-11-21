@@ -1,6 +1,6 @@
-import type LineContext from 'bottender/dist/line/LineContext';
-
 import type { LinkAnalysis, Reminder, SavedItem, Todo } from '@/domain/schemas';
+import { lineClient } from './lineBot';
+import { logger } from '@/utils/logger';
 
 // LIFF URLs for dashboard and settings
 const LIFF_DASHBOARD_URL = process.env.LIFF_DASHBOARD_URL ?? 'https://liff.line.me/YOUR_DASHBOARD_LIFF_ID';
@@ -55,7 +55,7 @@ function buildQuickReplies() {
         // Message action for usage guide
         return {
           type: 'action' as const,
-          action: {
+  action: {
             type: 'message' as const,
             label: item.label,
             text: item.text,
@@ -73,15 +73,46 @@ function buildQuickReplies() {
         };
       }
     }),
-  } as any; // Bottender 的型別定義可能不支援所有 action 類型，使用 as any 繞過型別檢查
+  } as any; // LINE API 的型別定義可能不完整，使用 as any 繞過型別檢查
+}
+
+/**
+ * Send messages to LINE user
+ * Uses replyMessage if replyToken is provided, otherwise uses pushMessages
+ */
+async function sendMessages(
+  userId: string,
+  messages: any[],
+  replyToken?: string,
+): Promise<void> {
+  try {
+    if (replyToken) {
+      // Use replyMessages for webhook events (has replyToken)
+      await lineClient.replyMessages(replyToken, messages);
+    } else {
+      // Use pushMessages for notifications or when no replyToken
+      await lineClient.pushMessages(userId, messages);
+    }
+  } catch (error) {
+    logger.error('Failed to send messages', {
+      userId,
+      hasReplyToken: !!replyToken,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
+  }
 }
 
 export async function sendSavedItemMessage(
-  context: LineContext,
+  userId: string,
   saved: SavedItem,
   summary: string,
+  replyToken?: string,
 ): Promise<void> {
-  await context.reply([
+  await sendMessages(
+    userId,
+    [
     {
       type: 'flex',
       altText: '已為你收藏生活紀錄',
@@ -110,8 +141,8 @@ export async function sendSavedItemMessage(
               type: 'separator',
               margin: 'md',
             },
-            {
-              type: 'text',
+    {
+      type: 'text',
               text: truncateText(saved.title || saved.content),
               wrap: true,
               margin: 'md',
@@ -171,20 +202,31 @@ export async function sendSavedItemMessage(
 }
 
 export async function sendReminderMessage(
-  context: LineContext,
+  userId: string,
   reminder: Reminder,
+  replyToken?: string,
 ): Promise<void> {
-  await context.reply([
-    {
-      type: 'text',
-      text: `我會在 ${reminder.triggerAt.toLocaleString()} 提醒你：「${reminder.title}」`,
-      quickReply: buildQuickReplies(),
-    },
-  ]);
+  await sendMessages(
+    userId,
+    [
+      {
+        type: 'text',
+        text: `我會在 ${reminder.triggerAt.toLocaleString()} 提醒你：「${reminder.title}」`,
+        quickReply: buildQuickReplies(),
+      },
+    ],
+    replyToken,
+  );
 }
 
-export async function sendInsightMessage(context: LineContext, item: SavedItem): Promise<void> {
-  await context.reply([
+export async function sendInsightMessage(
+  userId: string,
+  item: SavedItem,
+  replyToken?: string,
+): Promise<void> {
+  await sendMessages(
+    userId,
+    [
     {
       type: 'flex',
       altText: '已儲存靈感',
@@ -213,26 +255,34 @@ export async function sendInsightMessage(context: LineContext, item: SavedItem):
       },
       quickReply: buildQuickReplies(),
     },
-  ]);
+    ],
+    replyToken,
+  );
 }
 
-export async function sendWelcomeMessage(context: LineContext): Promise<void> {
-  await context.reply([
+export async function sendWelcomeMessage(userId: string, replyToken?: string): Promise<void> {
+  await sendMessages(
+    userId,
+    [
     {
       type: 'text',
       text: '嗨，我是 Booboo 小幽 👋 想記錄靈感、設定提醒或聽聽建議，都可以跟我說！\n範例：\n- 「幫我記下今天看到的文章 https://...」\n- 「提醒我明天 9 點要寫日記」\n- 「幫我整理最近的想法」',
       quickReply: buildQuickReplies(),
     },
-  ]);
+    ],
+    replyToken,
+  );
 }
 
-export async function sendUsageGuideMessage(context: LineContext): Promise<void> {
-  await context.reply([
+export async function sendUsageGuideMessage(userId: string, replyToken?: string): Promise<void> {
+  await sendMessages(
+    userId,
+    [
     {
       type: 'flex',
       altText: 'Booboo 小幽使用教學',
       contents: {
-        type: 'carousel',
+    type: 'carousel',
         contents: [
           // Page 1: Introduction and Todo
           {
@@ -490,27 +540,36 @@ export async function sendUsageGuideMessage(context: LineContext): Promise<void>
       },
       quickReply: buildQuickReplies(),
     },
-  ]);
+    ],
+    replyToken,
+  );
 }
 
 export async function sendTodoMessage(
-  context: LineContext,
+  userId: string,
   todo: Todo,
   action: 'created' | 'listed' | 'updated',
+  replyToken?: string,
 ): Promise<void> {
   if (action === 'listed') {
     // For list, we'll send a simple text message
-    await context.reply([
-      {
-        type: 'text',
-        text: `待辦事項：${todo.title}${todo.description ? `\n${todo.description}` : ''}\n狀態：${todo.status === 'pending' ? '待處理' : todo.status === 'done' ? '已完成' : '已取消'}`,
-        quickReply: buildQuickReplies(),
-      },
-    ]);
+    await sendMessages(
+      userId,
+      [
+        {
+          type: 'text',
+          text: `待辦事項：${todo.title}${todo.description ? `\n${todo.description}` : ''}\n狀態：${todo.status === 'pending' ? '待處理' : todo.status === 'done' ? '已完成' : '已取消'}`,
+          quickReply: buildQuickReplies(),
+        },
+      ],
+      replyToken,
+    );
     return;
   }
 
-  await context.reply([
+  await sendMessages(
+    userId,
+    [
     {
       type: 'flex',
       altText: action === 'created' ? '已建立待辦事項' : '已更新待辦事項',
@@ -561,15 +620,20 @@ export async function sendTodoMessage(
       },
       quickReply: buildQuickReplies(),
     },
-  ]);
+    ],
+    replyToken,
+  );
 }
 
 export async function sendLinkMessage(
-  context: LineContext,
+  userId: string,
   url: string,
   analysis: LinkAnalysis,
+  replyToken?: string,
 ): Promise<void> {
-  await context.reply([
+  await sendMessages(
+    userId,
+    [
     {
       type: 'flex',
       altText: '連結分析結果',
@@ -624,7 +688,7 @@ export async function sendLinkMessage(
               type: 'button',
               style: 'link',
               height: 'sm',
-              action: {
+      action: {
                 type: 'uri',
                 label: '查看連結',
                 uri: url,
@@ -635,25 +699,38 @@ export async function sendLinkMessage(
       },
       quickReply: buildQuickReplies(),
     },
-  ]);
+    ],
+    replyToken,
+  );
 }
 
 export async function sendJournalMessage(
-  context: LineContext,
+  userId: string,
   content: string,
   action: 'saved',
+  replyToken?: string,
 ): Promise<void> {
-  await context.reply([
-    {
-      type: 'text',
-      text: `已為你記錄：${content}`,
-      quickReply: buildQuickReplies(),
-    },
-  ]);
+  await sendMessages(
+    userId,
+    [
+      {
+        type: 'text',
+        text: `已為你記錄：${content}`,
+        quickReply: buildQuickReplies(),
+      },
+    ],
+    replyToken,
+  );
 }
 
-export async function sendFeedbackMessage(context: LineContext, feedback: string): Promise<void> {
-  await context.reply([
+export async function sendFeedbackMessage(
+  userId: string,
+  feedback: string,
+  replyToken?: string,
+): Promise<void> {
+  await sendMessages(
+    userId,
+    [
     {
       type: 'flex',
       altText: '生活回饋',
@@ -673,8 +750,8 @@ export async function sendFeedbackMessage(context: LineContext, feedback: string
               type: 'separator',
               margin: 'md',
             },
-            {
-              type: 'text',
+    {
+      type: 'text',
               text: truncateText(feedback),
               wrap: true,
               margin: 'md',
@@ -684,14 +761,19 @@ export async function sendFeedbackMessage(context: LineContext, feedback: string
       },
       quickReply: buildQuickReplies(),
     },
-  ]);
+    ],
+    replyToken,
+  );
 }
 
 export async function sendRecommendationMessage(
-  context: LineContext,
+  userId: string,
   recommendation: string,
+  replyToken?: string,
 ): Promise<void> {
-  await context.reply([
+  await sendMessages(
+    userId,
+    [
     {
       type: 'flex',
       altText: '推薦內容',
@@ -722,27 +804,41 @@ export async function sendRecommendationMessage(
       },
       quickReply: buildQuickReplies(),
     },
-  ]);
+    ],
+    replyToken,
+  );
 }
 
-export async function sendChatMessage(context: LineContext, response: string): Promise<void> {
-  await context.reply([
-    {
-      type: 'text',
-      text: response,
-      quickReply: buildQuickReplies(),
-    },
-  ]);
+export async function sendChatMessage(
+  userId: string,
+  response: string,
+  replyToken?: string,
+): Promise<void> {
+  await sendMessages(
+    userId,
+    [
+      {
+        type: 'text',
+        text: response,
+        quickReply: buildQuickReplies(),
+      },
+    ],
+    replyToken,
+  );
 }
 
-export async function sendTodosListMessage(context: LineContext, todos: Todo[]): Promise<void> {
+export async function sendTodosListMessage(
+  userId: string,
+  todos: Todo[],
+  replyToken?: string,
+): Promise<void> {
   if (todos.length === 0) {
-    await sendChatMessage(context, '目前沒有待辦事項呢！');
+    await sendChatMessage(userId, '目前沒有待辦事項呢！', replyToken);
     return;
   }
 
   if (todos.length === 1) {
-    await sendTodoMessage(context, todos[0], 'listed');
+    await sendTodoMessage(userId, todos[0], 'listed', replyToken);
     return;
   }
 
@@ -755,7 +851,9 @@ export async function sendTodosListMessage(context: LineContext, todos: Todo[]):
     })
     .join('\n');
 
-  await context.reply([
+  await sendMessages(
+    userId,
+    [
     {
       type: 'flex',
       altText: '待辦事項列表',
@@ -775,8 +873,8 @@ export async function sendTodosListMessage(context: LineContext, todos: Todo[]):
               type: 'separator',
               margin: 'md',
             },
-            {
-              type: 'text',
+    {
+      type: 'text',
               text: truncateText(todoList),
               wrap: true,
               margin: 'md',
@@ -787,7 +885,9 @@ export async function sendTodosListMessage(context: LineContext, todos: Todo[]):
       },
       quickReply: buildQuickReplies(),
     },
-  ]);
+    ],
+    replyToken,
+  );
 }
 
 export async function sendTodoNotificationMessage(
@@ -813,11 +913,11 @@ export async function sendTodoNotificationMessage(
 
   try {
     await lineClient.pushMessages(userId, [
-      {
-        type: 'text',
+    {
+      type: 'text',
         text: notificationText,
-      },
-    ]);
+    },
+  ]);
 
     logger.info('Todo notification message sent', {
       userId,

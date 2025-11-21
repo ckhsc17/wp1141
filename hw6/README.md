@@ -1,6 +1,8 @@
 ## 專案簡介
 
-**Booboo 小幽** 是一個幫你把生活中的連結、靈感、提醒與情緒整理成「可行動智慧」的 LINE 助理。把任何訊息丟給小幽，它會透過 Gemini API 分析內容、分類並存入個人資料庫，必要時主動提醒或給出洞察。專案採 Next.js App Router + Bottender，並以 Service Layer + Repository Pattern 撰寫，方便後續接入 Supabase。
+**Booboo 小幽** 是一個幫你把生活中的連結、靈感、提醒與情緒整理成「可行動智慧」的 LINE 助理。把任何訊息丟給小幽，它會透過 Gemini API 分析內容、分類並存入個人資料庫，必要時主動提醒或給出洞察。專案採 Next.js App Router + LINE Messaging API（使用 `messaging-api-line` 套件），並以 Service Layer + Repository Pattern 撰寫，方便後續接入 Supabase。
+
+**架構說明**：本專案使用 Next.js Serverless Functions 作為主要架構，直接使用 LINE Messaging API 發送訊息，而非使用 Bottender 的完整 bot 框架。這樣的設計更適合 Vercel 等 Serverless 環境，避免長連線問題。
 
 ## 環境需求
 
@@ -32,7 +34,7 @@ LIFF_ADMIN_URL=https://liff.line.me/YOUR_LIFF_ID
 ## 開發流程
 
 ```bash
-yarn dev      # 啟動 Next.js + Bottender
+yarn dev      # 啟動 Next.js 開發伺服器
 yarn lint     # 靜態檢查
 yarn build    # 打包
 ```
@@ -114,7 +116,8 @@ async function listUserItems(userId: string) {
 
 ## 部署建議
 
-- 可先部署在 Vercel Node.js Runtime；若仍遇到 `socket hang up`，可考慮 Edge Runtime 或將 `/api/line` 拆到長駐主機。
+- 專案已重構為直接使用 LINE Messaging API，避免 Bottender 框架的長連線問題，更適合 Vercel Serverless 環境。
+- 使用 Next.js Node.js Runtime，已配置 keep-alive agents 和 IPv4 DNS 解析以優化連線。
 - 未來接 Supabase 時，只需新增 Repository 實作並在 `container.ts` 切換注入。
 - **提醒功能限制**：Vercel Hobby 計劃每天只能執行一次 cron job（目前設定為每天 08:00 執行）。
   - 若需要更頻繁的提醒（例如每 5 分鐘檢查一次），可考慮：

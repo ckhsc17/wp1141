@@ -1,49 +1,69 @@
 import type { NextRequest } from 'next/server';
-import type { LineRequestBody } from 'bottender/dist/line/LineTypes';
+import crypto from 'node:crypto';
 
-import { lineBot } from '@/bot/lineBot';
+import { handleLineWebhook } from '@/bot/webhookHandler';
+import { logger } from '@/utils/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const requestHandler = lineBot.createRequestHandler();
+/**
+ * Verify LINE webhook signature
+ * Reference: https://developers.line.biz/en/docs/messaging-api/receiving-messages/#verifying-signatures
+ */
+function verifySignature(body: string, signature: string, channelSecret: string): boolean {
+  try {
+    const hash = crypto
+      .createHmac('sha256', channelSecret)
+      .update(body)
+      .digest('base64');
+    return hash === signature;
+  } catch (error) {
+    logger.warn('Failed to verify signature', { error });
+    return false;
+  }
+}
 
-async function handleLineWebhook(req: NextRequest): Promise<Response> {
+async function handleLineWebhookRequest(req: NextRequest): Promise<Response> {
   const rawBody = await req.text();
 
   if (!rawBody) {
     return new Response('Empty body', { status: 400 });
   }
 
-  let body: LineRequestBody;
+  // Verify signature if channel secret is set
+  const channelSecret = process.env.LINE_CHANNEL_SECRET;
+  const signature = req.headers.get('x-line-signature');
+  
+  if (channelSecret && signature) {
+    const isValid = verifySignature(rawBody, signature, channelSecret);
+    if (!isValid) {
+      logger.warn('Invalid LINE webhook signature');
+      return new Response('Invalid signature', { status: 401 });
+    }
+  }
 
+  let body: any;
   try {
-    body = JSON.parse(rawBody) as LineRequestBody;
+    body = JSON.parse(rawBody);
   } catch {
     return new Response('Invalid JSON body', { status: 400 });
   }
 
-  const headers: Record<string, string> = {};
-  req.headers.forEach((value, key) => {
-    headers[key] = value;
-  });
-
   try {
-    console.log('收到 LINE webhook 事件');
-    console.log(body.events[0]);
-    await requestHandler(body, {
-      method: req.method ?? 'POST',
-      path: req.nextUrl.pathname,
-      query: Object.fromEntries(req.nextUrl.searchParams.entries()),
-      headers,
-      rawBody,
-      body,
-      params: {},
-      url: req.url,
+    logger.debug('收到 LINE webhook 事件', {
+      eventCount: body.events?.length || 0,
+      destination: body.destination,
     });
-    console.log('處理 LINE webhook 事件完成');
+    
+    await handleLineWebhook(body);
+    
+    logger.debug('處理 LINE webhook 事件完成');
   } catch (error) {
-    console.error('處理 LINE webhook 事件時發生錯誤', error);
+    logger.error('處理 LINE webhook 事件時發生錯誤', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return new Response('Internal Server Error', { status: 500 });
   }
 
@@ -51,7 +71,7 @@ async function handleLineWebhook(req: NextRequest): Promise<Response> {
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
-  return handleLineWebhook(req);
+  return handleLineWebhookRequest(req);
 }
 
 export async function GET(): Promise<Response> {
