@@ -4,6 +4,9 @@
 
 **架構說明**：本專案使用 Next.js Serverless Functions 作為主要架構，直接使用 LINE Messaging API 發送訊息，而非使用 Bottender 的完整 bot 框架。這樣的設計更適合 Vercel 等 Serverless 環境，避免長連線問題。
 
+- 小幽 Booboo 好友 QR code 連結：https://lin.ee/HT9b2xR
+- 小幽 Booboo Admin dashboard 連結：https://boobooboo.vercel.app/admin
+
 ## 環境需求
 
 - Node.js 18 以上
