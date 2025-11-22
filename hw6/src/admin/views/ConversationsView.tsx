@@ -5,10 +5,23 @@ import { useQuery } from '@tanstack/react-query';
 import { ConversationList } from '../components/ConversationList';
 import { ConversationFilters } from '../components/ConversationFilters';
 import { Box, Typography } from '@mui/material';
-import type { SavedItem } from '@/domain/schemas';
+
+interface ConversationWithUser {
+  id: string;
+  userId: string;
+  title?: string;
+  content: string;
+  url?: string;
+  tags: string[];
+  metadata?: Record<string, unknown>;
+  location?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userDisplayName?: string;
+}
 
 interface ConversationsResponse {
-  conversations: SavedItem[];
+  conversations: ConversationWithUser[];
   total: number;
   page: number;
   limit: number;
@@ -16,7 +29,7 @@ interface ConversationsResponse {
 }
 
 export function ConversationsView() {
-  const [userId, setUserId] = useState('');
+  const [userName, setUserName] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [search, setSearch] = useState('');
@@ -24,17 +37,17 @@ export function ConversationsView() {
 
   const buildQueryParams = useCallback(() => {
     const params = new URLSearchParams();
-    if (userId) params.set('userId', userId);
+    if (userName) params.set('userName', userName);
     if (startDate) params.set('startDate', startDate.toISOString());
     if (endDate) params.set('endDate', endDate.toISOString());
     if (search) params.set('search', search);
     params.set('page', page.toString());
     params.set('limit', '20');
     return params.toString();
-  }, [userId, startDate, endDate, search, page]);
+  }, [userName, startDate, endDate, search, page]);
 
   const { data, isLoading } = useQuery<ConversationsResponse>({
-    queryKey: ['conversations', userId, startDate, endDate, search, page],
+    queryKey: ['conversations', userName, startDate, endDate, search, page],
     queryFn: async () => {
       const params = buildQueryParams();
       const res = await fetch(`/api/admin/conversations?${params}`);
@@ -44,7 +57,7 @@ export function ConversationsView() {
   });
 
   const handleReset = useCallback(() => {
-    setUserId('');
+    setUserName('');
     setStartDate(null);
     setEndDate(null);
     setSearch('');
@@ -57,11 +70,11 @@ export function ConversationsView() {
         對話紀錄
       </Typography>
       <ConversationFilters
-        userId={userId}
+        userName={userName}
         startDate={startDate}
         endDate={endDate}
         search={search}
-        onUserIdChange={setUserId}
+        onUserNameChange={setUserName}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
         onSearchChange={setSearch}

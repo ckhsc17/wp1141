@@ -3,6 +3,7 @@ import type { SavedItem } from '@/domain/schemas';
 
 export interface ConversationFilters {
   userId?: string;
+  userName?: string;
   startDate?: Date;
   endDate?: Date;
   search?: string;
@@ -10,8 +11,12 @@ export interface ConversationFilters {
   limit?: number;
 }
 
+export interface ConversationWithUser extends SavedItem {
+  userDisplayName?: string;
+}
+
 export interface ConversationListResult {
-  conversations: SavedItem[];
+  conversations: ConversationWithUser[];
   total: number;
   page: number;
   limit: number;
@@ -26,6 +31,7 @@ export class PrismaConversationRepository implements ConversationRepository {
   async listConversations(filters: ConversationFilters): Promise<ConversationListResult> {
     const {
       userId,
+      userName,
       startDate,
       endDate,
       search,
@@ -41,6 +47,16 @@ export class PrismaConversationRepository implements ConversationRepository {
       where.userId = userId;
     }
 
+    // 支援使用者名稱模糊搜尋
+    if (userName) {
+      where.user = {
+        displayName: {
+          contains: userName,
+          mode: 'insensitive',
+        },
+      };
+    }
+
     if (startDate || endDate) {
       where.createdAt = {};
       if (startDate) {
@@ -53,12 +69,41 @@ export class PrismaConversationRepository implements ConversationRepository {
 
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
         { content: { contains: search, mode: 'insensitive' } },
       ];
     }
 
     const skip = (page - 1) * limit;
+
+    // 計算總數的 where 條件（不包含 include）
+    const countWhere: any = {
+      tags: { has: 'chat' },
+    };
+    if (userId) {
+      countWhere.userId = userId;
+    }
+    if (userName) {
+      countWhere.user = {
+        displayName: {
+          contains: userName,
+          mode: 'insensitive',
+        },
+      };
+    }
+    if (startDate || endDate) {
+      countWhere.createdAt = {};
+      if (startDate) {
+        countWhere.createdAt.gte = startDate;
+      }
+      if (endDate) {
+        countWhere.createdAt.lte = endDate;
+      }
+    }
+    if (search) {
+      countWhere.OR = [
+        { content: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
     const [records, total] = await Promise.all([
       prisma.savedItem.findMany({
@@ -75,10 +120,10 @@ export class PrismaConversationRepository implements ConversationRepository {
           },
         },
       }),
-      prisma.savedItem.count({ where }),
+      prisma.savedItem.count({ where: countWhere }),
     ]);
 
-    const conversations: SavedItem[] = records.map((item: any) => ({
+    const conversations: ConversationWithUser[] = records.map((item: any) => ({
       id: item.id,
       userId: item.userId,
       title: item.title ?? undefined,
@@ -89,6 +134,7 @@ export class PrismaConversationRepository implements ConversationRepository {
       location: item.location ?? undefined,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
+      userDisplayName: item.user?.displayName ?? undefined,
     }));
 
     return {

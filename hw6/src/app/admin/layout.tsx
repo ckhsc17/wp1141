@@ -6,6 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { AppBar, Toolbar, Typography, Container, Box, Tabs, Tab } from '@mui/material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 const theme = createTheme({
   palette: {
@@ -28,12 +29,30 @@ function NavigationTabs() {
     { label: '健康監控', path: '/admin/health' },
   ];
 
-  const currentTab = tabs.findIndex((tab) => pathname === tab.path || pathname?.startsWith(tab.path + '/'));
+  // 計算當前選中的 tab
+  // 對於 /admin，只匹配精確路徑
+  // 對於其他路徑，匹配以該路徑開頭的路徑
+  const currentTab = tabs.findIndex((tab) => {
+    if (tab.path === '/admin') {
+      // 總覽頁面只匹配精確的 /admin
+      return pathname === '/admin';
+    } else {
+      // 其他頁面匹配以該路徑開頭的路徑
+      return pathname?.startsWith(tab.path);
+    }
+  });
 
   return (
     <Tabs
       value={currentTab >= 0 ? currentTab : 0}
-      sx={{ borderBottom: 1, borderColor: 'divider' }}
+      sx={{
+        borderBottom: 1,
+        borderColor: 'divider',
+        '& .MuiTabs-indicator': {
+          backgroundColor: '#2e7d32',
+          height: 3,
+        },
+      }}
     >
       {tabs.map((tab) => (
         <Tab
@@ -41,7 +60,12 @@ function NavigationTabs() {
           label={tab.label}
           component={Link}
           href={tab.path}
-          sx={{ textTransform: 'none' }}
+          sx={{
+            textTransform: 'none',
+            '&.Mui-selected': {
+              color: '#2e7d32',
+            },
+          }}
         />
       ))}
     </Tabs>
@@ -60,9 +84,18 @@ export default function AdminLayout({
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
           <AppBar position="static" sx={{ backgroundColor: '#2e7d32' }}>
             <Toolbar>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                Booboo Admin Dashboard
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1 }}>
+                <Image
+                  src="/favicon.ico"
+                  alt="Booboo"
+                  width={32}
+                  height={32}
+                  style={{ borderRadius: '4px' }}
+                />
+                <Typography variant="h6" component="div">
+                  Booboo Admin Dashboard
+                </Typography>
+              </Box>
             </Toolbar>
           </AppBar>
           <NavigationTabs />

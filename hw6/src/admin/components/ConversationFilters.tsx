@@ -10,11 +10,11 @@ import {
 } from '@mui/material';
 
 interface ConversationFiltersProps {
-  userId: string;
+  userName: string;
   startDate: Date | null;
   endDate: Date | null;
   search: string;
-  onUserIdChange: (value: string) => void;
+  onUserNameChange: (value: string) => void;
   onStartDateChange: (value: Date | null) => void;
   onEndDateChange: (value: Date | null) => void;
   onSearchChange: (value: string) => void;
@@ -22,11 +22,11 @@ interface ConversationFiltersProps {
 }
 
 export function ConversationFilters({
-  userId,
+  userName,
   startDate,
   endDate,
   search,
-  onUserIdChange,
+  onUserNameChange,
   onStartDateChange,
   onEndDateChange,
   onSearchChange,
@@ -41,10 +41,10 @@ export function ConversationFilters({
         <Grid item xs={12} md={4}>
           <TextField
             fullWidth
-            label="使用者 ID"
-            value={userId}
-            onChange={(e) => onUserIdChange(e.target.value)}
-            placeholder="輸入使用者 ID"
+            label="使用者名稱"
+            value={userName}
+            onChange={(e) => onUserNameChange(e.target.value)}
+            placeholder="輸入使用者名稱（模糊搜尋）"
           />
         </Grid>
         <Grid item xs={12} md={4}>
@@ -73,7 +73,7 @@ export function ConversationFilters({
             label="搜尋內容"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="搜尋標題或內容"
+            placeholder="搜尋對話內容"
           />
         </Grid>
         <Grid item xs={12} md={6}>

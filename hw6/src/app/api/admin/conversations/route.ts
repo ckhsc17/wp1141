@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
     const userId = searchParams.get('userId') || undefined;
+    const userName = searchParams.get('userName') || undefined;
     const startDateStr = searchParams.get('startDate');
     const endDateStr = searchParams.get('endDate');
     const search = searchParams.get('search') || undefined;
@@ -20,6 +21,7 @@ export async function GET(req: NextRequest) {
 
     const result = await conversationService.listConversations({
       userId,
+      userName,
       startDate,
       endDate,
       search,

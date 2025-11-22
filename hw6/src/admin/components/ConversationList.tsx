@@ -14,10 +14,23 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { format } from 'date-fns';
-import type { SavedItem } from '@/domain/schemas';
+
+interface ConversationWithUser {
+  id: string;
+  userId: string;
+  title?: string;
+  content: string;
+  url?: string;
+  tags: string[];
+  metadata?: Record<string, unknown>;
+  location?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userDisplayName?: string;
+}
 
 interface ConversationListProps {
-  conversations: SavedItem[];
+  conversations: ConversationWithUser[];
   totalPages: number;
   page: number;
   onPageChange: (page: number) => void;
@@ -56,7 +69,7 @@ export function ConversationList({
           <TableHead>
             <TableRow>
               <TableCell>時間</TableCell>
-              <TableCell>使用者 ID</TableCell>
+              <TableCell>使用者名稱</TableCell>
               <TableCell>內容</TableCell>
               <TableCell>標籤</TableCell>
             </TableRow>
@@ -67,8 +80,8 @@ export function ConversationList({
                 <TableCell>
                   {format(new Date(conv.createdAt), 'yyyy-MM-dd HH:mm')}
                 </TableCell>
-                <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                  {conv.userId.slice(0, 8)}...
+                <TableCell>
+                  {conv.userDisplayName || `使用者 ${conv.userId.slice(0, 8)}...`}
                 </TableCell>
                 <TableCell>
                   <Typography
@@ -80,7 +93,7 @@ export function ConversationList({
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {conv.title || conv.content}
+                    {conv.content}
                   </Typography>
                 </TableCell>
                 <TableCell>
