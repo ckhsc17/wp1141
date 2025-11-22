@@ -1,6 +1,6 @@
 ## 專案簡介
 
-**Booboo 小幽** 是一個幫你把生活中的連結、靈感、提醒與情緒整理成「可行動智慧」的 LINE 助理。把任何訊息丟給小幽，它會透過 Gemini API 分析內容、分類並存入個人資料庫，必要時主動提醒或給出洞察。專案採 Next.js App Router + LINE Messaging API（使用 `messaging-api-line` 套件），並以 Service Layer + Repository Pattern 撰寫，方便後續接入 Supabase。
+**Booboo 小幽** 是一個幫你把生活中的連結、靈感、提醒與情緒整理成「可行動智慧」的 LINE 助理。把任何訊息丟給小幽，它會透過 Gemini API 分析內容、分類並存入個人資料庫，必要時主動提醒或給出洞察。專案採 Next.js App Router + LINE Messaging API（使用 `messaging-api-line` 套件），並以 Service Layer + Repository Pattern 撰寫，確保架構清楚乾淨。
 
 **架構說明**：本專案使用 Next.js Serverless Functions 作為主要架構，直接使用 LINE Messaging API 發送訊息，而非使用 Bottender 的完整 bot 框架。這樣的設計更適合 Vercel 等 Serverless 環境，避免長連線問題。
 

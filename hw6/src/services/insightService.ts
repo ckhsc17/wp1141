@@ -17,7 +17,7 @@ export class InsightService {
       payload: { text },
     });
 
-    let summary = text.slice(0, 150);
+    let summary = text.slice(0, 200);
     let tags: string[] = ['insight'];
 
     try {
@@ -39,7 +39,7 @@ export class InsightService {
 
     const item = await this.savedItemRepo.create({
       userId,
-      title: summary.slice(0, 40),
+      title: summary.slice(0, 200),
       content: text,
       tags,
     });

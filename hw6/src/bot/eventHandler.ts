@@ -25,6 +25,7 @@ import {
   sendRecommendationMessage,
   sendSavedItemMessage,
   sendTodoMessage,
+  sendTodosAndMemoriesMessage,
   sendTodosListMessage,
   sendUsageGuideMessage,
   sendWelcomeMessage,
@@ -109,10 +110,87 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
         if (classification.subIntent === 'query') {
           // Query todos by natural language
           const todos = await services.todo.queryTodosByNaturalLanguage(userId, text);
-          if (todos.length === 0) {
-            await sendChatMessage(userId, '找不到符合條件的待辦事項呢！', replyToken);
+          
+          // Check if query contains "做了什麼" or similar keywords - if so, also search memories
+          const lowerText = text.toLowerCase();
+          const activityKeywords = ['做了什麼', '做了哪些', '做了', '做了什麼事', '做了哪些事'];
+          const shouldIncludeMemories = activityKeywords.some((keyword) => lowerText.includes(keyword));
+          
+          if (shouldIncludeMemories) {
+            // Also search for memories with the same date filter
+            const parsedQuery = await services.todo.parseTodoQuery(userId, text);
+            const memories = await repositories.savedItemRepo.searchByTags(userId, ['memory'], 10);
+            
+            // Filter memories by date if specificDate or timeRange was parsed
+            let filteredMemories = memories;
+            if (parsedQuery.specificDate) {
+              try {
+                const [year, month, day] = parsedQuery.specificDate.split('-').map(Number);
+                const targetDate = new Date(year, month - 1, day);
+                const nextDay = new Date(year, month - 1, day + 1);
+                filteredMemories = memories.filter((memory) => {
+                  const memoryDate = new Date(memory.createdAt);
+                  return memoryDate >= targetDate && memoryDate < nextDay;
+                });
+              } catch (error) {
+                logger.warn('Failed to filter memories by date', { error });
+              }
+            } else if (parsedQuery.timeRange) {
+              // Apply similar time range filtering for memories
+              const now = new Date();
+              let startDate: Date | null = null;
+              let endDate: Date | null = null;
+              
+              switch (parsedQuery.timeRange) {
+                case '昨天': {
+                  startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+                  endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  break;
+                }
+                case '今天': {
+                  startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                  break;
+                }
+                case '上禮拜':
+                case '上週': {
+                  const dayOfWeek = now.getDay();
+                  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                  startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday - 7);
+                  endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday);
+                  break;
+                }
+                // Add more time ranges as needed
+              }
+              
+              if (startDate) {
+                if (endDate) {
+                  filteredMemories = memories.filter((memory) => {
+                    const memoryDate = new Date(memory.createdAt);
+                    return memoryDate >= startDate! && memoryDate < endDate!;
+                  });
+                } else {
+                  filteredMemories = memories.filter((memory) => {
+                    const memoryDate = new Date(memory.createdAt);
+                    return memoryDate >= startDate!;
+                  });
+                }
+              }
+            }
+            
+            // Send combined results
+            if (todos.length === 0 && filteredMemories.length === 0) {
+              await sendChatMessage(userId, '找不到符合條件的待辦事項或記憶呢！', replyToken);
+            } else {
+              await sendTodosAndMemoriesMessage(userId, todos, filteredMemories, replyToken);
+            }
           } else {
-            await sendTodosListMessage(userId, todos, replyToken);
+            // Only todos
+            if (todos.length === 0) {
+              await sendChatMessage(userId, '找不到符合條件的待辦事項呢！', replyToken);
+            } else {
+              await sendTodosListMessage(userId, todos, replyToken);
+            }
           }
         } else if (classification.subIntent === 'update') {
           // Update todo by natural language
@@ -141,8 +219,8 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
 
         if (!url) {
           await sendChatMessage(userId, '我找不到連結呢，請確認訊息中包含有效的 URL。', replyToken);
-          return;
-        }
+    return;
+  }
 
         const result = await services.link.analyzeAndSave(userId, url, text);
         await sendLinkMessage(userId, url, result.analysis, replyToken);
@@ -201,7 +279,8 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
 
       case 'other':
       default: {
-        // General chat
+        // General chat - save as SavedItem first, then respond
+        const savedItem = await services.chat.saveChat(userId, text);
         const response = await services.chat.chat(userId, text);
         await sendChatMessage(userId, response, replyToken);
         break;

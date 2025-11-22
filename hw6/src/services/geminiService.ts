@@ -43,6 +43,10 @@ export class GeminiService {
           { role: 'user', parts: [{ text: prompt.system }] },
           { role: 'user', parts: [{ text: prompt.user(payload) }] },
         ],
+        generationConfig: {
+          maxOutputTokens: 8192, // Increase output token limit to prevent truncation
+          temperature: 0.7,
+        },
       });
 
       const text = result.response.text();

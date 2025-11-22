@@ -312,7 +312,12 @@ export class TodoService {
     }
   }
 
-  async queryTodosByNaturalLanguage(userId: string, text: string): Promise<Todo[]> {
+  async parseTodoQuery(userId: string, text: string): Promise<{
+    specificDate: string | null;
+    timeRange: string | null;
+    keywords: string[];
+    status: Todo['status'] | null;
+  }> {
     // Parse query using LLM
     const response = await this.gemini.generate({
       template: 'parseTodoQuery',
@@ -346,6 +351,12 @@ export class TodoService {
         error: error instanceof Error ? error.message : String(error),
       });
     }
+
+    return { specificDate, timeRange, keywords, status };
+  }
+
+  async queryTodosByNaturalLanguage(userId: string, text: string): Promise<Todo[]> {
+    let { specificDate, timeRange, keywords, status } = await this.parseTodoQuery(userId, text);
 
     // Get all todos
     let todos = await this.todoRepo.listByUser(userId);

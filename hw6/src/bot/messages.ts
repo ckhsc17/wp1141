@@ -7,25 +7,86 @@ const LIFF_DASHBOARD_URL = process.env.LIFF_DASHBOARD_URL ?? 'https://liff.line.
 const LIFF_SETTINGS_URL = process.env.LIFF_SETTINGS_URL ?? 'https://liff.line.me/YOUR_SETTINGS_LIFF_ID';
 
 /**
- * Truncate text to fit LINE Flex Message limits
+ * Calculate the size of a string when JSON stringified
+ * @param str - String to measure
+ * @returns Size in bytes
+ */
+function getJsonStringSize(str: string): number {
+  // JSON.stringify adds quotes and escapes special characters
+  // We need to measure the actual size including JSON encoding overhead
+  return Buffer.byteLength(JSON.stringify(str), 'utf8');
+}
+
+/**
+ * Truncate text to fit LINE Flex Message limits based on actual JSON size
  * 
  * LINE Flex Message limits:
  * - Single Bubble JSON size: 10KB
  * - Carousel JSON size: 50KB
  * - Text component: No explicit character limit, but must fit within JSON size limit
  * 
- * We use 4000 characters as default to leave buffer for JSON structure overhead.
- * For shorter content like tags, use a smaller limit (e.g., 500).
+ * This function truncates based on actual JSON byte size rather than character count,
+ * which is more accurate for Chinese/multibyte characters.
  * 
  * @param text - Text to truncate
- * @param maxLength - Maximum length (default: 4000)
+ * @param maxBytes - Maximum size in bytes (default: 8000, leaving 2KB buffer for JSON structure)
  * @returns Truncated text with ellipsis if needed
  */
-function truncateText(text: string, maxLength: number = 4000): string {
+function truncateTextBySize(text: string, maxBytes: number = 8000): string {
+  // Check if text fits within limit
+  if (getJsonStringSize(text) <= maxBytes) {
+    return text;
+  }
+
+  // Binary search for the maximum length that fits
+  let left = 0;
+  let right = text.length;
+  let bestLength = 0;
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const truncated = text.slice(0, mid) + '...';
+    const size = getJsonStringSize(truncated);
+
+    if (size <= maxBytes) {
+      bestLength = mid;
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+
+  if (bestLength === 0) {
+    return '...';
+  }
+
+  return text.slice(0, bestLength) + '...';
+}
+
+/**
+ * Truncate text by character count (for backwards compatibility and simple cases)
+ * 
+ * @param text - Text to truncate
+ * @param maxLength - Maximum character count (default: 6000, more generous for Chinese)
+ * @returns Truncated text with ellipsis if needed
+ */
+function truncateText(text: string, maxLength: number = 6000): string {
   if (text.length <= maxLength) {
     return text;
   }
   return text.slice(0, maxLength - 3) + '...';
+}
+
+/**
+ * Truncate text for Flex Message, using size-based truncation for accuracy
+ * This is the recommended function to use for Flex Message text components
+ * 
+ * @param text - Text to truncate
+ * @param maxBytes - Maximum size in bytes (default: 8000)
+ * @returns Truncated text with ellipsis if needed
+ */
+function truncateFlexText(text: string, maxBytes: number = 8000): string {
+  return truncateTextBySize(text, maxBytes);
 }
 
 const quickReplyItems = [
@@ -143,7 +204,7 @@ export async function sendSavedItemMessage(
             },
     {
       type: 'text',
-              text: truncateText(saved.title || saved.content),
+              text: truncateFlexText(saved.title || saved.content),
               wrap: true,
               margin: 'md',
             },
@@ -238,7 +299,7 @@ export async function sendInsightMessage(
           contents: [
             { type: 'text', text: '已儲存靈感 ✨', weight: 'bold', size: 'md' },
             { type: 'separator', margin: 'md' },
-            { type: 'text', text: truncateText(item.title || item.content), wrap: true, margin: 'md' },
+            { type: 'text', text: truncateFlexText(item.title || ''), wrap: true, margin: 'md' },
             ...(item.tags.length > 0
               ? [
                   {
@@ -591,7 +652,7 @@ export async function sendTodoMessage(
             },
             {
               type: 'text',
-              text: truncateText(todo.title),
+              text: truncateFlexText(todo.title),
               wrap: true,
               margin: 'md',
               weight: 'bold',
@@ -600,7 +661,7 @@ export async function sendTodoMessage(
               ? [
                   {
                     type: 'text' as const,
-                    text: truncateText(todo.description),
+                    text: truncateFlexText(todo.description || ''),
                     wrap: true,
                     size: 'sm' as const,
                     color: '#666666',
@@ -662,7 +723,7 @@ export async function sendLinkMessage(
             },
             {
               type: 'text',
-              text: truncateText(analysis.summary),
+              text: truncateFlexText(analysis.summary || ''),
               wrap: true,
               margin: 'md',
             },
@@ -728,42 +789,61 @@ export async function sendFeedbackMessage(
   feedback: string,
   replyToken?: string,
 ): Promise<void> {
-  await sendMessages(
-    userId,
-    [
-    {
-      type: 'flex',
-      altText: '生活回饋',
-      contents: {
-        type: 'bubble',
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: '小幽的生活回饋 💫',
-              weight: 'bold',
-              size: 'md',
-            },
-            {
-              type: 'separator',
-              margin: 'md',
-            },
-    {
-      type: 'text',
-              text: truncateText(feedback),
-              wrap: true,
-              margin: 'md',
-            },
-          ],
-        },
+  // Check if feedback is too long for a single Flex Message (10KB limit)
+  // If too long, split into multiple text messages instead of truncating
+  const feedbackMessage = {
+    type: 'flex',
+    altText: '生活回饋',
+    contents: {
+      type: 'bubble',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: '小幽的生活回饋 💫',
+            weight: 'bold',
+            size: 'md',
+          },
+          {
+            type: 'separator',
+            margin: 'md',
+          },
+          {
+            type: 'text',
+            text: feedback,
+            wrap: true,
+            margin: 'md',
+          },
+        ],
       },
-      quickReply: buildQuickReplies(),
     },
-    ],
-    replyToken,
-  );
+    quickReply: buildQuickReplies(),
+  };
+
+  // Check JSON size
+  const messageJson = JSON.stringify([feedbackMessage]);
+  const messageSize = Buffer.byteLength(messageJson, 'utf8');
+
+  if (messageSize > 10000) {
+    // If too large, send as multiple text messages instead
+    const chunkSize = 4000; // Split into chunks of ~4000 characters
+    const chunks: string[] = [];
+    for (let i = 0; i < feedback.length; i += chunkSize) {
+      chunks.push(feedback.slice(i, i + chunkSize));
+    }
+
+    const messages = chunks.map((chunk, idx) => ({
+      type: 'text' as const,
+      text: idx === 0 ? `小幽的生活回饋 💫\n\n${chunk}` : chunk,
+      quickReply: idx === chunks.length - 1 ? buildQuickReplies() : undefined,
+    }));
+
+    await sendMessages(userId, messages, replyToken);
+  } else {
+    await sendMessages(userId, [feedbackMessage], replyToken);
+  }
 }
 
 export async function sendRecommendationMessage(
@@ -771,42 +851,61 @@ export async function sendRecommendationMessage(
   recommendation: string,
   replyToken?: string,
 ): Promise<void> {
-  await sendMessages(
-    userId,
-    [
-    {
-      type: 'flex',
-      altText: '推薦內容',
-      contents: {
-        type: 'bubble',
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: '小幽的推薦 ✨',
-              weight: 'bold',
-              size: 'md',
-            },
-            {
-              type: 'separator',
-              margin: 'md',
-            },
-            {
-              type: 'text',
-              text: truncateText(recommendation),
-              wrap: true,
-              margin: 'md',
-            },
-          ],
-        },
+  // Check if recommendation is too long for a single Flex Message (10KB limit)
+  // If too long, split into multiple text messages instead of truncating
+  const recommendationMessage = {
+    type: 'flex',
+    altText: '推薦內容',
+    contents: {
+      type: 'bubble',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: '小幽的推薦 ✨',
+            weight: 'bold',
+            size: 'md',
+          },
+          {
+            type: 'separator',
+            margin: 'md',
+          },
+          {
+            type: 'text',
+            text: recommendation,
+            wrap: true,
+            margin: 'md',
+          },
+        ],
       },
-      quickReply: buildQuickReplies(),
     },
-    ],
-    replyToken,
-  );
+    quickReply: buildQuickReplies(),
+  };
+
+  // Check JSON size
+  const messageJson = JSON.stringify([recommendationMessage]);
+  const messageSize = Buffer.byteLength(messageJson, 'utf8');
+
+  if (messageSize > 10000) {
+    // If too large, send as multiple text messages instead
+    const chunkSize = 4000; // Split into chunks of ~4000 characters
+    const chunks: string[] = [];
+    for (let i = 0; i < recommendation.length; i += chunkSize) {
+      chunks.push(recommendation.slice(i, i + chunkSize));
+    }
+
+    const messages = chunks.map((chunk, idx) => ({
+      type: 'text' as const,
+      text: idx === 0 ? `小幽的推薦 ✨\n\n${chunk}` : chunk,
+      quickReply: idx === chunks.length - 1 ? buildQuickReplies() : undefined,
+    }));
+
+    await sendMessages(userId, messages, replyToken);
+  } else {
+    await sendMessages(userId, [recommendationMessage], replyToken);
+  }
 }
 
 export async function sendChatMessage(
@@ -875,7 +974,87 @@ export async function sendTodosListMessage(
             },
     {
       type: 'text',
-              text: truncateText(todoList),
+              text: truncateFlexText(todoList),
+              wrap: true,
+              margin: 'md',
+              size: 'sm',
+            },
+          ],
+        },
+      },
+      quickReply: buildQuickReplies(),
+    },
+    ],
+    replyToken,
+  );
+}
+
+export async function sendTodosAndMemoriesMessage(
+  userId: string,
+  todos: Todo[],
+  memories: SavedItem[],
+  replyToken?: string,
+): Promise<void> {
+  const parts: string[] = [];
+  
+  if (todos.length > 0) {
+    const todoList = todos
+      .map((todo, idx) => {
+        const statusText =
+          todo.status === 'pending' ? '待處理' : todo.status === 'done' ? '已完成' : '已取消';
+        return `${idx + 1}. ${todo.title} (${statusText})`;
+      })
+      .join('\n');
+    parts.push(`📋 待辦事項 (${todos.length} 個):\n${todoList}`);
+  }
+  
+  if (memories.length > 0) {
+    // Display full content for memories, but limit each memory to 300 characters to prevent overflow
+    const memoryList = memories
+      .map((memory, idx) => {
+        const displayText = memory.title || memory.content;
+        // Limit each memory to 200 characters to ensure we can fit multiple memories
+        const truncatedMemory = displayText.length > 300
+          ? displayText.slice(0, 300) + '...' 
+          : displayText;
+        return `${idx + 1}. ${truncatedMemory}`;
+      })
+      .join('\n\n');
+    parts.push(`\n💭 記憶 (${memories.length} 個):\n${memoryList}`);
+  }
+  
+  if (parts.length === 0) {
+    await sendChatMessage(userId, '找不到符合條件的待辦事項或記憶呢！', replyToken);
+    return;
+  }
+  
+  const combinedText = parts.join('\n');
+  
+  await sendMessages(
+    userId,
+    [
+    {
+      type: 'flex',
+      altText: '待辦事項與記憶',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: `找到 ${todos.length} 個待辦事項，${memories.length} 個記憶`,
+              weight: 'bold',
+              size: 'md',
+            },
+            {
+              type: 'separator',
+              margin: 'md',
+            },
+    {
+      type: 'text',
+              text: truncateFlexText(combinedText, 9000), // Use size-based truncation with 9KB limit for combined content
               wrap: true,
               margin: 'md',
               size: 'sm',

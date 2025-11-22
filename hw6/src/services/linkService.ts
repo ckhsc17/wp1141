@@ -51,7 +51,7 @@ export class LinkService {
     // Save as SavedItem
     const item = await this.savedItemRepo.create({
       userId,
-      title: analysis.summary.slice(0, 40),
+      title: analysis.summary.slice(0, 100),
       content: content || analysis.summary,
       url,
       tags,
