@@ -79,14 +79,105 @@ function truncateText(text: string, maxLength: number = 6000): string {
 
 /**
  * Truncate text for Flex Message, using size-based truncation for accuracy
- * This is the recommended function to use for Flex Message text components
+ * This function tries to truncate at line break boundaries to preserve formatting
  * 
  * @param text - Text to truncate
  * @param maxBytes - Maximum size in bytes (default: 8000)
  * @returns Truncated text with ellipsis if needed
  */
 function truncateFlexText(text: string, maxBytes: number = 8000): string {
-  return truncateTextBySize(text, maxBytes);
+  // Check if text fits within limit
+  if (getJsonStringSize(text) <= maxBytes) {
+    return text;
+  }
+
+  // Binary search for the maximum length that fits
+  let left = 0;
+  let right = text.length;
+  let bestLength = 0;
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const truncated = text.slice(0, mid) + '...';
+    const size = getJsonStringSize(truncated);
+
+    if (size <= maxBytes) {
+      bestLength = mid;
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+
+  if (bestLength === 0) {
+    return '...';
+  }
+
+  // Try to truncate at a line break boundary if possible
+  const truncated = text.slice(0, bestLength);
+  const lastNewline = truncated.lastIndexOf('\n');
+  
+  // If we can truncate at a newline and still fit within limit, do so
+  if (lastNewline > bestLength * 0.8) { // Only if we're not losing too much content
+    const newlineTruncated = text.slice(0, lastNewline) + '...';
+    if (getJsonStringSize(newlineTruncated) <= maxBytes) {
+      return newlineTruncated;
+    }
+  }
+
+  return truncated + '...';
+}
+
+/**
+ * Split text into multiple text components for Flex Message
+ * This is useful when text is too long for a single component or contains many line breaks
+ * 
+ * @param text - Text to split
+ * @param maxBytesPerComponent - Maximum size in bytes per component (default: 7000)
+ * @returns Array of text components
+ */
+function splitTextIntoComponents(
+  text: string,
+  maxBytesPerComponent: number = 7000,
+): Array<{ type: 'text'; text: string; wrap: boolean; size?: string; color?: string; margin?: string }> {
+  // If text fits in one component, return it
+  if (getJsonStringSize(text) <= maxBytesPerComponent) {
+    return [{ type: 'text', text, wrap: true }];
+  }
+
+  const components: Array<{ type: 'text'; text: string; wrap: boolean; size?: string; color?: string; margin?: string }> = [];
+  const lines = text.split('\n');
+  let currentChunk = '';
+
+  for (const line of lines) {
+    const testChunk = currentChunk ? `${currentChunk}\n${line}` : line;
+    const testSize = getJsonStringSize(testChunk);
+
+    if (testSize <= maxBytesPerComponent) {
+      currentChunk = testChunk;
+    } else {
+      // Save current chunk if it has content
+      if (currentChunk) {
+        components.push({ type: 'text', text: currentChunk, wrap: true });
+      }
+
+      // If single line is too long, truncate it
+      if (getJsonStringSize(line) > maxBytesPerComponent) {
+        const truncated = truncateFlexText(line, maxBytesPerComponent);
+        components.push({ type: 'text', text: truncated, wrap: true });
+        currentChunk = '';
+      } else {
+        currentChunk = line;
+      }
+    }
+  }
+
+  // Add remaining chunk
+  if (currentChunk) {
+    components.push({ type: 'text', text: currentChunk, wrap: true });
+  }
+
+  return components.length > 0 ? components : [{ type: 'text', text: truncateFlexText(text, maxBytesPerComponent), wrap: true }];
 }
 
 const quickReplyItems = [
@@ -99,14 +190,14 @@ const quickReplyItems = [
     uri: 'https://bowenchen.vercel.app/files/novel.pdf',
   },
 
-  {
-    label: '👤 我的',
-    uri: LIFF_DASHBOARD_URL,
-  },
-  {
-    label: '⚙️ 設定',
-    uri: LIFF_SETTINGS_URL,
-  },
+  // {
+  //   label: '👤 我的',
+  //   uri: LIFF_DASHBOARD_URL,
+  // },
+  // {
+  //   label: '⚙️ 設定',
+  //   uri: LIFF_SETTINGS_URL,
+  // },
 ] as const;
 
 function buildQuickReplies() {
@@ -377,7 +468,62 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '個人生活記錄與 AI 助手 - 直接和小幽用自然語言對話！',
+                  text: '「個人生活記錄與 AI 助手」',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'sm',
+                },
+                {
+                  type: 'text',
+                  text: '大家平常會不會有只有自己的 LINE 群組？',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'sm',
+                },
+                {
+                  type: 'text',
+                  text: '會在裡面傳連結或任何很突然的想法？',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'sm',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '這就是聰明的 me 群組機器人！',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'sm',
+                },
+                {
+                  type: 'text',
+                  text: '可以幫你整理待辦靈感、知識、記憶，並提供個人化的回饋與推薦。',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'sm',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: '直接和小幽用自然語言對話吧～',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'sm',
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: '*待辦通知因目前為 Vercel 免費版，',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'sm',
+                },
+                {
+                  type: 'text',
+                  text: ' 只能每天通知一次（設定在 08:00）。',
                   size: 'sm',
                   color: '#666666',
                   margin: 'sm',
@@ -395,7 +541,7 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '新增：我要吃飯、取貨、寫作業',
+                  text: '新增：Ex. 我要吃飯、取貨、寫作業',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
@@ -403,7 +549,7 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '更新：我寫完作業了！',
+                  text: '更新：Ex. 我寫完作業了！',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
@@ -411,7 +557,7 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '查詢：明天要幹嘛？',
+                  text: '查詢：Ex. 明天要幹嘛？',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
@@ -455,6 +601,18 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
+                  text: 'Ex. https://bowenchen.vercel.app/',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
                   text: '💡 靈感',
                   weight: 'bold',
                   size: 'md',
@@ -462,11 +620,23 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '記錄頓悟和啟發',
+                  text: '隨手隨時記錄頓悟和啟發',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
                   wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: 'Ex. 街頭攝影不一定要有人；只要有人跡就夠了',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
                 },
                 {
                   type: 'text',
@@ -485,6 +655,18 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
+                  text: 'Ex. 小幽用了 intent classification 和 RAG 技術，可以更聰明地回答你的問題',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
                   text: '💭 記憶',
                   weight: 'bold',
                   size: 'md',
@@ -493,6 +675,14 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 {
                   type: 'text',
                   text: '記錄個人經驗、日記',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: 'Ex. 今天跟朋友聊到當一年兵的事情...',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
@@ -528,11 +718,23 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '記錄想練習的歌曲',
+                  text: '記錄想練習/覺得好聽的歌曲',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
                   wrap: true,
+                },
+                {
+                  type: 'text',
+                  text: 'Ex. 陶喆 二十二、盧廣仲 大人中',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
                 },
                 {
                   type: 'text',
@@ -550,6 +752,10 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                   wrap: true,
                 },
                 {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
                   type: 'text',
                   text: '💬 回饋請求',
                   weight: 'bold',
@@ -558,11 +764,15 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '給我一些生活建議',
+                  text: 'Ex. 給我一些生活建議 \n Ex. 幫我分析時間管理 \n Ex. 我最近過得怎麼樣？',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
                   wrap: true,
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
                 },
                 {
                   type: 'text',
@@ -573,22 +783,26 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '推薦一些技術文章',
+                  text: 'Ex. 推薦一些技術文章 \n Ex. 推薦一些展覽 \n Ex. 推薦一些音樂',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
                   wrap: true,
                 },
                 {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
                   type: 'text',
-                  text: '🔍 對話紀錄查詢',
+                  text: '🔍 對話紀錄/記憶查詢',
                   weight: 'bold',
                   size: 'md',
                   margin: 'md',
                 },
                 {
                   type: 'text',
-                  text: '我有沒有聊過 XXX？',
+                  text: 'Ex. 我有沒有聊過 XXX？ \n Ex. 我上禮拜說了什麼？ \n Ex. 之前提到的作業是什麼？',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
@@ -930,6 +1144,10 @@ export async function sendTodosListMessage(
   userId: string,
   todos: Todo[],
   replyToken?: string,
+  options?: {
+    title?: string;
+    showStatus?: boolean;
+  },
 ): Promise<void> {
   if (todos.length === 0) {
     await sendChatMessage(userId, '目前沒有待辦事項呢！', replyToken);
@@ -941,52 +1159,74 @@ export async function sendTodosListMessage(
     return;
   }
 
+  const title = options?.title ?? `找到 ${todos.length} 個待辦事項`;
+  const showStatus = options?.showStatus ?? true;
+
   // For multiple todos, send a carousel or formatted list
   const todoList = todos
     .map((todo, idx) => {
-      const statusText =
-        todo.status === 'pending' ? '待處理' : todo.status === 'done' ? '已完成' : '已取消';
-      return `${idx + 1}. ${todo.title} (${statusText})`;
+      if (showStatus) {
+        const statusText =
+          todo.status === 'pending' ? '待處理' : todo.status === 'done' ? '已完成' : '已取消';
+        return `${idx + 1}. ${todo.title} (${statusText})`;
+      } else {
+        return `${idx + 1}. ${todo.title}`;
+      }
     })
     .join('\n');
 
-  await sendMessages(
-    userId,
-    [
-    {
-      type: 'flex',
-      altText: '待辦事項列表',
-      contents: {
-        type: 'bubble',
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: `找到 ${todos.length} 個待辦事項`,
-              weight: 'bold',
-              size: 'md',
+  // Check if text is too long for a single component
+  const textComponents = splitTextIntoComponents(todoList, 7000);
+  
+  // If text fits in one component, use simple flex message
+  if (textComponents.length === 1) {
+    await sendMessages(
+      userId,
+      [
+        {
+          type: 'flex',
+          altText: '待辦事項列表',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: title,
+                  weight: 'bold',
+                  size: 'md',
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: textComponents[0].text,
+                  wrap: true,
+                  margin: 'md',
+                  size: 'sm',
+                },
+              ],
             },
-            {
-              type: 'separator',
-              margin: 'md',
-            },
-    {
-      type: 'text',
-              text: truncateFlexText(todoList),
-              wrap: true,
-              margin: 'md',
-              size: 'sm',
-            },
-          ],
+          },
+          quickReply: buildQuickReplies(),
         },
-      },
-      quickReply: buildQuickReplies(),
-    },
-    ],
-    replyToken,
-  );
+      ],
+      replyToken,
+    );
+  } else {
+    // If text is too long, send as multiple text messages to preserve formatting
+    const messages = textComponents.map((component, idx) => ({
+      type: 'text' as const,
+      text: idx === 0 ? `${title}\n\n${component.text}` : component.text,
+      quickReply: idx === textComponents.length - 1 ? buildQuickReplies() : undefined,
+    }));
+    
+    await sendMessages(userId, messages, replyToken);
+  }
 }
 
 export async function sendTodosAndMemoriesMessage(
@@ -1030,43 +1270,58 @@ export async function sendTodosAndMemoriesMessage(
   
   const combinedText = parts.join('\n');
   
-  await sendMessages(
-    userId,
-    [
-    {
-      type: 'flex',
-      altText: '待辦事項與記憶',
-      contents: {
-        type: 'bubble',
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: `找到 ${todos.length} 個待辦事項，${memories.length} 個記憶`,
-              weight: 'bold',
-              size: 'md',
+  // Check if text is too long for a single component
+  const textComponents = splitTextIntoComponents(combinedText, 7000);
+  
+  // If text fits in one component, use simple flex message
+  if (textComponents.length === 1) {
+    await sendMessages(
+      userId,
+      [
+        {
+          type: 'flex',
+          altText: '待辦事項與記憶',
+          contents: {
+            type: 'bubble',
+            body: {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: `找到 ${todos.length} 個待辦事項，${memories.length} 個記憶`,
+                  weight: 'bold',
+                  size: 'md',
+                },
+                {
+                  type: 'separator',
+                  margin: 'md',
+                },
+                {
+                  type: 'text',
+                  text: textComponents[0].text,
+                  wrap: true,
+                  margin: 'md',
+                  size: 'sm',
+                },
+              ],
             },
-            {
-              type: 'separator',
-              margin: 'md',
-            },
-    {
-      type: 'text',
-              text: truncateFlexText(combinedText, 9000), // Use size-based truncation with 9KB limit for combined content
-              wrap: true,
-              margin: 'md',
-              size: 'sm',
-            },
-          ],
+          },
+          quickReply: buildQuickReplies(),
         },
-      },
-      quickReply: buildQuickReplies(),
-    },
-    ],
-    replyToken,
-  );
+      ],
+      replyToken,
+    );
+  } else {
+    // If text is too long, send as multiple text messages to preserve formatting
+    const messages = textComponents.map((component, idx) => ({
+      type: 'text' as const,
+      text: idx === 0 ? `找到 ${todos.length} 個待辦事項，${memories.length} 個記憶\n\n${component.text}` : component.text,
+      quickReply: idx === textComponents.length - 1 ? buildQuickReplies() : undefined,
+    }));
+    
+    await sendMessages(userId, messages, replyToken);
+  }
 }
 
 export async function sendTodoNotificationMessage(

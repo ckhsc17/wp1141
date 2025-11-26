@@ -206,7 +206,15 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
           if (todos.length === 1) {
             await sendTodoMessage(userId, todos[0], 'created', replyToken);
           } else {
-            await sendChatMessage(userId, `已為你建立 ${todos.length} 個待辦事項：\n${todos.map((t, i) => `${i + 1}. ${t.title}`).join('\n')}`, replyToken);
+            await sendTodosListMessage(
+              userId,
+              todos,
+              replyToken,
+              {
+                title: `已為你建立 ${todos.length} 個待辦事項`,
+                //showStatus: false, // 刚创建的待办事项都是 pending，不需要显示状态
+              },
+            );
           }
         }
         break;

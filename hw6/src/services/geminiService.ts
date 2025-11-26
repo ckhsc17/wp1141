@@ -50,11 +50,13 @@ export class GeminiService {
       });
 
       const text = result.response.text();
+      // Remove all asterisks (*) from response as Flex Message cannot parse markdown syntax
+      const cleanedText = text.replace(/\*/g, '');
       logger.debug('Gemini generate: received response', {
         template,
-        responsePreview: text.slice(0, 200),
+        responsePreview: cleanedText.slice(0, 200),
       });
-      return text;
+      return cleanedText;
     } catch (error) {
       logger.error('Gemini generation failed', {
         error,
