@@ -15,6 +15,9 @@ const QUESTION_KEYWORDS = [
   '嗎',
   '呢',
   '吧',
+  '幹嘛',
+  '要幹嘛',
+  '要做什麼',
 ];
 
 const QUESTION_PATTERNS = [

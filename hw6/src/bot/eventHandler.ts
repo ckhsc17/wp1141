@@ -104,6 +104,26 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
       }
     }
 
+    // Check if todo create was incorrectly classified for a query question
+    // If text contains query keywords (even without question mark), it should be todo query
+    if (classification.intent === 'todo' && classification.subIntent === 'create') {
+      const lowerText = text.toLowerCase();
+      const queryKeywords = ['幹嘛', '要做什麼', '要幹嘛', '做了什麼', '做了哪些', '哪些', '什麼', '查', '看'];
+      // Check if it's a question OR contains query keywords
+      if (isQuestion(text) || queryKeywords.some((keyword) => lowerText.includes(keyword))) {
+        const originalSubIntent = classification.subIntent;
+        classification.subIntent = 'query';
+        classification.confidence = 0.6; // Lower confidence since it's a reclassification
+        
+        logger.warn('Reclassified todo create as query', {
+          userId,
+          originalSubIntent,
+          newSubIntent: 'query',
+          textPreview: text.slice(0, 100),
+        });
+      }
+    }
+
     // Route to appropriate service based on intent
     switch (classification.intent) {
       case 'todo': {

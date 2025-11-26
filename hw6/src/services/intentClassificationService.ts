@@ -44,7 +44,17 @@ export class IntentClassificationService {
       
       // Priority 2: Check for todos
       if (lowerText.includes('待辦') || lowerText.includes('todo') || lowerText.includes('要做')) {
-        if (lowerText.includes('查') || lowerText.includes('看') || lowerText.includes('做了') || lowerText.includes('哪些')) {
+        // Check for query keywords: 查、看、做了、哪些、幹嘛、什麼、要幹嘛、要做什麼
+        if (
+          lowerText.includes('查') ||
+          lowerText.includes('看') ||
+          lowerText.includes('做了') ||
+          lowerText.includes('哪些') ||
+          lowerText.includes('幹嘛') ||
+          lowerText.includes('要做什麼') ||
+          lowerText.includes('要幹嘛') ||
+          (lowerText.includes('什麼') && (lowerText.includes('要做') || lowerText.includes('要幹')))
+        ) {
           return {
             intent: 'todo',
             subIntent: 'query',

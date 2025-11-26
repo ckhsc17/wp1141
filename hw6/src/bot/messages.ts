@@ -516,7 +516,7 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '*待辦通知因目前為 Vercel 免費版，',
+                  text: '*待辦事項通知因目前為 Vercel 免費版，',
                   size: 'sm',
                   color: '#666666',
                   margin: 'sm',
@@ -541,7 +541,7 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '新增：Ex. 我要吃飯、取貨、寫作業',
+                  text: '新增：Ex. 明天寫網服作業、明天 21:00 寫日記',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
@@ -549,7 +549,7 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: '更新：Ex. 我寫完作業了！',
+                  text: '更新：Ex. 我寫完網服作業了！',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
@@ -752,6 +752,14 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                   wrap: true,
                 },
                 {
+                  type: 'text',
+                  text: 'Ex. 想去看動物方城市 3',
+                  size: 'sm',
+                  color: '#666666',
+                  margin: 'xs',
+                  wrap: true,
+                },
+                {
                   type: 'separator',
                   margin: 'md',
                 },
@@ -764,7 +772,7 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: 'Ex. 給我一些生活建議 \n Ex. 幫我分析時間管理 \n Ex. 我最近過得怎麼樣？',
+                  text: 'Ex. 給我一些生活建議 / 幫我分析時間管理 / 我最近過得怎麼樣？',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
@@ -783,7 +791,7 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: 'Ex. 推薦一些技術文章 \n Ex. 推薦一些展覽 \n Ex. 推薦一些音樂',
+                  text: 'Ex. 推薦一些技術文章 / 展覽 / 音樂',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
@@ -802,7 +810,7 @@ export async function sendUsageGuideMessage(userId: string, replyToken?: string)
                 },
                 {
                   type: 'text',
-                  text: 'Ex. 我有沒有聊過 XXX？ \n Ex. 我上禮拜說了什麼？ \n Ex. 之前提到的作業是什麼？',
+                  text: 'Ex. 我有沒有聊過 XXX？ / 我上禮拜說了什麼？ / 之前提到的作業是什麼？',
                   size: 'sm',
                   color: '#666666',
                   margin: 'xs',
