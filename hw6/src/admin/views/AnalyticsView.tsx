@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Typography, Grid, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Box, Typography, Grid, Select, MenuItem, FormControl, InputLabel, Alert } from '@mui/material';
 import { StatsCard } from '../components/StatsCard';
 import { IntentChart } from '../components/IntentChart';
 import { UserActivityChart } from '../components/UserActivityChart';
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { subDays, startOfMonth, endOfMonth } from 'date-fns';
 
 interface AnalyticsData {
   userStats: {
@@ -32,7 +32,11 @@ interface AnalyticsData {
 export function AnalyticsView() {
   const [dateRange, setDateRange] = useState<'7days' | '30days' | 'month' | 'all'>('30days');
 
-  const getDateRange = useCallback(() => {
+  const dateRangeObj = useMemo(() => {
+    if (dateRange === 'all') {
+      return undefined;
+    }
+    
     const now = new Date();
     switch (dateRange) {
       case '7days':
@@ -55,10 +59,20 @@ export function AnalyticsView() {
     }
   }, [dateRange]);
 
-  const dateRangeObj = getDateRange();
+  // Use ISO strings in queryKey to ensure stable references
+  const queryKey = useMemo(() => {
+    if (dateRange === 'all') {
+      return ['analytics', 'all'];
+    }
+    return [
+      'analytics',
+      dateRangeObj?.startDate?.toISOString(),
+      dateRangeObj?.endDate?.toISOString(),
+    ];
+  }, [dateRange, dateRangeObj]);
 
-  const { data, isLoading } = useQuery<AnalyticsData>({
-    queryKey: ['analytics', dateRangeObj?.startDate, dateRangeObj?.endDate],
+  const { data, isLoading, error } = useQuery<AnalyticsData>({
+    queryKey,
     queryFn: async () => {
       const params = new URLSearchParams();
       if (dateRangeObj?.startDate) {
@@ -71,6 +85,7 @@ export function AnalyticsView() {
       if (!res.ok) throw new Error('Failed to fetch analytics');
       return res.json();
     },
+    enabled: true, // Always enabled, even for 'all' case
   });
 
   return (
@@ -94,43 +109,49 @@ export function AnalyticsView() {
         </FormControl>
       </Box>
 
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          載入統計資料時發生錯誤：{error instanceof Error ? error.message : '未知錯誤'}
+        </Alert>
+      ) : null}
+
       {isLoading ? (
         <Typography>載入中...</Typography>
-      ) : (
+      ) : data ? (
         <>
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} md={4}>
               <StatsCard
                 title="總對話數"
-                value={data?.conversationStats.totalConversations || 0}
+                value={data.conversationStats.totalConversations || 0}
                 color="success"
               />
             </Grid>
             <Grid item xs={12} md={4}>
               <StatsCard
                 title="總使用者數"
-                value={data?.userStats.totalUsers || 0}
-                subtitle={`活躍: ${data?.userStats.activeUsers || 0}`}
+                value={data.userStats.totalUsers || 0}
+                subtitle={`活躍: ${data.userStats.activeUsers || 0}`}
               />
             </Grid>
             <Grid item xs={12} md={4}>
               <StatsCard
                 title="活躍使用者"
-                value={data?.userStats.activeUsers || 0}
+                value={data.userStats.activeUsers || 0}
               />
             </Grid>
           </Grid>
 
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <IntentChart data={data?.intentDistribution || []} />
+              <IntentChart data={data.intentDistribution || []} />
             </Grid>
             <Grid item xs={12} md={6}>
-              <UserActivityChart data={data?.dailyActivity || []} />
+              <UserActivityChart data={data.dailyActivity || []} />
             </Grid>
           </Grid>
         </>
-      )}
+      ) : null}
     </Box>
   );
 }
