@@ -50,3 +50,4 @@ export function extractTrendingInputFromPost(post: any): TrendingScoreInput {
 }
 
 
+

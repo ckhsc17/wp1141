@@ -418,7 +418,7 @@ export async function sendWelcomeMessage(userId: string, replyToken?: string): P
     [
     {
       type: 'text',
-      text: '嗨，我是 Booboo 小幽 👋 想記錄靈感、設定提醒或聽聽建議，都可以跟我說！\n範例：\n- 「幫我記下今天看到的文章 https://...」\n- 「提醒我明天 9 點要寫日記」\n- 「幫我整理最近的想法」',
+      text: '嗨，我是 Booboo 小幽 👋 想記錄靈感、設定提醒或聽聽建議，都可以跟我說！最近有點太多人找我，如果看到我回你我在忙，代表我的 token 快用完了，我需要休息一下，請隔最多一天之後我就會恢復精力啦！... \n範例：\n- 「幫我記下今天看到的文章 https://...」\n- 「提醒我明天 9 點要寫日記」\n- 「幫我整理最近的想法」',
       quickReply: buildQuickReplies(),
     },
     ],
