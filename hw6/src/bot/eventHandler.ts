@@ -19,6 +19,7 @@ type LineWebhookEvent = {
 
 import {
   sendChatMessage,
+  sendCoinCountMessage,
   sendFeedbackMessage,
   sendInsightMessage,
   sendLinkMessage,
@@ -36,7 +37,7 @@ import { ensureUser } from '@/bot/userHelper';
 import { repositories, services } from '@/container';
 import { logger } from '@/utils/logger';
 import { isQuestion, classifyQuestionIntent } from '@/utils/questionDetector';
-import { checkDailyMessageLimit, isTooManyRequestsError } from '@/utils/messageLimit';
+import { checkDailyMessageLimit, isTooManyRequestsError, recordApiCall } from '@/utils/messageLimit';
 
 export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
   const userId = event.source?.userId;
@@ -64,16 +65,16 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
   // Ensure user exists before processing any message
   await ensureUser(userId, lineClient, repositories.userRepo);
 
-  // Handle usage guide quick reply
+  // Handle usage guide quick reply (内建功能，不計入限制)
   if (text === '使用教學') {
     await sendUsageGuideMessage(userId, replyToken);
     return;
   }
 
-  // Check daily message limit (8 messages per day)
-  const messageLimitCheck = await checkDailyMessageLimit(userId, repositories.savedItemRepo, 8);
-  if (messageLimitCheck.exceeded) {
-    await sendChatMessage(userId, '今天的幽靈幣用完啦！明天再來找我聊天吧～ 👻', replyToken);
+  // Handle coin count quick reply (内建功能，不計入限制)
+  if (text === '查看幽靈幣數量') {
+    const messageLimitCheck = await checkDailyMessageLimit(userId, repositories.savedItemRepo, 8);
+    await sendCoinCountMessage(userId, messageLimitCheck.count, 8, replyToken);
     return;
   }
 
@@ -81,7 +82,7 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
   await showTyping(userId);
 
   try {
-    // Classify intent using LLM
+    // Classify intent using LLM (intent classification 不算在用戶限制內)
     const classification = await services.intentClassification.classify(userId, text);
 
     logger.debug('Intent classified', {
@@ -131,6 +132,18 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
         });
       }
     }
+
+    // Check daily API call limit before processing
+    // Note: Intent classification already happened above and doesn't count toward limit
+    // All other intents will trigger Gemini API calls
+    const messageLimitCheck = await checkDailyMessageLimit(userId, repositories.savedItemRepo, 8);
+    if (messageLimitCheck.exceeded) {
+      await sendChatMessage(userId, '今天的幽靈幣用完啦！明天再來找我聊天吧～ 👻', replyToken);
+      return;
+    }
+    
+    // Record API call before processing (intent classification doesn't count)
+    await recordApiCall(userId, repositories.savedItemRepo, classification.intent);
 
     // Route to appropriate service based on intent
     switch (classification.intent) {

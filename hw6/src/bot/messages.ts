@@ -189,6 +189,10 @@ const quickReplyItems = [
     label: '📖 小幽的身世',
     uri: 'https://bowenchen.vercel.app/files/novel.pdf',
   },
+  {
+    label: '👻 查看幽靈幣',
+    text: '查看幽靈幣數量',
+  },
 
   // {
   //   label: '👤 我的',
@@ -421,6 +425,156 @@ export async function sendWelcomeMessage(userId: string, replyToken?: string): P
       text: '嗨，我是 Booboo 小幽 👋 想記錄靈感、設定提醒或聽聽建議，都可以跟我說！最近有點太多人找我，如果看到我回你我在忙，代表我的 token 快用完了，我需要休息一下，請隔最多一天之後我就會恢復精力啦！... \n範例：\n- 「幫我記下今天看到的文章 https://...」\n- 「提醒我明天 9 點要寫日記」\n- 「幫我整理最近的想法」',
       quickReply: buildQuickReplies(),
     },
+    ],
+    replyToken,
+  );
+}
+
+export async function sendCoinCountMessage(
+  userId: string,
+  currentCount: number,
+  dailyLimit: number = 8,
+  replyToken?: string,
+): Promise<void> {
+  const percentage = Math.min((currentCount / dailyLimit) * 100, 100);
+  const remaining = Math.max(dailyLimit - currentCount, 0);
+  
+  // Determine color based on usage
+  let progressColor = '#4CAF50'; // Green
+  if (percentage >= 75) {
+    progressColor = '#FF9800'; // Orange
+  }
+  if (percentage >= 90) {
+    progressColor = '#F44336'; // Red
+  }
+  
+  await sendMessages(
+    userId,
+    [
+      {
+        type: 'flex',
+        altText: `幽靈幣用量：${currentCount}/${dailyLimit}`,
+        contents: {
+          type: 'bubble',
+          hero: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'text',
+                text: '👻 幽靈幣',
+                weight: 'bold',
+                size: 'xl',
+                color: '#FFFFFF',
+                align: 'center',
+              },
+            ],
+            backgroundColor: '#9C27B0',
+            paddingAll: '20px',
+          },
+          body: {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'md',
+            contents: [
+              {
+                type: 'box',
+                layout: 'vertical',
+                spacing: 'sm',
+                contents: [
+                  {
+                    type: 'text',
+                    text: `今日用量`,
+                    size: 'sm',
+                    color: '#666666',
+                  },
+                  {
+                    type: 'text',
+                    text: `${currentCount} / ${dailyLimit}`,
+                    weight: 'bold',
+                    size: 'xxl',
+                    color: '#333333',
+                  },
+                ],
+              },
+              {
+                type: 'separator',
+                margin: 'md',
+              },
+              {
+                type: 'box',
+                layout: 'vertical',
+                spacing: 'xs',
+                contents: [
+                  {
+                    type: 'box',
+                    layout: 'horizontal',
+                    contents: [
+                      {
+                        type: 'box',
+                        layout: 'vertical',
+                        flex: Math.max(currentCount, 1),
+                        backgroundColor: progressColor,
+                        height: '20px',
+                        cornerRadius: '10px',
+                        contents: [
+                          {
+                            type: 'text',
+                            text: ' ',
+                            size: 'xs',
+                          },
+                        ],
+                      },
+                      {
+                        type: 'box',
+                        layout: 'vertical',
+                        flex: Math.max(remaining, 1),
+                        backgroundColor: '#E0E0E0',
+                        height: '20px',
+                        cornerRadius: '10px',
+                        contents: [
+                          {
+                            type: 'text',
+                            text: ' ',
+                            size: 'xs',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'text',
+                text: remaining > 0 ? `還剩 ${remaining} 次可以使用` : '今天的幽靈幣已用完',
+                size: 'sm',
+                color: remaining > 0 ? '#4CAF50' : '#F44336',
+                align: 'center',
+                margin: 'md',
+                weight: 'bold',
+              },
+            ],
+            paddingAll: '20px',
+          },
+          footer: {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: '💡 提示：只有觸發 Gemini API 的訊息才會計算用量',
+                size: 'xs',
+                color: '#999999',
+                align: 'center',
+                wrap: true,
+                margin: 'sm',
+              },
+            ],
+          },
+        },
+        quickReply: buildQuickReplies(),
+      },
     ],
     replyToken,
   );

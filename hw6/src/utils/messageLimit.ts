@@ -1,10 +1,11 @@
 import type { SavedItemRepository } from '@/repositories';
 
 /**
- * Check if user has exceeded daily message limit
+ * Check if user has exceeded daily API call limit
+ * Only counts messages that trigger Gemini API (not intent classification)
  * @param userId - User ID
  * @param savedItemRepo - SavedItem repository
- * @param dailyLimit - Daily message limit (default: 8)
+ * @param dailyLimit - Daily API call limit (default: 8)
  * @returns Object with { exceeded: boolean, count: number }
  */
 export async function checkDailyMessageLimit(
@@ -18,12 +19,12 @@ export async function checkDailyMessageLimit(
     timeZone: 'Asia/Taipei',
   }); // Returns YYYY-MM-DD format
   
-  // Get all SavedItems (all types: chat, insight, knowledge, memory, music, life, link, etc.)
+  // Get all API call records (tagged with 'api_call')
   // Note: We need to get all items and filter by date since repository doesn't have date filtering
-  const allItems = await savedItemRepo.listByUser(userId, 1000);
+  const allApiCalls = await savedItemRepo.listByTags(userId, ['api_call'], 1000);
   
-  // Filter items created today (in Taipei timezone)
-  const todayItems = allItems.filter((item) => {
+  // Filter API calls made today (in Taipei timezone)
+  const todayApiCalls = allApiCalls.filter((item) => {
     const itemDate = new Date(item.createdAt);
     const itemDateStr = itemDate.toLocaleDateString('en-CA', { 
       timeZone: 'Asia/Taipei',
@@ -31,10 +32,29 @@ export async function checkDailyMessageLimit(
     return itemDateStr === taipeiDateStr;
   });
 
-  const count = todayItems.length;
+  const count = todayApiCalls.length;
   const exceeded = count >= dailyLimit;
 
   return { exceeded, count };
+}
+
+/**
+ * Record an API call for message limit tracking
+ * @param userId - User ID
+ * @param savedItemRepo - SavedItem repository
+ * @param intent - Intent type that triggered the API call
+ */
+export async function recordApiCall(
+  userId: string,
+  savedItemRepo: SavedItemRepository,
+  intent: string,
+): Promise<void> {
+  await savedItemRepo.create({
+    userId,
+    title: `API call: ${intent}`,
+    content: `API call recorded for intent: ${intent}`,
+    tags: ['api_call'],
+  });
 }
 
 /**
