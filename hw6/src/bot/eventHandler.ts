@@ -115,21 +115,38 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
 
     // Check if todo create was incorrectly classified for a query question
     // If text contains query keywords (even without question mark), it should be todo query
+    // BUT: if text contains create keywords (新增, 提醒我, etc.), keep it as create
     if (classification.intent === 'todo' && classification.subIntent === 'create') {
       const lowerText = text.toLowerCase();
-      const queryKeywords = ['幹嘛', '要做什麼', '要幹嘛', '做了什麼', '做了哪些', '哪些', '什麼', '查', '看'];
-      // Check if it's a question OR contains query keywords
-      if (isQuestion(text) || queryKeywords.some((keyword) => lowerText.includes(keyword))) {
-        const originalSubIntent = classification.subIntent;
-        classification.subIntent = 'query';
-        classification.confidence = 0.6; // Lower confidence since it's a reclassification
+      
+      // Create keywords take priority - if these exist, keep as create
+      const createKeywords = ['新增', '提醒我', '提醒', '幫我新增', '幫我記', '記下', '設定'];
+      const hasCreateKeyword = createKeywords.some((keyword) => lowerText.includes(keyword));
+      
+      if (!hasCreateKeyword) {
+        // Only reclassify if no create keywords are present
+        const queryKeywords = ['幹嘛', '要做什麼', '要幹嘛', '做了什麼', '做了哪些', '哪些', '查'];
+        // More specific query patterns - "看" alone is not enough, need context
+        const specificQueryPatterns = [
+          '要看', '查看', '看什麼', '看哪些', '看做了', '看待辦', '看todo',
+        ];
         
-        logger.warn('Reclassified todo create as query', {
-          userId,
-          originalSubIntent,
-          newSubIntent: 'query',
-          textPreview: text.slice(0, 100),
-        });
+        const hasQueryKeyword = queryKeywords.some((keyword) => lowerText.includes(keyword));
+        const hasQueryPattern = specificQueryPatterns.some((pattern) => lowerText.includes(pattern));
+        
+        // Check if it's a question OR contains query keywords/patterns
+        if (isQuestion(text) || hasQueryKeyword || hasQueryPattern) {
+          const originalSubIntent = classification.subIntent;
+          classification.subIntent = 'query';
+          classification.confidence = 0.6; // Lower confidence since it's a reclassification
+          
+          logger.warn('Reclassified todo create as query', {
+            userId,
+            originalSubIntent,
+            newSubIntent: 'query',
+            textPreview: text.slice(0, 100),
+          });
+        }
       }
     }
 
