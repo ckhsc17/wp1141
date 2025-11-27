@@ -193,6 +193,10 @@ const quickReplyItems = [
     label: '👻 查看幽靈幣',
     text: '查看幽靈幣數量',
   },
+  {
+    label: '💡 功能許願池',
+    uri: 'https://app.sli.do/event/6GB5Y4xYAbbEzfkSF4rZRh/live/questions',
+  },
 
   // {
   //   label: '👤 我的',
