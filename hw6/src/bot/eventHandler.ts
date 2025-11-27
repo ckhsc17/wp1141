@@ -36,6 +36,7 @@ import { ensureUser } from '@/bot/userHelper';
 import { repositories, services } from '@/container';
 import { logger } from '@/utils/logger';
 import { isQuestion, classifyQuestionIntent } from '@/utils/questionDetector';
+import { checkDailyMessageLimit, isTooManyRequestsError } from '@/utils/messageLimit';
 
 export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
   const userId = event.source?.userId;
@@ -66,6 +67,13 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
   // Handle usage guide quick reply
   if (text === '使用教學') {
     await sendUsageGuideMessage(userId, replyToken);
+    return;
+  }
+
+  // Check daily message limit (8 messages per day)
+  const messageLimitCheck = await checkDailyMessageLimit(userId, repositories.savedItemRepo, 8);
+  if (messageLimitCheck.exceeded) {
+    await sendChatMessage(userId, '今天的幽靈幣用完啦！明天再來找我聊天吧～ 👻', replyToken);
     return;
   }
 
@@ -321,6 +329,16 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
       userId,
       textPreview: text.slice(0, 100),
     });
-    await sendChatMessage(userId, '小幽現在有點忙碌，請稍後再試一次 🙏', replyToken);
+
+    // Check if it's a 429 Too Many Requests error
+    if (isTooManyRequestsError(error)) {
+      await sendChatMessage(
+        userId,
+        '小幽今天處理太多請求了，有點累...讓我休息一下，晚點再來找我聊天吧～ 😴',
+        replyToken,
+      );
+    } else {
+      await sendChatMessage(userId, '小幽現在有點忙碌，請稍後再試一次 🙏', replyToken);
+    }
   }
 }
