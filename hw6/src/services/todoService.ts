@@ -452,29 +452,27 @@ export class TodoService {
             break;
         }
 
-        // For future time queries, only filter todos that have a date field
-        // (todos without date cannot be determined if they're in the future range)
+        // For future time queries, try to filter by date first
+        // If no results, fallback to all pending todos (user might be asking what they need to do)
         if (startDate !== null) {
-          if (endDate !== null) {
-            todos = todos.filter((todo) => {
-              // Only include todos with date field for future queries
-              if (!todo.date) {
-                return false;
-              }
-              const todoDate = new Date(todo.date);
-              // Compare dates: todo.date should be >= startDate and < endDate
+          const todosWithDate = todos.filter((todo) => {
+            if (!todo.date) {
+              return false;
+            }
+            const todoDate = new Date(todo.date);
+            if (endDate !== null) {
               return todoDate >= startDate! && todoDate < endDate!;
-            });
-          } else {
-            todos = todos.filter((todo) => {
-              // Only include todos with date field for future queries
-              if (!todo.date) {
-                return false;
-              }
-              const todoDate = new Date(todo.date);
+            } else {
               return todoDate >= startDate!;
-            });
+            }
+          });
+          
+          // If we found todos with matching dates, use those
+          // Otherwise, return all pending todos (user is asking what they need to do)
+          if (todosWithDate.length > 0) {
+            todos = todosWithDate;
           }
+          // If no todos with matching dates, keep all pending todos (already filtered by status above)
         }
       } else {
         // Handle past/current time ranges
