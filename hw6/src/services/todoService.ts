@@ -404,10 +404,14 @@ export class TodoService {
     }
 
     // Filter by keywords
-    if (keywords.length > 0) {
+    // But ignore generic query keywords that don't help filter (哪些, 待辦, 什麼, 幹嘛, etc.)
+    const genericQueryKeywords = ['哪些', '待辦', '什麼', '幹嘛', '要幹嘛', '要做什麼', '做了什麼', '做了哪些', 'todo'];
+    const meaningfulKeywords = keywords.filter((keyword) => !genericQueryKeywords.includes(keyword.toLowerCase()));
+    
+    if (meaningfulKeywords.length > 0) {
       todos = todos.filter((todo) => {
         const todoText = `${todo.title} ${todo.description || ''}`.toLowerCase();
-        return keywords.some((keyword) => todoText.includes(keyword.toLowerCase()));
+        return meaningfulKeywords.some((keyword) => todoText.includes(keyword.toLowerCase()));
       });
     }
 
