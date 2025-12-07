@@ -10,14 +10,14 @@ export const dynamic = 'force-dynamic';
 /**
  * Cron job endpoint to check and send todo notifications
  * 
- * Note: Vercel Hobby plan only allows one cron job per day.
- * Current schedule: Daily at 8:00 AM (Asia/Taipei, UTC+8).
- * Cron expression: "0 0 * * *" (UTC 00:00 = Asia/Taipei 08:00)
+ * Current schedule: Every hour at minute 0 (e.g., 1:00, 2:00, 3:00...)
+ * Cron expression: "0 * * * *" (runs at the top of every hour in UTC)
  * 
- * For more frequent checks (e.g., every 5 minutes), consider:
- * - Upgrading to Vercel Pro plan
- * - Using external cron services (e.g., cron-job.org, EasyCron)
- * - Using webhook-based solutions
+ * Note: Vercel cron jobs use UTC timezone.
+ * - For Asia/Taipei (UTC+8), this means it runs at 9:00, 10:00, 11:00... local time
+ * 
+ * Vercel Pro plan allows multiple cron jobs with flexible schedules.
+ * Free (Hobby) plan has limitations on cron frequency.
  */
 export async function GET(req: NextRequest): Promise<Response> {
   // Optional: Add authentication to prevent unauthorized access
