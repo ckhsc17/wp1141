@@ -11,7 +11,7 @@ import type { SavedItemRepository } from '@/repositories';
 export async function checkDailyMessageLimit(
   userId: string,
   savedItemRepo: SavedItemRepository,
-  dailyLimit: number = 8,
+  dailyLimit: number = 1000,
 ): Promise<{ exceeded: boolean; count: number }> {
   // Get today's date string in Asia/Taipei timezone
   const now = new Date();

@@ -1293,12 +1293,34 @@ export async function sendChatMessage(
   response: string,
   replyToken?: string,
 ): Promise<void> {
+  // Validate that response is not empty (LINE API requirement)
+  const trimmedResponse = response?.trim() || '';
+  if (!trimmedResponse) {
+    logger.warn('Attempted to send empty chat message, using fallback', {
+      userId,
+      originalResponse: response,
+    });
+    // Use a fallback message instead of sending empty text
+    await sendMessages(
+      userId,
+      [
+        {
+          type: 'text',
+          text: '抱歉，我現在無法回應，請稍後再試一次 🙏',
+          quickReply: buildQuickReplies(),
+        },
+      ],
+      replyToken,
+    );
+    return;
+  }
+
   await sendMessages(
     userId,
     [
       {
         type: 'text',
-        text: response,
+        text: trimmedResponse,
         quickReply: buildQuickReplies(),
       },
     ],
