@@ -109,12 +109,12 @@ ${text}
   },
   analyzeLink: {
     system:
-      '你是連結內容分析助手。分析連結的類型、摘要、地點等資訊，必須嚴格按照 JSON 格式輸出。請使用 Google Search 來獲取連結的實際內容和最新資訊，並參考用戶的歷史記錄來提供更準確的分析。',
+      '你是連結內容分析助手。分析連結的類型、摘要、地點等資訊，必須嚴格按照 JSON 格式輸出。系統會自動使用 URL Context 工具來讀取連結的實際內容，並使用 Google Search 來獲取相關資訊和類似連結，同時參考用戶的歷史記錄來提供更準確的分析。',
     user: (payload: Record<string, unknown>) => {
       const url = typeof payload.url === 'string' ? payload.url : '';
       const content = typeof payload.content === 'string' ? payload.content : '';
       const ragContext = typeof payload.ragContext === 'string' ? payload.ragContext : undefined;
-      return `請使用 Google Search 搜尋並分析以下連結的實際內容：
+      return `請分析以下連結的實際內容：
 <連結>
 ${url}
 </連結>
@@ -122,24 +122,25 @@ ${content ? `<用戶提供的內容>\n${content}\n</用戶提供的內容>` : ''
 ${ragContext ? `<用戶歷史相關記錄>\n${ragContext}\n</用戶歷史相關記錄>\n\n這些是用戶之前儲存的類似連結或內容，可以作為參考來理解用戶的偏好和分類習慣。` : ''}
 
 重要指示：
-1. 請使用 Google Search 來搜尋這個連結的實際內容、網站資訊和相關資訊
-2. 參考用戶的歷史記錄（如果有的話）來理解用戶的分類習慣和偏好
-3. 根據搜尋結果和歷史記錄來判斷連結的類型、內容摘要和相關標籤
-4. 如果搜尋結果顯示這是餐廳、咖啡廳等美食相關，請提取地點資訊
-5. 如果搜尋結果顯示這是活動、展覽等娛樂相關，請提取地點資訊
-6. 根據實際內容和用戶歷史來決定最適合的分類和標籤
-7. 如果用戶歷史中有類似類型的連結，可以參考其分類方式
+1. 系統會自動使用 URL Context 工具來直接讀取連結的實際內容
+2. 系統會自動使用 Google Search 來搜尋這個連結的相關資訊、網站資訊和類似連結
+3. 參考用戶的歷史記錄（如果有的話）來理解用戶的分類習慣和偏好
+4. 根據 URL 內容、搜尋結果和歷史記錄來判斷連結的類型、內容摘要和相關標籤
+5. 如果內容顯示這是餐廳、咖啡廳等美食相關，請提取地點資訊
+6. 如果內容顯示這是活動、展覽等娛樂相關，請提取地點資訊
+7. 根據實際內容和用戶歷史來決定最適合的分類和標籤
+8. 如果用戶歷史中有類似類型的連結，可以參考其分類方式
 
 規則：
 - tags: 統一使用英文小寫（例如：food, entertainment, knowledge, life, news, tool）
 - location: 僅美食/娛樂類型需要，如果無法確定可設為 null
-- summary: 基於搜尋結果提供 150 字內的準確摘要
+- summary: 基於 URL 內容和搜尋結果提供 150 字內的準確摘要
 
 輸出 JSON 格式（不能有其他文字）：
 <JSON>
 {
   "type": "美食|娛樂|知識|生活|新聞|工具|其他",
-  "summary": "150字內的摘要（基於搜尋結果）",
+  "summary": "150字內的摘要（基於 URL 內容和搜尋結果）",
   "location": "地點" (僅美食/娛樂類型需要，可為 null),
   "tags": ["food", "restaurant"] (統一使用英文小寫)
 }

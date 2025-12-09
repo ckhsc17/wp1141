@@ -50,10 +50,13 @@ export class LinkService {
     //   similarItemsCount: uniqueSimilarItems.length,
     // });
 
-    // Analyze link using LLM with Google Search grounding and RAG context
-    let result = await this.gemini.generateWithGrounding({
+    // Analyze link using LLM with URL Context + Google Search grounding and RAG context
+    // URL Context: Directly reads the content from the provided URL
+    // Google Search: Finds related information and similar links for recommendations
+    let result = await this.gemini.generateWithUrlContextAndGrounding({
       template: 'analyzeLink',
       payload: { url, content, ragContext },
+      url,
     });
 
     // Fallback to regular generate if grounding fails (empty text)
@@ -101,6 +104,7 @@ export class LinkService {
     };
 
     // Store grounding metadata if available
+    // groundingChunks 中的連結可以用來推薦類似的連結給用戶
     if (result.groundingMetadata) {
       metadata.grounding = {
         webSearchQueries: result.groundingMetadata.webSearchQueries || [],
@@ -114,7 +118,36 @@ export class LinkService {
         userId,
         url,
         searchQueriesCount: result.groundingMetadata.webSearchQueries?.length || 0,
+        searchQueries: result.groundingMetadata.webSearchQueries || [], // 具體的搜尋查詢
         sourcesCount: result.groundingMetadata.groundingChunks?.length || 0,
+        sources: result.groundingMetadata.groundingChunks?.map((chunk) => ({
+          uri: chunk.uri,
+          title: chunk.title,
+        })) || [], // 具體的來源連結
+      });
+    }
+
+    // Store URL context metadata if available
+    // 完整 log 出來，就像官方示例的 console.log(response.candidates[0].urlContextMetadata)
+    if (result.urlContextMetadata) {
+      const urlContextData = {
+        retrievedUrl: result.urlContextMetadata.urlMetadata?.[0]?.retrievedUrl || url,
+        retrievalStatus: result.urlContextMetadata.urlMetadata?.[0]?.urlRetrievalStatus || 'UNKNOWN',
+      };
+      metadata.urlContext = urlContextData;
+
+      logger.debug('Link analysis with URL context metadata', {
+        userId,
+        url,
+        retrievalStatus: urlContextData.retrievalStatus,
+        retrievedUrl: urlContextData.retrievedUrl,
+        // 完整 log urlContextMetadata，就像官方示例
+        urlContextMetadata: JSON.stringify(result.urlContextMetadata, null, 2),
+      });
+    } else {
+      logger.debug('Link analysis: no URL context metadata available', {
+        userId,
+        url,
       });
     }
 
