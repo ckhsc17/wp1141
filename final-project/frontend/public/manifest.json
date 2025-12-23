@@ -1,0 +1,43 @@
+{
+  "name": "MeetHalf - 找到完美聚會地點",
+  "short_name": "MeetHalf",
+  "description": "幫助群組尋找公平的聚會地點，自動計算最佳會面中點",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "categories": ["travel", "navigation", "social", "lifestyle"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "我的群組",
+      "short_name": "群組",
+      "description": "查看我參與的所有群組",
+      "url": "/groups",
+      "icons": [
+        {
+          "src": "/favicon.ico",
+          "sizes": "any"
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,29 @@
+# MeetHalf 專案規則
+
+## 專案狀態
+- Stage 0-2: ✅ 完成
+- Stage 3-4: 待開發
+- Stage 5-6: 待開發
+
+## 重要設定
+- 前端 port: 5173
+- 後端 port: 3000
+- 資料庫: SQLite (dev.db)
+- API Key 命名: VITE_GOOGLE_MAPS_JS_KEY
+
+## 安全規則
+- 永不提交 .env 檔案
+- 永不提交 *.db 檔案
+- 密碼使用 bcrypt（10 rounds）
+- JWT 存於 HttpOnly Cookie
+- CORS 僅允許 localhost:5173, 127.0.0.1:5173
+
+## 開發規範
+- 使用 TypeScript
+- 使用 Zod 驗證所有 API payload
+- 前端使用 react-hook-form
+- 資料庫修改使用 Prisma migration
+
+## Stage 4 準備事項
+- Group.ownerId 已就緒（授權檢查用）
+- Member.lat/lng/address 已就緒（數值欄位）

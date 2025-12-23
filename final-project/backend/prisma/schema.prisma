@@ -1,0 +1,220 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                  Int      @id @default(autoincrement())
+  userId              String?  @unique // email前綴 + "_" + 三個字母數字亂碼（首次設定時才填入）
+  email               String   @unique
+  name                String   // User display name (from OAuth or email)
+  passwordHash        String?  // Optional: keep for existing users, new users via OAuth
+  googleId            String?  @unique
+  githubId            String?  @unique
+  provider            String?  // EMAIL, GOOGLE, GITHUB
+  avatar              String?  // Avatar URL from OAuth
+  defaultLat          Float?   // 預設出發點緯度
+  defaultLng          Float?   // 預設出發點經度
+  defaultAddress      String?  // 預設出發點地址
+  defaultLocationName String?  // 預設出發點名稱
+  defaultTravelMode   String?  // 預設交通方式: driving, transit, walking, bicycling
+  needsSetup          Boolean  @default(true) // 是否需要首次設定
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  groups              Group[]  // Many-to-many relation with Group
+}
+
+model Event {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  ownerId             String   // Owner's userId (not foreign key - allows anonymous users)
+  meetingPointLat     Float?   // 集合點緯度（可選）
+  meetingPointLng     Float?   // 集合點經度（可選）
+  meetingPointName    String?  // 地點名稱（可選）
+  meetingPointAddress String?  // 地址（可選）
+  startTime           DateTime
+  endTime             DateTime
+  status              EventStatus @default(upcoming)
+  useMeetHalf         Boolean  @default(false) // 是否使用 MeetHalf
+  groupId             Int?     // 關聯到朋友群組（可選）
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  members             Member[]
+  pokeRecords         PokeRecord[]
+  shareTokens         ShareToken[]
+  invitations         EventInvitation[]
+  group               Group?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  
+  @@index([ownerId])
+  @@index([groupId])
+  @@index([status])
+}
+
+enum EventStatus {
+  upcoming
+  ongoing
+  ended
+}
+
+model Member {
+  id            Int       @id @default(autoincrement())
+  userId        String?   // User's userId or anonymous identifier (nullable for offline members)
+  eventId       Int
+  lat           Float?
+  lng           Float?
+  address       String?
+  travelMode    String?   @default("driving") // driving, transit, walking, bicycling
+  nickname      String?   // Display name for non-registered members
+  shareLocation Boolean   @default(false) // 是否分享位置
+  arrivalTime   DateTime? // 到達時間（可選）
+  
+  event         Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([eventId])
+  @@index([userId])
+}
+
+model Group {
+  id        Int      @id @default(autoincrement())
+  name      String   // 群組名稱，例如「大學同學」
+  ownerId   String   // 建立者 userId（對應 User.userId）
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  members      User[]        // 群組成員（多對多關聯）
+  events       Event[]       // 關聯的所有聚會
+  chatMessages ChatMessage[] // 群組聊天訊息
+  
+  @@index([ownerId])
+}
+
+model PokeRecord {
+  id           String   @id @default(cuid())
+  eventId      Int      // 關聯到 Event
+  fromMemberId Int      // 戳人者的 Member ID
+  toMemberId   Int      // 被戳者的 Member ID
+  createdAt    DateTime @default(now()) // 戳人時間
+  
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  @@index([eventId])
+  @@index([toMemberId])
+}
+
+model ShareToken {
+  id        String   @id @default(cuid())
+  eventId   Int      // 關聯到 Event
+  token     String   @unique // 32字元 NanoID token
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@index([eventId])
+}
+
+model EventInvitation {
+  id         Int                    @id @default(autoincrement())
+  eventId    Int                    // 關聯到 Event
+  fromUserId String                 // 邀請者 userId
+  toUserId   String                 // 被邀請者 userId
+  status     EventInvitationStatus  @default(pending)
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  
+  event      Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, toUserId]) // 同一個活動不能重複邀請同一個人
+  @@index([eventId])
+  @@index([toUserId])
+  @@index([status])
+}
+
+enum EventInvitationStatus {
+  pending
+  accepted
+  rejected
+}
+
+model Friend {
+  id        Int      @id @default(autoincrement())
+  userId    String   // 發起方 userId
+  friendId  String   // 對方 userId
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, friendId]) // 確保唯一關係
+  @@index([userId])
+  @@index([friendId])
+}
+
+model FriendRequest {
+  id         Int                @id @default(autoincrement())
+  fromUserId String             // 邀請方 userId
+  toUserId   String             // 被邀請方 userId
+  status     FriendRequestStatus @default(pending)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  
+  @@unique([fromUserId, toUserId]) // 避免重複邀請
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([status])
+}
+
+enum FriendRequestStatus {
+  pending
+  accepted
+  rejected
+}
+
+model ChatMessage {
+  id         Int      @id @default(autoincrement())
+  content    String   @db.Text // 訊息內容
+  senderId   String   // 發送者 userId
+  receiverId String?  // 個人聊天對象 userId（可選）
+  groupId    Int?     // 群組聊天（可選）
+  readBy     Json     @default("[]") // 已讀列表 userId[]
+  createdAt  DateTime @default(now())
+  
+  group      Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([groupId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    String           // 接收者 userId
+  type      NotificationType // 通知類型
+  title     String           // 標題
+  body      String           @db.Text // 內容
+  data      Json?            // 額外資料（如 requestId, eventId）
+  read      Boolean          @default(false) // 是否已讀
+  createdAt DateTime         @default(now())
+  
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
+  FRIEND_REJECTED
+  EVENT_INVITE
+  POKE
+  NEW_MESSAGE
+  EVENT_UPDATE
+}
+
