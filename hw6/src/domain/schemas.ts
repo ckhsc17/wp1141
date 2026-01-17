@@ -46,10 +46,12 @@ export const SharedContentSchema = z.object({
 
 export type SharedContent = z.infer<typeof SharedContentSchema>;
 
-// Intent Classification
+// Intent Classification (簡化為 5 種意圖)
 export const IntentClassificationSchema = z.object({
-  intent: z.enum(['todo', 'link', 'insight', 'knowledge', 'memory', 'music', 'life', 'feedback', 'recommendation', 'chat_history', 'other']),
-  subIntent: z.enum(['create', 'update', 'query']).optional(),
+  intent: z.enum(['todo', 'link', 'save_content', 'query', 'other']), // 從 11 種減少到 5 種
+  subIntent: z.enum(['create', 'update', 'query']).optional(), // 僅 todo 時需要
+  contentType: z.enum(['insight', 'knowledge', 'memory', 'music', 'life']).optional(), // 僅 save_content 時使用
+  queryType: z.enum(['feedback', 'recommendation', 'chat_history']).optional(), // 僅 query 時使用
   confidence: z.number().min(0).max(1).default(0.8),
   extractedData: z.record(z.string(), z.unknown()).optional(),
 });

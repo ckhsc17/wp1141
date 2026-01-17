@@ -93,21 +93,23 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
       confidence: classification.confidence,
     });
 
-    // Check if a storage intent was incorrectly classified for a question
-    // Storage intents: insight, knowledge, memory, music, life
-    const storageIntents = ['insight', 'knowledge', 'memory', 'music', 'life'] as const;
-    if (storageIntents.includes(classification.intent as any) && isQuestion(text)) {
+    // Check if save_content intent was incorrectly classified for a question
+    // If it's a question, should be query instead of save_content
+    if (classification.intent === 'save_content' && isQuestion(text)) {
       // Reclassify question to appropriate query intent
       const questionIntent = classifyQuestionIntent(text);
       if (questionIntent) {
         const originalIntent = classification.intent;
-        classification.intent = questionIntent;
+        classification.intent = 'query';
+        classification.queryType = questionIntent; // Set queryType: 'feedback' or 'chat_history'
+        classification.contentType = undefined; // Clear contentType since we're switching to query
         classification.confidence = 0.6; // Lower confidence since it's a reclassification
         
         logger.warn('Reclassified question as query intent', {
           userId,
           originalIntent,
-          newIntent: questionIntent,
+          newIntent: 'query',
+          queryType: questionIntent,
           textPreview: text.slice(0, 100),
         });
       }
@@ -165,6 +167,17 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
     // Route to appropriate service based on intent
     switch (classification.intent) {
       case 'todo': {
+        // 提取 todo 相關的習慣和模式記憶（非同步，不阻塞）
+        services.chat.extractMemoryForIntent(
+          userId,
+          'todo',
+          text,
+          undefined,
+          { subIntent: classification.subIntent }
+        ).catch((error) => {
+          logger.warn('Failed to extract todo memory (non-blocking)', { userId, error });
+        });
+
         if (classification.subIntent === 'query') {
           // Query todos by natural language
           const todos = await services.todo.queryTodosByNaturalLanguage(userId, text);
@@ -290,65 +303,151 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
 
         const result = await services.link.analyzeAndSave(userId, url, text);
         await sendLinkMessage(userId, url, result.analysis, replyToken);
+        
+        // 提取 link 相關的興趣和主題記憶（非同步，不阻塞）
+        services.chat.extractMemoryForIntent(
+          userId,
+          'link',
+          text,
+          undefined,
+          { linkTitle: result.analysis.summary, linkType: result.analysis.type }
+        ).catch((error) => {
+          logger.warn('Failed to extract link memory (non-blocking)', { userId, error });
+        });
         break;
       }
 
-      case 'insight': {
-        const item = await services.insight.saveInsight(userId, text);
-        await sendInsightMessage(userId, item, replyToken);
+      case 'save_content': {
+        // 根據 contentType 路由到對應服務
+        const contentType = classification.contentType || 'memory'; // 預設 memory
+        
+        let savedItem;
+        switch (contentType) {
+          case 'insight': {
+            savedItem = await services.insight.saveInsight(userId, text);
+            await sendInsightMessage(userId, savedItem, replyToken);
+            break;
+          }
+          case 'knowledge': {
+            savedItem = await services.knowledge.saveKnowledge(userId, text);
+            await sendSavedItemMessage(userId, savedItem, '已儲存知識', replyToken);
+            break;
+          }
+          case 'memory': {
+            savedItem = await services.memory.saveMemory(userId, text);
+            await sendSavedItemMessage(userId, savedItem, '已儲存記憶', replyToken);
+            break;
+          }
+          case 'music': {
+            savedItem = await services.music.saveMusic(userId, text);
+            await sendSavedItemMessage(userId, savedItem, '已儲存音樂', replyToken);
+            break;
+          }
+          case 'life': {
+            savedItem = await services.life.saveLife(userId, text);
+            await sendSavedItemMessage(userId, savedItem, '已儲存活動', replyToken);
+            break;
+          }
+          default: {
+            // Fallback to memory
+            savedItem = await services.memory.saveMemory(userId, text);
+            await sendSavedItemMessage(userId, savedItem, '已儲存記憶', replyToken);
+            break;
+          }
+        }
+
+        // save_content 是記憶的核心：
+        // 1. 提取關鍵字與標籤（非同步，不阻塞）
+        services.chat.extractMemoryForIntent(
+          userId,
+          'save_content',
+          text,
+          undefined,
+          { contentType }
+        ).catch((error) => {
+          logger.warn('Failed to extract save_content memory (non-blocking)', { userId, error });
+        });
+
+        // 2. 儲存原始對話到 mem0（非同步，不阻塞）
+        // 構建助手響應訊息
+        const assistantResponseMap: Record<string, string> = {
+          insight: '已儲存靈感',
+          knowledge: '已儲存知識',
+          memory: '已儲存記憶',
+          music: '已儲存音樂',
+          life: '已儲存活動',
+        };
+        const assistantResponse = assistantResponseMap[contentType] || '已儲存記憶';
+        
+        // 傳入 'save_content' 作為 category，確保記憶分類正確
+        services.chat.saveConversationToMemory(userId, text, assistantResponse, 'save_content').catch((error) => {
+          logger.warn('Failed to save save_content conversation to memory (non-blocking)', { userId, error });
+        });
         break;
       }
 
-      case 'knowledge': {
-        const item = await services.knowledge.saveKnowledge(userId, text);
-        await sendSavedItemMessage(userId, item, '已儲存知識', replyToken);
-        break;
-      }
+      case 'query': {
+        // 根據 queryType 路由到對應服務
+        const queryType = classification.queryType || 'feedback'; // 預設 feedback
+        
+        let assistantResponse: string;
+        switch (queryType) {
+          case 'feedback': {
+            const query = (classification.extractedData?.query as string | undefined) || text;
+            assistantResponse = await services.feedback.generateFeedback(userId, query);
+            await sendFeedbackMessage(userId, assistantResponse, replyToken);
+            break;
+          }
+          case 'recommendation': {
+            const query = (classification.extractedData?.query as string | undefined) || text;
+            assistantResponse = await services.recommendation.generateRecommendation(userId, query);
+            await sendRecommendationMessage(userId, assistantResponse, replyToken);
+            break;
+          }
+          case 'chat_history': {
+            const query = (classification.extractedData?.query as string | undefined) || text;
+            assistantResponse = await services.chat.searchHistory(userId, query);
+            await sendChatMessage(userId, assistantResponse, replyToken);
+            break;
+          }
+          default: {
+            // Fallback to feedback
+            assistantResponse = await services.feedback.generateFeedback(userId, text);
+            await sendFeedbackMessage(userId, assistantResponse, replyToken);
+            break;
+          }
+        }
 
-      case 'memory': {
-        const item = await services.memory.saveMemory(userId, text);
-        await sendSavedItemMessage(userId, item, '已儲存記憶', replyToken);
-        break;
-      }
-
-      case 'music': {
-        const item = await services.music.saveMusic(userId, text);
-        await sendSavedItemMessage(userId, item, '已儲存音樂', replyToken);
-        break;
-      }
-
-      case 'life': {
-        const item = await services.life.saveLife(userId, text);
-        await sendSavedItemMessage(userId, item, '已儲存活動', replyToken);
-        break;
-      }
-
-      case 'feedback': {
-        const feedback = await services.feedback.generateFeedback(userId, text);
-        await sendFeedbackMessage(userId, feedback, replyToken);
-        break;
-      }
-
-      case 'recommendation': {
-        const recommendation = await services.recommendation.generateRecommendation(userId, text);
-        await sendRecommendationMessage(userId, recommendation, replyToken);
-        break;
-      }
-
-      case 'chat_history': {
-        // Extract query from text or use full text
-        const query = (classification.extractedData?.query as string | undefined) || text;
-        const response = await services.chat.searchHistory(userId, query);
-        await sendChatMessage(userId, response, replyToken);
+        // query 一般不儲存，除非用戶在查詢時透露了新資訊（非同步，不阻塞）
+        services.chat.extractMemoryForIntent(
+          userId,
+          'query',
+          text,
+          assistantResponse,
+          { queryType }
+        ).catch((error) => {
+          logger.warn('Failed to extract query memory (non-blocking)', { userId, error });
+        });
         break;
       }
 
       case 'other':
       default: {
-        // General chat - save as SavedItem first, then respond
-        const savedItem = await services.chat.saveChat(userId, text);
+        // General chat - generate response first, then save with response
         const response = await services.chat.chat(userId, text);
+        const savedItem = await services.chat.saveChat(userId, text, response);
         await sendChatMessage(userId, response, replyToken);
+        
+        // other (閒聊) 提取個人偏好、性格特徵、生活現況（非同步，不阻塞）
+        // 注意：saveChat 已經會存入對話（帶有 'other' category），這裡只提取結構化記憶
+        services.chat.extractMemoryForIntent(
+          userId,
+          'other',
+          text,
+          response
+        ).catch((error) => {
+          logger.warn('Failed to extract other memory (non-blocking)', { userId, error });
+        });
         break;
       }
     }

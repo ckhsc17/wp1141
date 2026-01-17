@@ -13,6 +13,7 @@ import { IntentClassificationService } from '@/services/intentClassificationServ
 import { KnowledgeService } from '@/services/knowledgeService';
 import { LifeService } from '@/services/lifeService';
 import { LinkService } from '@/services/linkService';
+import { MemoryProviderFactory } from '@/services/memory/MemoryProviderFactory';
 import { MemoryService } from '@/services/memoryService';
 import { MusicService } from '@/services/musicService';
 import { RecommendationService } from '@/services/recommendationService';
@@ -34,6 +35,23 @@ const reminderRepo = new PrismaReminderRepository();
 const todoRepo = new PrismaTodoRepository();
 const gemini = new GeminiService(geminiApiKey);
 
+// 創建 Memory Provider（透過 Factory，根據環境變數選擇）
+const memoryProvider = MemoryProviderFactory.create();
+
+// 診斷日誌：檢查 memoryProvider 是否成功創建
+if (memoryProvider) {
+  logger.info('Memory provider created successfully', {
+    providerType: process.env.MEMORY_PROVIDER || 'mem0',
+    hasApiKey: !!process.env.MEM0_API_KEY,
+  });
+} else {
+  logger.warn('Memory provider is null - memory features will be disabled', {
+    providerType: process.env.MEMORY_PROVIDER || 'mem0',
+    hasApiKey: !!process.env.MEM0_API_KEY,
+    memoryProviderEnv: process.env.MEMORY_PROVIDER,
+  });
+}
+
 export const services = {
   content: new ContentService(savedItemRepo, gemini),
   reminders: new ReminderService(reminderRepo),
@@ -47,7 +65,7 @@ export const services = {
   link: new LinkService(savedItemRepo, gemini),
   feedback: new FeedbackService(savedItemRepo, gemini),
   recommendation: new RecommendationService(savedItemRepo, gemini),
-  chat: new ChatService(savedItemRepo, gemini),
+  chat: new ChatService(savedItemRepo, gemini, memoryProvider), // 傳入 memoryProvider（可能為 null）
 };
 
 export const repositories = {
