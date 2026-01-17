@@ -67,15 +67,22 @@ export class RecommendationService {
     let mem0Memories = '';
     if (this.memoryProvider) {
       // 不限制 categories，允許搜尋所有類型記憶（包括 link、other、save_content 等提取的偏好）
+      // 即使查詢為空，也搜索一般性的偏好記憶
+      const searchQuery = query || '用戶偏好 興趣';
       mem0Memories = await this.memoryProvider.searchRelevantMemories(
         userId,
-        query || '推薦',
-        5,
+        searchQuery,
+        10, // 增加數量，以便獲取更多偏好資訊
         undefined // 不限制 categories
       );
     }
 
-    if (uniqueResults.length === 0 && !mem0Memories) {
+    // 5. 如果沒有直接相關的 SavedItem，但有 Mem0 記憶（偏好），仍然可以生成推薦
+    const hasSavedItems = uniqueResults.length > 0;
+    const hasPreferences = !!mem0Memories;
+
+    // 只有當兩者都沒有時，才說沒有內容
+    if (!hasSavedItems && !hasPreferences) {
       return '你還沒有儲存相關內容呢！分享一些你感興趣的內容，我會根據你的喜好提供推薦 ✨';
     }
 
@@ -84,10 +91,16 @@ export class RecommendationService {
       .map((item) => `- ${item.title || item.content.slice(0, 100)}${item.url ? ` (${item.url})` : ''}${item.tags.length > 0 ? ` [${item.tags.join(', ')}]` : ''}`)
       .join('\n');
 
-    // 如果有 Mem0 記憶，加入 context
-    const combinedContext = mem0Memories
-      ? `${mem0Memories}\n\n用戶儲存的內容：\n${itemsText}`
-      : itemsText;
+    // 組合 context：優先顯示偏好，然後是保存的內容
+    let combinedContext = '';
+    if (hasPreferences) {
+      combinedContext = `用戶的偏好與興趣：\n${mem0Memories}`;
+      if (hasSavedItems) {
+        combinedContext += `\n\n用戶儲存的相關內容：\n${itemsText}`;
+      }
+    } else {
+      combinedContext = itemsText;
+    }
 
     const response = await this.gemini.generate({
       template: 'generateRecommendationWithRAG',
