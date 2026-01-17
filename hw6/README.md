@@ -14,17 +14,208 @@
 - **資料庫**：PostgreSQL (Prisma ORM)
 - **AI 服務**：Google Gemini API
 - **訊息平台**：LINE Messaging API (`messaging-api-line`)
+- **記憶引擎**：Mem0 (長期記憶管理)
 - **架構模式**：Service Layer + Repository Pattern
 
 ---
 
-## 完整系統架構圖
+## 系統架構演進
+
+### 導入 Mem0 前的架構（v1.0）
+
+在導入 Mem0 之前，系統主要依賴 PostgreSQL 的 `SavedItem` 表來儲存對話記錄，並使用 tag 和全文搜尋來檢索相關內容。
 
 ```mermaid
 graph TB
     subgraph "外部服務"
         LINE[LINE Platform]
         GEMINI[Google Gemini API]
+    end
+
+    subgraph "Next.js Application"
+        WEBHOOK[POST /api/line<br/>Webhook Handler]
+        EH[eventHandler.ts<br/>事件處理器]
+    end
+
+    subgraph "Service Layer"
+        CHAT[chatService<br/>對話處理]
+        FEEDBACK[feedbackService<br/>回饋生成]
+        REC[recommendationService<br/>推薦生成]
+    end
+
+    subgraph "Repository Layer"
+        SR[SavedItemRepository<br/>查詢最近 3 條記錄]
+    end
+
+    subgraph "Database"
+        PG[(PostgreSQL<br/>SavedItem 表<br/>tag 搜尋 + 全文搜尋)]
+    end
+
+    LINE -->|Webhook Events| WEBHOOK
+    WEBHOOK --> EH
+    EH -->|路由| CHAT
+    EH -->|路由| FEEDBACK
+    EH -->|路由| REC
+    
+    CHAT -->|搜尋| SR
+    FEEDBACK -->|搜尋 SavedItem<br/>by tags| SR
+    REC -->|搜尋 SavedItem<br/>by tags + text| SR
+    
+    SR -->|讀取| PG
+    
+    CHAT -->|生成回應| GEMINI
+    FEEDBACK -->|RAG 生成| GEMINI
+    REC -->|RAG 生成| GEMINI
+    
+    style GEMINI fill:#4285F4,color:#fff
+    style LINE fill:#00C300,color:#fff
+    style PG fill:#336791,color:#fff
+```
+
+**限制**：
+- ❌ 只能查詢最近 N 條記錄，無法做語意搜尋
+- ❌ 依賴硬編碼的 tag 提取，缺乏個人化
+- ❌ 無法提取和儲存「習慣」、「偏好」等高階抽象記憶
+- ❌ 長期對話脈絡容易遺失
+
+### 導入 Mem0 後的架構（v2.0）
+
+導入 Mem0 後，系統增加了長期記憶管理能力，能夠提取、儲存和檢索用戶的習慣、偏好、興趣等高階抽象記憶。
+
+```mermaid
+graph TB
+    subgraph "外部服務"
+        LINE[LINE Platform]
+        GEMINI[Google Gemini API]
+        MEM0[Mem0 Hosted API<br/>記憶引擎]
+    end
+
+    subgraph "Next.js Application"
+        WEBHOOK[POST /api/line<br/>Webhook Handler]
+        EH[eventHandler.ts<br/>事件處理器]
+    end
+
+    subgraph "Service Layer"
+        CHAT[chatService<br/>對話處理]
+        FEEDBACK[feedbackService<br/>回饋生成]
+        REC[recommendationService<br/>推薦生成]
+    end
+
+    subgraph "Memory Layer"
+        MP[MemoryProvider<br/>抽象介面]
+        MFP[MemoryProviderFactory<br/>工廠模式]
+        MEM0P[Mem0HostedProvider<br/>Mem0 實作]
+        UP[UpstashProvider<br/>Upstash 實作<br/>預留]
+        PG[PostgreSQLProvider<br/>PostgreSQL 實作<br/>預留]
+    end
+
+    subgraph "Repository Layer"
+        SR[SavedItemRepository<br/>儲存原始記錄]
+    end
+
+    subgraph "Database"
+        PGDB[(PostgreSQL<br/>SavedItem 表<br/>原始對話記錄)]
+        MEM0DB[(Mem0 Cloud<br/>長期記憶儲存<br/>習慣/偏好/興趣)]
+    end
+
+    LINE -->|Webhook Events| WEBHOOK
+    WEBHOOK --> EH
+    EH -->|路由| CHAT
+    EH -->|路由| FEEDBACK
+    EH -->|路由| REC
+    
+    CHAT -->|語意搜尋記憶| MP
+    FEEDBACK -->|語意搜尋記憶| MP
+    REC -->|語意搜尋記憶| MP
+    
+    CHAT -->|提取記憶<br/>按意圖類型| GEMINI
+    CHAT -->|儲存原始對話| SR
+    
+    MFP -->|創建| MEM0P
+    MP -.實作.-> MEM0P
+    MP -.實作預留.-> UP
+    MP -.實作預留.-> PG
+    
+    MEM0P -->|搜尋/儲存| MEM0
+    MEM0 -->|讀寫| MEM0DB
+    
+    SR -->|讀寫| PGDB
+    
+    CHAT -->|生成回應| GEMINI
+    FEEDBACK -->|RAG 生成<br/>結合 SavedItem + Mem0| GEMINI
+    REC -->|RAG 生成<br/>結合 SavedItem + Mem0| GEMINI
+    
+    style GEMINI fill:#4285F4,color:#fff
+    style LINE fill:#00C300,color:#fff
+    style MEM0 fill:#FF6B6B,color:#fff
+    style PGDB fill:#336791,color:#fff
+    style MEM0DB fill:#FF6B6B,color:#fff
+```
+
+**改進**：
+- ✅ 語意搜尋：能夠根據查詢的語意找到相關記憶，而不只是關鍵字匹配
+- ✅ 個人化記憶提取：針對不同意圖提取不同類型的記憶（習慣、偏好、興趣等）
+- ✅ 長期脈絡：能夠記住用戶的長期偏好和習慣
+- ✅ 抽象層設計：可以輕鬆切換不同的記憶後端（Mem0、Upstash、PostgreSQL）
+
+---
+
+## Mem0 vs. 單純 Vector Cosine Similarity
+
+### 為什麼選擇 Mem0？
+
+Mem0 不僅僅是 vector similarity search，它是一個**完整的記憶管理系統**，包含以下特性：
+
+| 特性 | Mem0 | 單純 Vector Cosine Similarity |
+|------|------|------------------------------|
+| **記憶提取** | ✅ LLM 驅動的結構化提取<br/>（例如：「用戶習慣在週六買牛奶」） | ❌ 需要手動設計 prompt |
+| **記憶類型** | ✅ 支援多種記憶類型<br/>（習慣、偏好、興趣、事實） | ❌ 只是相似度搜尋 |
+| **記憶合併** | ✅ 自動檢測和合併重複記憶 | ❌ 需要手動去重 |
+| **分類管理** | ✅ 支援 categories 分類<br/>（todo、link、save_content 等） | ❌ 需要手動標籤 |
+| **時間過濾** | ✅ 支援日期範圍搜尋<br/>（「我 1/17 在幹嘛？」） | ❌ 需要額外 metadata |
+| **重要性評分** | ✅ 自動評分記憶重要性 | ❌ 需要手動設計 |
+| **記憶聚合** | ✅ 自動聚合相關記憶 | ❌ 需要手動處理 |
+
+### 實際應用場景
+
+**場景 1：推薦系統**
+```
+用戶：「推薦一些音樂」
+```
+
+**使用 Vector Similarity**：
+- 搜尋相似關鍵字：「音樂」、「solo」、「歌曲」
+- 只能找到包含這些詞的記錄
+- 無法理解「用戶喜歡爵士樂」這種抽象偏好
+
+**使用 Mem0**：
+- 語意搜尋找到「用戶喜歡爵士樂」、「用戶對 React 技術感興趣」等高階記憶
+- 即使沒有直接相關的 SavedItem，也能基於偏好生成推薦
+
+**場景 2：個人化回饋**
+```
+用戶：「我的時間管理如何？」
+```
+
+**使用 Vector Similarity**：
+- 只能搜尋 tag 包含「todo」、「memory」的記錄
+- 無法提取「用戶常有延遲執行的傾向」這種習慣
+
+**使用 Mem0**：
+- 提取「用戶習慣在週六買牛奶」（todo 習慣）
+- 提取「用戶對 React 技術感興趣」（link 興趣）
+- 基於這些提取的偏好和習慣，生成個人化回饋
+
+---
+
+## 完整系統架構圖（導入 Mem0 後）
+
+```mermaid
+graph TB
+    subgraph "外部服務"
+        LINE[LINE Platform]
+        GEMINI[Google Gemini API]
+        MEM0[Mem0 Hosted API<br/>記憶引擎]
         VERCEL[Vercel Cron Jobs]
     end
 
@@ -44,16 +235,22 @@ graph TB
     subgraph "Service Layer"
         IC[intentClassificationService<br/>意圖分類]
         TODO[todoService<br/>待辦管理]
-        CHAT[chatService<br/>對話處理]
+        CHAT[chatService<br/>對話處理<br/>+ 記憶提取]
         LINK[linkService<br/>連結分析]
         INSIGHT[insightService<br/>靈感儲存]
         KNOWLEDGE[knowledgeService<br/>知識儲存]
         MEMORY[memoryService<br/>記憶儲存]
         MUSIC[musicService<br/>音樂儲存]
         LIFE[lifeService<br/>活動儲存]
-        FEEDBACK[feedbackService<br/>回饋生成]
-        REC[recommendationService<br/>推薦生成]
+        FEEDBACK[feedbackService<br/>回饋生成<br/>+ Mem0 RAG]
+        REC[recommendationService<br/>推薦生成<br/>+ Mem0 RAG]
         REM[reminderService<br/>提醒管理]
+    end
+
+    subgraph "Memory Layer"
+        MP[IMemoryProvider<br/>抽象介面]
+        MFP[MemoryProviderFactory]
+        MEM0P[Mem0HostedProvider]
     end
 
     subgraph "Repository Layer"
@@ -64,7 +261,8 @@ graph TB
     end
 
     subgraph "Database"
-        PG[(PostgreSQL<br/>Prisma)]
+        PG[(PostgreSQL<br/>Prisma<br/>原始記錄)]
+        MEM0DB[(Mem0 Cloud<br/>長期記憶)]
     end
 
     subgraph "Utils"
@@ -89,6 +287,16 @@ graph TB
     EH -->|路由到服務| LIFE
     EH -->|路由到服務| FEEDBACK
     EH -->|路由到服務| REC
+    
+    CHAT -->|語意搜尋記憶| MP
+    CHAT -->|提取記憶<br/>按意圖| GEMINI
+    FEEDBACK -->|語意搜尋記憶| MP
+    REC -->|語意搜尋記憶| MP
+    
+    MFP -->|創建| MEM0P
+    MP -.實作.-> MEM0P
+    MEM0P -->|搜尋/儲存| MEM0
+    MEM0 -->|讀寫| MEM0DB
     
     TODO -->|呼叫| GEMINI
     CHAT -->|呼叫| GEMINI
@@ -143,7 +351,9 @@ graph TB
     
     style GEMINI fill:#4285F4,color:#fff
     style LINE fill:#00C300,color:#fff
+    style MEM0 fill:#FF6B6B,color:#fff
     style PG fill:#336791,color:#fff
+    style MEM0DB fill:#FF6B6B,color:#fff
     style VERCEL fill:#000,color:#fff
 ```
 
@@ -188,18 +398,29 @@ intentClassificationService.classify()
     │
     ├─ life → lifeService.saveLife() → 呼叫 Gemini (analyzeLife)
     │
-    ├─ feedback → feedbackService.generateFeedback() → 呼叫 Gemini (generateFeedback)
+    ├─ feedback → feedbackService.generateFeedback()
+    │   ├─ 搜尋 SavedItem (by tags)
+    │   ├─ 搜尋 Mem0 記憶（語意搜尋）
+    │   └─ 呼叫 Gemini (generateFeedbackWithRAG)
     │
-    ├─ recommendation → recommendationService.generateRecommendation() → 呼叫 Gemini (generateRecommendation)
+    ├─ recommendation → recommendationService.generateRecommendation()
+    │   ├─ 搜尋 SavedItem (by tags + text)
+    │   ├─ 搜尋 Mem0 記憶（語意搜尋）
+    │   └─ 呼叫 Gemini (generateRecommendationWithRAG)
     │
-    ├─ chat_history → chatService.searchHistory() → 呼叫 Gemini (extractSearchKeywords, answerChatHistoryWithRAG)
+    ├─ chat_history → chatService.searchHistory()
+    │   ├─ 搜尋 SavedItem (by tags + text)
+    │   ├─ 搜尋 Mem0 記憶（語意搜尋）
+    │   └─ 呼叫 Gemini (answerChatHistoryWithRAG)
     │
     └─ other → chatService.saveChat() + chatService.chat()
         ├─ saveChat() → 呼叫 Gemini (analyzeChat)
-        └─ chat() → 呼叫 Gemini (chat)
+        ├─ chat() → 搜尋 Mem0 記憶 + 呼叫 Gemini (chat)
+        └─ extractMemoryForIntent() → 提取偏好記憶（非同步）
     ↓
 服務處理完成後：
     ├─ 儲存到資料庫（SavedItem / Todo / Reminder）
+    ├─ 提取並儲存記憶到 Mem0（根據 intent 類型，非同步）
     ├─ 記錄 API 呼叫（用於限制追蹤）
     └─ 透過 messages.ts 發送回應訊息
     ↓
@@ -399,6 +620,92 @@ Reminder
 
 ---
 
+## Mem0 記憶引擎整合
+
+### 記憶提取策略
+
+系統針對不同意圖類型，採用不同的記憶提取策略：
+
+| 意圖類型 | 提取的記憶類型 | 範例 |
+|---------|--------------|------|
+| `todo` | 用戶習慣和模式 | 「用戶習慣在週六買牛奶」 |
+| `link` | 用戶興趣和主題 | 「用戶對 React Server Components 的技術文章感興趣」 |
+| `save_content` | 關鍵字與標籤 | 「用戶記錄了 React 相關知識」 |
+| `query` | 查詢習慣或新資訊 | 「用戶有筆記顏色分類的習慣」（如果有新資訊） |
+| `other` | 個人偏好、性格特徵、生活現況 | 「用戶喜歡爵士樂」、「用戶最近搬到汐止」 |
+
+### 記憶儲存流程
+
+```
+用戶訊息
+    ↓
+意圖分類（intent）
+    ↓
+根據 intent 調用 extractMemoryForIntent()
+    ├─ todo → extractTodoMemory (提取習慣)
+    ├─ link → extractLinkMemory (提取興趣)
+    ├─ save_content → extractSaveContentMemory (提取關鍵字)
+    ├─ query → extractQueryMemory (提取新資訊，可能為 null)
+    └─ other → extractOtherMemory (提取偏好)
+    ↓
+LLM 提取結構化記憶（JSON）
+    ↓
+儲存到 Mem0 (addConversation with category)
+```
+
+### 記憶檢索流程
+
+```
+用戶查詢（feedback/recommendation/chat）
+    ↓
+搜尋 Mem0 (searchRelevantMemories)
+    ├─ 語意搜尋（semantic search）
+    ├─ 分類過濾（categories: ['todo', 'other', ...]）
+    └─ 日期過濾（parseDateFromQuery: "1/17"）
+    ↓
+同時搜尋 SavedItem (searchByTags/searchByText)
+    ↓
+合併結果作為 RAG context
+    ├─ Mem0 記憶（格式：相關背景記憶：\n1. [YYYY-MM-DD] 記憶內容）
+    └─ SavedItem（格式：- 標題 [標籤]）
+    ↓
+生成回應（generateFeedbackWithRAG / generateRecommendationWithRAG）
+```
+
+### 記憶 Provider 抽象層
+
+系統採用抽象層設計，支援多種記憶後端：
+
+```typescript
+interface IMemoryProvider {
+  searchRelevantMemories(userId, query, limit?, categories?): Promise<string>;
+  addConversation(userId, messages, category?): Promise<void>;
+}
+```
+
+**目前實作**：
+- ✅ `Mem0HostedProvider`: 使用 Mem0 hosted API（預設）
+- 🔜 `UpstashProvider`: Upstash Vector（預留）
+- 🔜 `PostgreSQLProvider`: PostgreSQL + pgvector（預留）
+
+**切換方式**：
+```bash
+# 使用 Mem0 hosted（預設）
+MEMORY_PROVIDER=mem0
+MEM0_API_KEY=your-mem0-api-key
+
+# 使用 Upstash（未來）
+MEMORY_PROVIDER=upstash
+UPSTASH_VECTOR_REST_URL=...
+UPSTASH_VECTOR_REST_TOKEN=...
+
+# 使用 PostgreSQL（未來）
+MEMORY_PROVIDER=postgresql
+# 使用 DATABASE_URL
+```
+
+---
+
 ## 環境變數設定
 
 ```bash
@@ -413,6 +720,10 @@ GEMINI_MODEL=gemini-2.0-flash  # 可選，預設為 gemini-2.0-flash
 # 資料庫
 DATABASE_URL=postgresql://user:password@localhost:5432/booboo_db
 
+# Mem0 記憶引擎（可選，但強烈建議）
+MEMORY_PROVIDER=mem0  # 預設為 mem0，可選：mem0, upstash, postgresql, none
+MEM0_API_KEY=your-mem0-api-key  # Mem0 hosted API key
+
 # 除錯
 DEBUG_API_TOKEN=local-debug-token
 
@@ -421,6 +732,10 @@ CRON_SECRET=your-cron-secret
 
 # LIFF Admin（可選）
 LIFF_ADMIN_URL=https://liff.line.me/YOUR_LIFF_ID
+
+# 系統設定（可選）
+DEFAULT_REGULAR_TOKEN_LIMIT=10  # 一般用戶 token 上限
+DEFAULT_VIP_TOKEN_LIMIT=200     # VIP 用戶 token 上限
 ```
 
 ---
