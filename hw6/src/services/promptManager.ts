@@ -107,6 +107,54 @@ ${text}
 </JSON>`;
     },
   },
+  classifyIntentSimplified: {
+    system:
+      '你是 Booboo 小幽的意圖分類助手。根據用戶訊息的意圖類型，必須嚴格按照 JSON 格式輸出。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      return `分析以下訊息的意圖：
+
+訊息：${text}
+
+意圖類型（5種）：
+1. todo - 待辦事項相關（新增/完成/查詢待辦）
+   - create: 新增待辦（例如：「我要吃飯、取貨、寫作業」「待辦：買菜」「我明天要開會」「提醒我買菜」「提醒我明天要開會」「今晚11:00看影片」「幫我新增待辦事項」「新增：晚上看影片」）
+   - update: 更新狀態（例如：「我寫完作業了！」「作業完成了」「取消吃飯」）
+   - query: 查詢待辦（例如：「我上禮拜做了哪些事？」「吃了什麼？」「查看待辦」「明天要幹嘛」）
+
+2. link - 分享連結（包含 http/https 連結）
+
+3. save_content - 儲存內容（用戶想要記錄的信息、事實性資訊、觀察、思考）
+   - contentType: insight（靈感）、knowledge（知識）、memory（記憶）、music（音樂）、life（活動）
+   - 例如：「今天突然理解了一個人生道理」（insight）、「React Hooks 的用法」（knowledge）、
+         「今天跟朋友聊到...」（memory）、「在 solo 陶喆 蝴蝶」（music）、
+         「小巨蛋溜冰！」（life）
+         「讓 AI 當你的提問教練」（memory），因為一句不是一般聊天的對話，而是我偶然看到想記錄下來的想法、觀察、思考
+         - 注意：如果是問句（例如：「這禮拜的社交狀況如何」），不應分類為 save_content
+
+4. query - 查詢類（用戶詢問或請求建議）
+   - queryType: feedback（請求回饋/建議）、recommendation（請求推薦）、chat_history（查詢過往對話）
+   - 例如：「給我一些生活建議」（feedback）、「推薦一些音樂」（recommendation）、
+         「我之前聊過什麼？」（chat_history）
+         「我今天在幹嘛？」（chat_history）
+
+5. other - 一般聊天（不明確的對話、想有個人陪伴，無壓力地分享即時感受、想找人聊天）
+
+判斷規則：
+- 如果是問句（如何、什麼、哪些、怎樣），通常是 query 而非 save_content
+- save_content 是「儲存」意圖，query 是「詢問」意圖
+- 如果包含連結，優先分類為 link
+
+輸出 JSON（不能有其他文字）：
+{
+  "intent": "todo|link|save_content|query|other",
+  "subIntent": "create|update|query" (僅 todo 時),
+  "contentType": "insight|knowledge|memory|music|life" (僅 save_content 時),
+  "queryType": "feedback|recommendation|chat_history" (僅 query 時),
+  "confidence": 0.0-1.0
+}`;
+    },
+  },
   analyzeLink: {
     system:
       '你是連結內容分析助手。分析連結的類型、摘要、地點等資訊，必須嚴格按照 JSON 格式輸出。系統會自動使用 URL Context 工具來讀取連結的實際內容，並使用 Google Search 來獲取相關資訊和類似連結，同時參考用戶的歷史記錄來提供更準確的分析。',
@@ -329,12 +377,12 @@ ${todos}
       return `這是用戶最近的日常紀錄：
 ${entries}
 
-請提供一段溫暖的生活回饋和建議（500-800字），包含：
+請提供一段溫暖的生活回饋和建議（100-200字），包含：
 1. 對用戶生活的觀察
 2. 具體的建議或行動方向
 3. 鼓勵的話語
 
-請詳細說明，不要過於簡短。`;
+請詳細說明，長度適中。`;
     },
   },
   generateRecommendation: {
@@ -573,7 +621,9 @@ ${items || '（暫無相關內容）'}
 
 請基於以上內容，提供具體、可執行的推薦。語氣溫暖、有行動力，直接回答用戶的問題。
 
-請提供詳細的推薦（每個推薦 100-200字），包含推薦的理由、內容和如何執行。不要過於簡短。
+請提供 2-3 個推薦，總長度控制在 150-300 字。每個推薦包含：
+1. 推薦標題或項目名稱
+2. 簡短的推薦理由（1-2句話）
 
 重要：請不要使用任何 markdown 語法（例如 **粗體**、*斜體* 等），直接使用純文字回覆。`;
     },
@@ -591,7 +641,10 @@ ${items || '（暫無相關內容）'}
 
 請基於以上內容，分析用戶的生活模式，提供建設性建議。語氣溫暖、支持性，直接回答用戶的問題。
 
-請提供詳細的回饋（500-1000字），包含具體的觀察、建議和鼓勵。不要過於簡短。
+請提供簡潔有力的回饋（150-250字），包含：
+1. 具體的觀察（1-2句話）
+2. 建設性的建議（1-2句話）
+3. 鼓勵的話語（1句話）
 
 重要：請不要使用任何 markdown 語法（例如 **粗體**、*斜體* 等），直接使用純文字回覆。`;
     },
@@ -607,9 +660,7 @@ ${items || '（暫無相關內容）'}
 相關內容：
 ${items || '（暫無相關內容）'}
 
-請基於以上內容，直接回答用戶的問題。如果找到相關內容，請詳細引用並說明；如果找不到，請誠實告知。
-
-請提供完整的回答，不要過於簡短。
+請基於以上內容，直接回答用戶的問題。如果找到相關內容，請引用並簡潔說明（100-200字）；如果找不到，請誠實告知。
 
 重要：請不要使用任何 markdown 語法（例如 **粗體**、*斜體* 等），直接使用純文字回覆。`;
     },
@@ -639,6 +690,127 @@ ${history}
 請用 Booboo 小幽的語氣回覆，保持溫暖、親切、自然。
 
 重要：請不要使用任何 markdown 語法（例如 **粗體**、*斜體* 等），直接使用純文字回覆。`;
+    },
+  },
+
+  // 記憶提取 Prompts（針對不同意圖類型）
+  extractTodoMemory: {
+    system:
+      '你是記憶提取助手。從待辦事項訊息中提取用戶的習慣、模式和行為特徵，而不是具體的待辦事項本身。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      const subIntent = typeof payload.subIntent === 'string' ? payload.subIntent : '';
+      return `用戶訊息：${text}
+子意圖：${subIntent}
+
+請從以上訊息中提取用戶的行為習慣、模式和特徵，而不是具體的待辦事項。
+
+範例：
+- 「提醒我買牛奶」→ 「用戶習慣在週六買牛奶」或「用戶常有延遲執行的傾向」
+- 「我明天要開會」→ 「用戶週間工作繁忙，常有會議安排」
+- 「寫完作業了！」→ 「用戶有完成任務後自我報告的習慣」
+
+輸出 JSON 格式（不能有其他文字）：
+{
+  "memory": "提取的習慣或模式描述（事實化）",
+  "keywords": ["關鍵字1", "關鍵字2"],
+  "tags": ["習慣", "模式"] // 可選標籤
+}`;
+    },
+  },
+
+  extractLinkMemory: {
+    system:
+      '你是記憶提取助手。從連結分享中提取用戶的興趣和關注主題，而不是連結本身。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      const linkTitle = typeof payload.linkTitle === 'string' ? payload.linkTitle : '';
+      const linkType = typeof payload.linkType === 'string' ? payload.linkType : '';
+      return `用戶訊息：${text}
+連結標題：${linkTitle}
+連結類型：${linkType}
+
+請從以上訊息中提取用戶的興趣和關注主題。
+
+範例：
+- 分享 React Server Components 文章 → 「用戶對 React Server Components 的技術文章感興趣」
+- 分享美食餐廳連結 → 「用戶對美食和餐廳資訊感興趣」
+
+輸出 JSON 格式（不能有其他文字）：
+{
+  "memory": "用戶的興趣或關注主題描述",
+  "keywords": ["關鍵字1", "關鍵字2"],
+  "tags": ["興趣", "技術"] // 根據連結類型
+}`;
+    },
+  },
+
+  extractSaveContentMemory: {
+    system:
+      '你是記憶提取助手。從用戶儲存的內容中提取關鍵字、標籤和核心資訊。這是記憶的核心來源。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      const contentType = typeof payload.contentType === 'string' ? payload.contentType : '';
+      return `用戶訊息：${text}
+內容類型：${contentType}
+
+請從以上訊息中提取關鍵字、標籤和核心資訊。
+
+範例：
+- 「今天突然理解了一個人生道理：時間是有限的」→ 「用戶對時間管理的哲學思考」
+- 「React Hooks 的用法」→ 「用戶學習 React Hooks，對前端技術感興趣」
+
+輸出 JSON 格式（不能有其他文字）：
+{
+  "memory": "核心記憶內容的描述",
+  "keywords": ["關鍵字1", "關鍵字2"],
+  "tags": ["標籤1", "標籤2"] // 根據內容類型
+}`;
+    },
+  },
+
+  extractQueryMemory: {
+    system:
+      '你是記憶提取助手。從查詢動作中提取用戶透露的新資訊，而不是查詢動作本身。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      const queryType = typeof payload.queryType === 'string' ? payload.queryType : '';
+      return `用戶查詢：${text}
+查詢類型：${queryType}
+
+請判斷此查詢是否透露了新資訊。如果只是單純查詢，不應提取記憶。
+
+範例：
+- 「幫我查我那個『藍色』的筆記」→ 「用戶有使用顏色分類筆記的習慣」
+- 「推薦一些音樂」→ null（沒有新資訊）
+
+輸出 JSON 格式（不能有其他文字）：
+{
+  "memory": "提取的新資訊描述，如果沒有新資訊則為 null",
+  "keywords": ["關鍵字1", "關鍵字2"] // 如果有記憶
+}`;
+    },
+  },
+
+  extractOtherMemory: {
+    system:
+      '你是記憶提取助手。從閒聊訊息中提取個人偏好、性格特徵、生活現況等重要資訊。',
+    user: (payload: Record<string, unknown>) => {
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      return `用戶訊息：${text}
+
+請從閒聊訊息中提取個人偏好、性格特徵、生活現況等重要資訊。
+
+範例：
+- 「剛搬到汐止」→ 「用戶最近搬到汐止」
+- 「我喜歡聽爵士樂」→ 「用戶喜歡爵士樂」
+
+輸出 JSON 格式（不能有其他文字）：
+{
+  "memory": "提取的個人資訊描述（偏好、性格、生活現況等）",
+  "keywords": ["關鍵字1", "關鍵字2"],
+  "tags": ["偏好", "生活"] // 可選標籤
+}`;
     },
   },
 };
