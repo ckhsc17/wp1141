@@ -27,6 +27,7 @@ function NavigationTabs() {
     { label: '對話紀錄', path: '/admin/conversations' },
     { label: '統計分析', path: '/admin/analytics' },
     { label: '健康監控', path: '/admin/health' },
+    { label: '系統設定', path: '/admin/settings' },
   ];
 
   // 計算當前選中的 tab

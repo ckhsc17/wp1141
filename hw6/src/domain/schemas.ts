@@ -5,6 +5,8 @@ export const UserProfileSchema = z.object({
   displayName: z.string().optional(),
   locale: z.enum(['zh-TW', 'en-US']).default('zh-TW'),
   timeZone: z.string().default('Asia/Taipei'),
+  isVIP: z.boolean().default(false),
+  tokenLimit: z.number().int().positive().nullable().default(null),
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
 });

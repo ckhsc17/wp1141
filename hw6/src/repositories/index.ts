@@ -147,6 +147,8 @@ export class PrismaUserRepository implements UserRepository {
       displayName: record.displayName ?? undefined,
       locale: record.locale as UserProfile['locale'],
       timeZone: record.timeZone,
+      isVIP: record.isVIP ?? false,
+      tokenLimit: record.tokenLimit ?? null,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
@@ -159,12 +161,16 @@ export class PrismaUserRepository implements UserRepository {
         displayName: profile.displayName,
         locale: profile.locale,
         timeZone: profile.timeZone,
+        isVIP: profile.isVIP,
+        tokenLimit: profile.tokenLimit,
       },
       create: {
         id: profile.id,
         displayName: profile.displayName,
         locale: profile.locale,
         timeZone: profile.timeZone,
+        isVIP: profile.isVIP ?? false,
+        tokenLimit: profile.tokenLimit ?? null,
       },
     });
 
@@ -173,6 +179,69 @@ export class PrismaUserRepository implements UserRepository {
       displayName: record.displayName ?? undefined,
       locale: record.locale as UserProfile['locale'],
       timeZone: record.timeZone,
+      isVIP: record.isVIP ?? false,
+      tokenLimit: record.tokenLimit ?? null,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    };
+  }
+
+  // Admin methods
+  async searchUsers(query: string, limit: number = 20): Promise<UserProfile[]> {
+    const records = await prisma.user.findMany({
+      where: {
+        OR: [
+          { id: { contains: query, mode: 'insensitive' } },
+          { displayName: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return records.map((record) => ({
+      id: record.id,
+      displayName: record.displayName ?? undefined,
+      locale: record.locale as UserProfile['locale'],
+      timeZone: record.timeZone,
+      isVIP: record.isVIP ?? false,
+      tokenLimit: record.tokenLimit ?? null,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    }));
+  }
+
+  async updateUserVIP(id: string, isVIP: boolean): Promise<UserProfile> {
+    const record = await prisma.user.update({
+      where: { id },
+      data: { isVIP },
+    });
+
+    return {
+      id: record.id,
+      displayName: record.displayName ?? undefined,
+      locale: record.locale as UserProfile['locale'],
+      timeZone: record.timeZone,
+      isVIP: record.isVIP ?? false,
+      tokenLimit: record.tokenLimit ?? null,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    };
+  }
+
+  async updateUserTokenLimit(id: string, tokenLimit: number | null): Promise<UserProfile> {
+    const record = await prisma.user.update({
+      where: { id },
+      data: { tokenLimit },
+    });
+
+    return {
+      id: record.id,
+      displayName: record.displayName ?? undefined,
+      locale: record.locale as UserProfile['locale'],
+      timeZone: record.timeZone,
+      isVIP: record.isVIP ?? false,
+      tokenLimit: record.tokenLimit ?? null,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };

@@ -1,18 +1,50 @@
-import type { SavedItemRepository } from '@/repositories';
+import type { SavedItemRepository, UserRepository } from '@/repositories';
+import { SystemSettingsRepository } from '@/repositories/systemSettingsRepository';
+
+const settingsRepo = new SystemSettingsRepository();
+
+/**
+ * Get user's token limit based on VIP status and custom limit
+ * @param userRepo - User repository
+ * @param userId - User ID
+ * @returns User's token limit (number)
+ */
+async function getUserTokenLimit(userRepo: UserRepository, userId: string): Promise<number> {
+  const user = await userRepo.getById(userId);
+  
+  // If user has custom tokenLimit, use it
+  if (user && user.tokenLimit !== null && user.tokenLimit !== undefined) {
+    return user.tokenLimit;
+  }
+
+  // Get default settings from database (or env vars as fallback)
+  const settings = await settingsRepo.getSettings();
+
+  // Use default based on VIP status
+  if (user?.isVIP) {
+    return settings.vipTokenLimit;
+  }
+
+  return settings.regularTokenLimit;
+}
 
 /**
  * Check if user has exceeded daily API call limit
  * Only counts messages that trigger Gemini API (not intent classification)
  * @param userId - User ID
  * @param savedItemRepo - SavedItem repository
- * @param dailyLimit - Daily API call limit (default: 8)
- * @returns Object with { exceeded: boolean, count: number }
+ * @param userRepo - User repository (for getting user's token limit)
+ * @param dailyLimit - Daily API call limit (optional, will be fetched from user if not provided)
+ * @returns Object with { exceeded: boolean, count: number, limit: number }
  */
 export async function checkDailyMessageLimit(
   userId: string,
   savedItemRepo: SavedItemRepository,
-  dailyLimit: number = 1000,
-): Promise<{ exceeded: boolean; count: number }> {
+  userRepo: UserRepository,
+  dailyLimit?: number,
+): Promise<{ exceeded: boolean; count: number; limit: number }> {
+  // If dailyLimit is not provided, fetch from user profile
+  const limit = dailyLimit ?? (await getUserTokenLimit(userRepo, userId));
   // Get today's date string in Asia/Taipei timezone
   const now = new Date();
   const taipeiDateStr = now.toLocaleDateString('en-CA', { 
@@ -33,9 +65,9 @@ export async function checkDailyMessageLimit(
   });
 
   const count = todayApiCalls.length;
-  const exceeded = count >= dailyLimit;
+  const exceeded = count >= limit;
 
-  return { exceeded, count };
+  return { exceeded, count, limit };
 }
 
 /**

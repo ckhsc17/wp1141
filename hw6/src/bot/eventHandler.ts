@@ -73,8 +73,8 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
 
   // Handle coin count quick reply (内建功能，不計入限制)
   if (text === '查看幽靈幣數量') {
-    const messageLimitCheck = await checkDailyMessageLimit(userId, repositories.savedItemRepo, 1000);
-    await sendCoinCountMessage(userId, messageLimitCheck.count, 1000, replyToken);
+    const messageLimitCheck = await checkDailyMessageLimit(userId, repositories.savedItemRepo, repositories.userRepo);
+    await sendCoinCountMessage(userId, messageLimitCheck.count, messageLimitCheck.limit, replyToken);
     return;
   }
 
@@ -155,7 +155,7 @@ export async function handleLineEvent(event: LineWebhookEvent): Promise<void> {
     // Check daily API call limit before processing
     // Note: Intent classification already happened above and doesn't count toward limit
     // All other intents will trigger Gemini API calls
-    const messageLimitCheck = await checkDailyMessageLimit(userId, repositories.savedItemRepo, 1000);
+    const messageLimitCheck = await checkDailyMessageLimit(userId, repositories.savedItemRepo, repositories.userRepo);
     if (messageLimitCheck.exceeded) {
       await sendChatMessage(userId, '今天的幽靈幣用完啦！明天再來找我聊天吧～ 👻', replyToken);
       return;

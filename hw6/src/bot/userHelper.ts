@@ -43,6 +43,8 @@ export async function ensureUser(
       displayName: lineProfile.displayName ?? undefined,
       locale: mapLineLanguageToLocale(lineProfile.language),
       timeZone: 'Asia/Taipei', // Default timezone
+      isVIP: false, // Default to non-VIP
+      tokenLimit: null, // Default to null (use default limit)
       createdAt: new Date(),
       updatedAt: new Date(),
     };
