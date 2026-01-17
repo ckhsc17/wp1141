@@ -63,8 +63,8 @@ export const services = {
   intentClassification: new IntentClassificationService(gemini),
   todo: new TodoService(todoRepo, reminderRepo, gemini),
   link: new LinkService(savedItemRepo, gemini),
-  feedback: new FeedbackService(savedItemRepo, gemini),
-  recommendation: new RecommendationService(savedItemRepo, gemini),
+  feedback: new FeedbackService(savedItemRepo, gemini, memoryProvider), // 傳入 memoryProvider（可能為 null）
+  recommendation: new RecommendationService(savedItemRepo, gemini, memoryProvider), // 傳入 memoryProvider（可能為 null）
   chat: new ChatService(savedItemRepo, gemini, memoryProvider), // 傳入 memoryProvider（可能為 null）
 };
 
