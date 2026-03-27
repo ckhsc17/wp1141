@@ -78,7 +78,7 @@ export const projects: Project[] = [
     title: "DOGTOR APP",
     description: "A comprehensive, customized Flutter education app for proactive learning, launching soon on App Store. Full-stack application using Flutter as frontend and FastAPI as backend, deployed on GCP with Cloud Run & Cloud SQL. Features AI-powered question generation using prompt engineering and model cross-validation, personalized recommendations with RAG customization, and TextCNN for topic classification to optimize token costs.",
     technologies: ["Flutter", "FastAPI", "GCP", "Cloud Run", "Cloud SQL", "AI", "RAG", "TextCNN", "Prompt Engineering"],
-    liveUrl: "https://testflight.apple.com/join/4DPcds6h",
+    liveUrl: "https://apps.apple.com/tw/app/dogtor-%E9%80%97%E8%AA%B2/id6751773627",
     githubUrl: "https://github.com/DOGTOR-LEARNING/dogtor_app",
     imageUrl: "/images/projects/DOGTOR.png",
     featured: true

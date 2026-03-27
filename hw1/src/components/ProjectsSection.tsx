@@ -21,7 +21,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ portfolioVM }) => {
       return <FaGithub className="w-5 h-5" />;
     } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
       return <FaYoutube className="w-5 h-5" />;
-    } else if (url.includes('testflight.apple.com')) {
+    } else if (url.includes('apps.apple.com')) {
       return <FaApple className="w-5 h-5" />;
     }
     // 預設圖示
